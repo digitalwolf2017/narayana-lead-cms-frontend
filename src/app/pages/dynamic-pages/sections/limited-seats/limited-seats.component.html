@@ -1,0 +1,365 @@
+<div class="space-y-6">
+
+  <!-- Visibility Controls -->
+  <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+
+      <div>
+        <h3 class="text-sm font-semibold text-slate-900">
+          Section Visibility
+        </h3>
+
+        <p class="mt-1 text-xs text-slate-500">
+          Choose where this section should be visible.
+        </p>
+      </div>
+
+      <div class="flex flex-wrap gap-3">
+
+        <!-- Desktop -->
+        <button type="button" role="switch" [attr.aria-checked]="limitedSeats.desktopActive" (click)="toggleDesktop()"
+          class="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 transition hover:bg-slate-50">
+
+          <span class="text-xs font-semibold text-slate-600">
+            Desktop
+          </span>
+
+          <span class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full p-0.5 transition-colors duration-200"
+            [class.bg-[#8c7ae6]]="limitedSeats.desktopActive"
+            [class.bg-slate-300]="!limitedSeats.desktopActive">
+            <span class="pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow-xs transition-transform duration-200"
+              [class.translate-x-4]="limitedSeats.desktopActive"
+              [class.translate-x-0]="!limitedSeats.desktopActive"></span>
+          </span>
+
+          <span class="text-xs font-medium text-slate-500">
+            {{
+            limitedSeats.desktopActive
+            ? 'Show'
+            : 'Hide'
+            }}
+          </span>
+
+        </button>
+
+        <!-- Mobile -->
+        <button type="button" role="switch" [attr.aria-checked]="limitedSeats.mobileActive" (click)="toggleMobile()"
+          class="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 transition hover:bg-slate-50">
+
+          <span class="text-xs font-semibold text-slate-600">
+            Mobile
+          </span>
+
+          <span class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full p-0.5 transition-colors duration-200"
+            [class.bg-[#8c7ae6]]="limitedSeats.mobileActive"
+            [class.bg-slate-300]="!limitedSeats.mobileActive">
+            <span class="pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow-xs transition-transform duration-200"
+              [class.translate-x-4]="limitedSeats.mobileActive"
+              [class.translate-x-0]="!limitedSeats.mobileActive"></span>
+          </span>
+
+          <span class="text-xs font-medium text-slate-500">
+            {{
+            limitedSeats.mobileActive
+            ? 'Show'
+            : 'Hide'
+            }}
+          </span>
+
+        </button>
+
+      </div>
+
+    </div>
+  </div>
+
+    <!-- Main Content -->
+    <div class="overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+
+      <!-- Header -->
+      <div class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+
+        <div>
+          <h3 class="text-base font-semibold text-slate-900">
+            Limited Seats Content
+          </h3>
+
+          <p class="mt-1 text-sm text-slate-500">
+            Configure image, heading, sub heading and button.
+          </p>
+        </div>
+
+        <button type="button" (click)="toggleContent()"
+          class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100">
+          {{ isContentOpen ? 'Close' : 'Open' }}
+        </button>
+
+      </div>
+
+      <!-- Content -->
+      @if (isContentOpen) {
+
+      <div class="space-y-5 border-t border-slate-200 bg-white p-5">
+
+        <!-- Image -->
+        <app-image-upload label="Limited Seats Image" description="Drag & drop image here or click to browse"
+          [imagePreview]="limitedSeats.image" (imageChange)="onImageChange($event)" />
+
+        <!-- Heading -->
+        <div>
+
+          <label class="mb-2 block text-sm font-semibold text-slate-700">
+            Heading / Text
+          </label>
+
+          <input type="text" [(ngModel)]="limitedSeats.heading" (ngModelChange)="emitChange()"
+            placeholder="Limited Seats"
+            class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100" />
+
+        </div>
+
+        <!-- Sub Heading -->
+        <div>
+
+          <label class="mb-2 block text-sm font-semibold text-slate-700">
+            Sub Heading
+          </label>
+
+          <textarea rows="4" [(ngModel)]="limitedSeats.subHeading" (ngModelChange)="emitChange()"
+            placeholder="Secure your child's admission before the seats are filled."
+            class="w-full resize-y rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100"></textarea>
+
+        </div>
+
+        <!-- Button -->
+        <div>
+
+          <label class="mb-2 block text-sm font-semibold text-slate-700">
+            Button Text
+          </label>
+
+          <input type="text" [(ngModel)]="limitedSeats.buttonText" (ngModelChange)="emitChange()"
+            placeholder="Apply Now"
+            class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100" />
+
+        </div>
+
+      </div>
+
+      }
+
+    </div>
+
+    <!-- Logos -->
+    <div class="overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+
+      <!-- Logos Header -->
+      <div class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+
+        <div>
+          <h3 class="text-base font-semibold text-slate-900">
+            Logos
+          </h3>
+
+          <p class="mt-1 text-sm text-slate-500">
+            Add and manage logos for this section.
+          </p>
+        </div>
+
+        <div class="flex shrink-0 items-center gap-2">
+
+          <button type="button" (click)="addLogo()"
+            class="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800">
+            + Add Logo
+          </button>
+
+          <button type="button" (click)="toggleLogos()"
+            class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100">
+            {{ isLogosOpen ? 'Close' : 'Open' }}
+          </button>
+
+        </div>
+
+      </div>
+
+      <!-- Logos Content -->
+      @if (isLogosOpen) {
+
+      <div class="space-y-3 border-t border-slate-200 bg-white p-5">
+
+        @for (
+        logo of limitedSeats.logos;
+        track logo.id
+        ) {
+
+        <div class="overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+
+          <!-- Logo Header -->
+          <div class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+
+            <div class="flex min-w-0 items-center gap-3">
+
+              <div
+                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-sm font-bold text-slate-600">
+                {{ $index + 1 }}
+              </div>
+
+              <div class="min-w-0">
+
+                <h4 class="truncate text-sm font-semibold text-slate-900">
+                  {{
+                  logo.name || 'Untitled Logo'
+                  }}
+                </h4>
+
+                <p class="mt-0.5 text-xs text-slate-500">
+                  Logo #{{ $index + 1 }}
+                </p>
+
+              </div>
+
+            </div>
+
+            <div class="flex shrink-0 items-center gap-2">
+
+              <button type="button" (click)="removeLogo(logo.id)"
+                class="rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50">
+                Remove
+              </button>
+
+              <button type="button" (click)="toggleLogo(logo.id)"
+                class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100">
+                {{
+                isLogoOpen(logo.id)
+                ? 'Close'
+                : 'Open'
+                }}
+              </button>
+
+            </div>
+
+          </div>
+
+          <!-- Logo Content -->
+          @if (isLogoOpen(logo.id)) {
+
+          <div class="space-y-5 border-t border-slate-200 bg-white p-5">
+
+            <!-- Logo Name -->
+            <div>
+
+              <label class="mb-2 block text-sm font-semibold text-slate-700">
+                Logo Name
+              </label>
+
+              <input type="text" [(ngModel)]="logo.name" (ngModelChange)="emitChange()" placeholder="Enter logo name"
+                class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100" />
+
+            </div>
+
+            <!-- Logo Image -->
+            <app-image-upload label="Logo Image" description="Drag & drop logo here or click to browse"
+              [imagePreview]="logo.image" (imageChange)="onLogoImageChange(logo.id, $event)" />
+
+          </div>
+
+          }
+
+        </div>
+
+        }
+
+        <!-- Empty State -->
+        @if (limitedSeats.logos.length === 0) {
+
+        <div class="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center">
+
+          <h4 class="text-sm font-semibold text-slate-800">
+            No logos added
+          </h4>
+
+          <p class="mt-1 text-sm text-slate-500">
+            Click "Add Logo" to create your first logo.
+          </p>
+
+          <button type="button" (click)="addLogo()"
+            class="mt-4 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white">
+            + Add Logo
+          </button>
+
+        </div>
+
+        }
+
+      </div>
+
+      }
+
+    </div>
+
+    <!-- School Details -->
+    <div class="overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+
+      <!-- Header -->
+      <div class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+
+        <div>
+          <h3 class="text-base font-semibold text-slate-900">
+            School Details
+          </h3>
+
+          <p class="mt-1 text-sm text-slate-500">
+            Add school name and number of schools.
+          </p>
+        </div>
+
+        <button type="button" (click)="toggleSchoolDetails()"
+          class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100">
+          {{
+          isSchoolDetailsOpen
+          ? 'Close'
+          : 'Open'
+          }}
+        </button>
+
+      </div>
+
+      <!-- Content -->
+      @if (isSchoolDetailsOpen) {
+
+      <div class="grid gap-5 border-t border-slate-200 bg-white p-5 md:grid-cols-2">
+
+        <!-- School Name -->
+        <div>
+
+          <label class="mb-2 block text-sm font-semibold text-slate-700">
+            School Name
+          </label>
+
+          <input type="text" [(ngModel)]="limitedSeats.schoolName" (ngModelChange)="emitChange()"
+            placeholder="Narayana School"
+            class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100" />
+
+        </div>
+
+        <!-- Number Of Schools -->
+        <div>
+
+          <label class="mb-2 block text-sm font-semibold text-slate-700">
+            No. of Schools
+          </label>
+
+          <input type="text" [(ngModel)]="limitedSeats.numberOfSchools" (ngModelChange)="emitChange()"
+            placeholder="900+"
+            class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100" />
+
+        </div>
+
+      </div>
+
+      }
+
+    </div>
+
+  </div>
