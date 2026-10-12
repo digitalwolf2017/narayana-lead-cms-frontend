@@ -1,0 +1,173 @@
+<div class="min-h-screen bg-slate-50 text-slate-900">
+  <!-- SIDEBAR -->
+  <app-sidebar></app-sidebar>
+
+  <!-- MAIN -->
+  <main class="lg:ml-[230px]">
+    <!-- TOPBAR -->
+    <app-topbar title="Executive Overview" subtitle="Real-time Lead Inflow & CMS Operations"></app-topbar>
+
+    <!-- CONTENT -->
+    <div class="mx-auto max-w-[1600px] p-3.5 sm:p-5 space-y-4">
+
+      <!-- EXECUTIVE GREETING & ACTION BAR -->
+      <section class="overflow-hidden rounded-xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-2xs">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+
+          <!-- TITLE & STATUS -->
+          <div class="flex items-center gap-3.5">
+            <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-[#7158e2] text-white shadow-2xs">
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h1 class="text-base sm:text-lg font-bold tracking-tight text-slate-900">
+                  Welcome back, SuperAdmin 👋
+                </h1>
+                <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-100">
+                  <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  Live Pipeline
+                </span>
+              </div>
+              <p class="text-xs text-slate-500 mt-0.5">
+                {{ todayFormattedDate }} • Active admission cycle operations
+              </p>
+            </div>
+          </div>
+
+          <!-- CONTROLS & QUICK ACTIONS -->
+          <div class="flex flex-wrap items-center gap-2.5">
+            <!-- TIMEFRAME SELECTOR -->
+            <div class="flex items-center rounded-xl border border-slate-200 bg-slate-50 p-1 shadow-2xs">
+              <button type="button" (click)="setTimeframe('today')"
+                class="rounded-lg px-2.5 py-1 text-xs font-bold transition"
+                [class.bg-white]="timeframe === 'today'"
+                [class.text-indigo-600]="timeframe === 'today'"
+                [class.shadow-2xs]="timeframe === 'today'"
+                [class.text-slate-500]="timeframe !== 'today'">
+                Today
+              </button>
+              <button type="button" (click)="setTimeframe('7d')"
+                class="rounded-lg px-2.5 py-1 text-xs font-bold transition"
+                [class.bg-white]="timeframe === '7d'"
+                [class.text-indigo-600]="timeframe === '7d'"
+                [class.shadow-2xs]="timeframe === '7d'"
+                [class.text-slate-500]="timeframe !== '7d'">
+                7D
+              </button>
+              <button type="button" (click)="setTimeframe('30d')"
+                class="rounded-lg px-2.5 py-1 text-xs font-bold transition"
+                [class.bg-white]="timeframe === '30d'"
+                [class.text-indigo-600]="timeframe === '30d'"
+                [class.shadow-2xs]="timeframe === '30d'"
+                [class.text-slate-500]="timeframe !== '30d'">
+                30D
+              </button>
+              <button type="button" (click)="setTimeframe('quarter')"
+                class="rounded-lg px-2.5 py-1 text-xs font-bold transition"
+                [class.bg-white]="timeframe === 'quarter'"
+                [class.text-indigo-600]="timeframe === 'quarter'"
+                [class.shadow-2xs]="timeframe === 'quarter'"
+                [class.text-slate-500]="timeframe !== 'quarter'">
+                Quarter
+              </button>
+              <button type="button" (click)="setTimeframe('all')"
+                class="rounded-lg px-2.5 py-1 text-xs font-bold transition"
+                [class.bg-white]="timeframe === 'all'"
+                [class.text-indigo-600]="timeframe === 'all'"
+                [class.shadow-2xs]="timeframe === 'all'"
+                [class.text-slate-500]="timeframe !== 'all'">
+                All Time
+              </button>
+            </div>
+
+            <!-- PRIMARY ACTIONS -->
+            <button type="button" (click)="navigateToAddPage()"
+              class="inline-flex h-9 items-center justify-center gap-1.5 rounded-xl bg-indigo-600 px-3.5 text-xs font-bold text-white shadow-xs transition hover:bg-indigo-700 active:scale-[0.98]">
+              <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+              <span>Create Landing Page</span>
+            </button>
+
+            <button type="button" (click)="navigateToLeads()"
+              class="inline-flex h-9 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 shadow-2xs transition hover:bg-slate-50 hover:text-slate-900">
+              <svg class="h-3.5 w-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              <span>Manage Leads</span>
+            </button>
+
+            <button type="button" (click)="exportSummary()" title="Export Summary CSV"
+              class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-2xs transition hover:bg-slate-50 hover:text-slate-900">
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+            </button>
+          </div>
+
+        </div>
+
+        <!-- QUICK SYSTEM SCOPE BADGES -->
+        <div class="mt-4 pt-3.5 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-slate-400 font-medium">Quick Scope:</span>
+
+            <a (click)="navigateToPages()" class="cursor-pointer inline-flex items-center gap-1.5 rounded-lg bg-indigo-50/60 px-2.5 py-1 font-bold text-indigo-700 hover:bg-indigo-100/60 transition">
+              <span class="h-1.5 w-1.5 rounded-full bg-indigo-500"></span>
+              {{ publishedPagesCount }} Published Dynamic Pages
+            </a>
+
+            <a (click)="navigateToBranches()" class="cursor-pointer inline-flex items-center gap-1.5 rounded-lg bg-slate-100/70 px-2.5 py-1 font-bold text-slate-700 hover:bg-slate-200/60 transition">
+              {{ activeBranchesCount }} Branches
+            </a>
+
+            <a (click)="navigateToCities()" class="cursor-pointer inline-flex items-center gap-1.5 rounded-lg bg-slate-100/70 px-2.5 py-1 font-bold text-slate-700 hover:bg-slate-200/60 transition">
+              {{ activeCitiesCount }} Operational Cities
+            </a>
+          </div>
+
+          <div class="flex items-center gap-1 text-[11px] font-semibold text-slate-500">
+            <span class="text-emerald-600 font-bold">● SMS Gateway:</span>
+            <span>{{ gatewayUptime }} Delivered</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- KPI STATS CARDS -->
+      <app-stats
+        [totalLeads]="totalLeads"
+        [todayLeads]="todayLeads"
+        [otpVerified]="otpVerified"
+        [conversionRate]="conversionRate"
+        [totalLeadsTrend]="totalLeadsTrend"
+        [todayLeadsTrend]="todayLeadsTrend"
+        [otpRate]="otpRate"
+        [timeFrameLabel]="timeFrameLabel"
+      />
+
+      <!-- MAIN ANALYTICS & OPERATIONS 2-COLUMN GRID -->
+      <section class="grid grid-cols-1 gap-4 xl:grid-cols-12 items-start">
+
+        <!-- LEFT COLUMN: Inflow Analytics & Recent Leads (8 COLS) -->
+        <div class="space-y-4 xl:col-span-8 min-w-0">
+          <app-leads-bar-chart />
+          <app-leads-table [recentOnly]="true" [hideFilters]="true" [hideExport]="true" />
+        </div>
+
+        <!-- RIGHT COLUMN: Acquisition Channels & Live Alerts (4 COLS) -->
+        <div class="space-y-4 xl:col-span-4 min-w-0">
+          <app-leads-pie-chart />
+          <app-notification-panel />
+        </div>
+
+      </section>
+
+    </div>
+  </main>
+</div>

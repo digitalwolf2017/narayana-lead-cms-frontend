@@ -1,0 +1,393 @@
+<div class="min-h-screen bg-slate-50 text-slate-900">
+  <app-sidebar></app-sidebar>
+
+  <div class="lg:ml-[230px]">
+    <app-topbar [title]="editingPageId !== null ? 'Edit Dynamic Page' : 'Create Dynamic Page'"
+      subtitle="Page Builder"></app-topbar>
+
+    <main>
+      <!-- PAGE HEADER (Compact Fitted) -->
+      <div class="border-b border-slate-200/80 bg-white px-4 py-3 sm:px-6">
+        <div class="mx-auto max-w-[1600px] flex items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <span
+              class="flex h-8 w-8 items-center justify-center rounded-lg bg-[#f5f3ff] text-sm font-bold text-[#8c7ae6]">
+              #
+            </span>
+            <div>
+              <h1 class="text-base font-bold tracking-tight text-slate-900 sm:text-lg">
+                {{ editingPageId !== null ? 'Edit Dynamic Page' : 'Create Dynamic Page' }}
+              </h1>
+              <p class="text-xs font-medium text-slate-500">
+                Location & scope configuration
+              </p>
+            </div>
+          </div>
+
+          <!-- BACK BUTTON -->
+          <button type="button" (click)="goBackToList()"
+            class="inline-flex h-8.5 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 hover:text-slate-900">
+            ← Back to Pages
+          </button>
+        </div>
+      </div>
+
+      <!-- MAIN CONTENT (Fitted Margins) -->
+      <div class="mx-auto max-w-[1600px] p-3 sm:p-5">
+
+        @if (isLoadingPageData) {
+        <div
+          class="mb-4 flex items-center justify-center gap-2.5 rounded-2xl border border-[#8c7ae6]/25 bg-[#f5f3ff] px-4 py-2.5 text-xs font-semibold text-[#8c7ae6] shadow-2xs">
+          <svg class="h-4 w-4 svg-spinner text-[#8c7ae6]" viewBox="0 0 24 24" fill="none">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          <span>Loading page configuration...</span>
+        </div>
+        }
+
+        <!-- PAGE CREATION / SCOPE CARD -->
+        <app-page-scope-form
+          [cities]="cities"
+          [availableBranches]="availableBranches"
+          [classes]="classes"
+          [(selectedCityId)]="selectedCityId"
+          (cityChanged)="onCityChange()"
+          [(selectedBranchId)]="selectedBranchId"
+          (branchChanged)="onBranchChange()"
+          [(selectedClassId)]="selectedClassId"
+          (classChanged)="onClassChange()"
+          [(pageTitle)]="pageTitle"
+          [(seoTitle)]="seoTitle"
+          [(seoDescription)]="seoDescription"
+          [domainName]="domainName"
+          [generatedSlug]="generatedSlug"
+          [pageCreated]="pageCreated"
+          [selectedRevisionId]="selectedRevisionId"
+          [revisions]="revisions"
+          [canCreatePage]="canCreatePage"
+          [isCreatingPage]="isCreatingPage"
+          [isSavingMetadata]="isSavingMetadata"
+          (create)="createPage()"
+          (saveMetadata)="saveDraftMetadata()"
+          (discardDraft)="discardDraftRevision()"
+          (copyUrl)="copyPageUrl()"
+        />
+
+
+        <!-- PAGE CONFIGURATION (Compact 2-Column Grid) -->
+        @if (pageCreated) {
+
+        <section class="mt-4 grid gap-4 xl:grid-cols-[1fr_320px] items-start">
+
+          <!-- LEFT COLUMN -->
+          <div class="space-y-3.5 min-w-0">
+
+            <!-- CONFIG HEADER -->
+            <div class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xs">
+
+              <div class="border-b border-slate-100 bg-white p-3.5 sm:p-4">
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <button type="button" (click)="togglePageStatus()" data-tooltip="Toggle page status"
+                        class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition border shadow-2xs hover:shadow-xs"
+                        [class.bg-emerald-50]="pageStatus === 'ACTIVE'"
+                        [class.border-emerald-200]="pageStatus === 'ACTIVE'"
+                        [class.text-emerald-700]="pageStatus === 'ACTIVE'"
+                        [class.bg-slate-100]="pageStatus !== 'ACTIVE'"
+                        [class.border-slate-200]="pageStatus !== 'ACTIVE'"
+                        [class.text-slate-600]="pageStatus !== 'ACTIVE'">
+                        <span class="h-2 w-2 rounded-full" [class.bg-emerald-500]="pageStatus === 'ACTIVE'"
+                          [class.bg-slate-400]="pageStatus !== 'ACTIVE'"></span>
+                        {{ pageStatus === 'ACTIVE' ? 'Active Page' : 'Inactive Page' }}
+                      </button>
+                      <span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700">
+                        {{ pageType }}
+                      </span>
+                    </div>
+
+                    <h2 class="mt-1.5 text-base sm:text-lg font-bold tracking-tight text-slate-900">
+                      {{ pageTitle }}
+                    </h2>
+
+                    <div class="mt-1 flex items-center gap-2 font-mono text-xs text-slate-600">
+                      <span class="truncate max-w-md">{{ domainName }}{{ generatedSlug }}</span>
+                      <button type="button" (click)="copyPageUrl()" data-tooltip="Copy link"
+                        class="font-sans font-bold text-xs text-[#8c7ae6] hover:text-[#7158e2] hover:underline">
+                        Copy
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- SINGLE SAVE BUTTON (ONE BUTTON FOR ACTIVE SECTION) -->
+                  <div class="flex items-center gap-2.5">
+                    <div
+                      class="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 shadow-2xs">
+                      <span class="text-xs text-slate-500 font-semibold hidden sm:inline">Section:</span>
+                      <select [(ngModel)]="activeEditingSectionKey"
+                        class="text-sm font-semibold text-slate-800 bg-transparent capitalize outline-none cursor-pointer">
+                        @for (sec of sections; track sec.key) {
+                        <option [value]="sec.key" class="capitalize">{{ sec.title }}</option>
+                        }
+                      </select>
+                    </div>
+
+                    <button type="button" (click)="saveActiveSection()" [disabled]="savingSectionKey !== null"
+                      class="inline-flex h-9.5 items-center justify-center gap-2 rounded-lg bg-[#8c7ae6] px-4 text-sm font-semibold text-white shadow-xs transition hover:bg-[#7158e2] disabled:opacity-50"
+                      title="Save {{ getActiveSectionTitle() }} section">
+                      @if (savingSectionKey !== null) {
+                      <svg class="h-4 w-4 svg-spinner text-white" viewBox="0 0 24 24" fill="none">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                        </circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z">
+                        </path>
+                      </svg>
+                      Saving {{ getActiveSectionTitle() }}...
+                      } @else {
+                      <svg class="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                      </svg>
+                      Save {{ getActiveSectionTitle() }}
+                      }
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+
+              <!-- SECTIONS ACCORDION -->
+              <div class="p-3 sm:p-4">
+
+                <div class="mb-3 flex items-center justify-between">
+                  <div>
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-slate-800">
+                      Page Sections
+                    </h3>
+                    <p class="text-xs font-medium text-slate-500">
+                      Enable or disable sections and customize content.
+                    </p>
+                  </div>
+                </div>
+
+
+
+                <div class="space-y-2.5">
+
+                  @for (
+                  section of sections;
+                  track section.key
+                  ) {
+
+                  <div (click)="setActiveEditingSection(section.key)"
+                    class="rounded-xl border bg-white shadow-2xs overflow-hidden transition cursor-pointer"
+                    [class.border-[#8c7ae6]]="activeEditingSectionKey === section.key"
+                    [class.ring-2]="activeEditingSectionKey === section.key"
+                    [class.ring-[#8c7ae6]/25]="activeEditingSectionKey === section.key"
+                    [class.border-slate-200]="activeEditingSectionKey !== section.key"
+                    [class.hover:border-slate-300]="activeEditingSectionKey !== section.key">
+
+                    <div class="flex items-center justify-between gap-3 p-3.5"
+                      [class.bg-[#f5f3ff]/40]="activeEditingSectionKey === section.key"
+                      [class.bg-slate-50/60]="activeEditingSectionKey !== section.key">
+
+                      <div class="flex min-w-0 items-center gap-3">
+
+                        <div
+                          class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#f5f3ff] text-xs font-bold text-[#8c7ae6] shadow-2xs">
+                          {{ getSectionNumber(section.key) }}
+                        </div>
+
+                        <div class="min-w-0">
+
+                          <p class="truncate text-sm font-semibold text-slate-900 flex items-center gap-2">
+                            <span>{{ section.title }}</span>
+                            @if (activeEditingSectionKey === section.key) {
+                            <span
+                              class="rounded-full bg-[#ede9fe] px-2.5 py-0.5 text-xs font-bold text-[#8c7ae6]">Editing</span>
+                            }
+                          </p>
+
+                        </div>
+
+                      </div>
+
+                      <div class="flex items-center gap-2.5">
+                        <button type="button" (click)="$event.stopPropagation(); toggleSection(section)"
+                          class="rounded-xl border px-3.5 py-1.5 text-xs font-bold transition"
+                          [class.border-emerald-200]="section.active" [class.bg-emerald-50]="section.active"
+                          [class.text-emerald-700]="section.active" [class.border-slate-200]="!section.active"
+                          [class.bg-white]="!section.active" [class.text-slate-500]="!section.active"
+                          title="Toggle {{ section.title }} section on page">
+                          {{ section.active ? 'Active' : 'Inactive' }}
+                        </button>
+
+                        <svg class="h-4 w-4 text-slate-400 transition-transform duration-200"
+                          [class.rotate-180]="activeEditingSectionKey === section.key" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+
+                    </div>
+
+
+                    <!-- SECTION FORM (EXPANDED ACCORDION BODY) -->
+                    @if (activeEditingSectionKey === section.key) {
+
+                    <div class="border-t border-slate-100 p-5 bg-white">
+
+
+                      @if (section.key === 'header') {
+
+                      <app-header-section [logos]="logos" (logosChange)="logos = $event"
+                        [uploadMedia]="uploadLogoMedia" />
+
+                      }
+
+                      @if (section.key === 'banner') {
+
+                      <app-banner-section />
+
+                      }
+
+                      @if (section.key === 'classes') {
+
+                      <app-classes-section />
+
+                      }
+
+                      @if (section.key === 'why-us') {
+
+                      <app-why-us [whyUs]="whyUs" (whyUsChange)="whyUs = $event" />
+
+                      }
+
+                      @if (section.key === 'course') {
+
+                      <app-course [course]="course" (courseChange)="course = $event" />
+
+                      }
+
+                      @if (section.key === 'right-school') {
+
+                      <app-right-school [rightSchool]="rightSchool" (rightSchoolChange)="rightSchool = $event" />
+
+                      }
+
+                      @if (section.key === 'academic-results') {
+
+                      <app-academic-results [academicResults]="academicResults"
+                        (academicResultsChange)="academicResults = $event" />
+
+                      }
+
+                      @if (section.key === 'parents-say') {
+
+                      <app-parents-say [parentsSay]="parentsSay" (parentsSayChange)="parentsSay = $event" />
+
+                      }
+
+                      @if (section.key === 'image-section') {
+
+                      <app-image-section [imageSection]="imageSection" (imageSectionChange)="imageSection = $event" />
+
+                      }
+
+                      @if (section.key === 'facilities') {
+
+                      <app-facilities-section [facilities]="facilities" (facilitiesChange)="facilities = $event" />
+
+                      }
+
+                      @if (section.key === 'faq') {
+
+                      <app-faq-section [faq]="faq" (faqChange)="faq = $event" />
+
+                      }
+
+                      @if (section.key === 'limited-seats') {
+
+                      <app-limited-seats-section [limitedSeats]="limitedSeatsConfig"
+                        (limitedSeatsChange)="onLimitedSeatsChange($event)" />
+
+                      }
+
+                    </div>
+
+                    }
+
+                  </div>
+
+                  }
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <!-- RIGHT COLUMN (REVISION & SUMMARY PANEL) -->
+          <app-page-revision-panel
+            [selectedRevisionId]="selectedRevisionId"
+            [revisions]="revisions"
+            [isPublishing]="isPublishing"
+            [isCreatingDraft]="isCreatingDraft"
+            [isUnpublishing]="isUnpublishing"
+            [hasPublishedRevision]="hasPublishedRevision"
+            [domainName]="domainName"
+            [generatedSlug]="generatedSlug"
+            [pageType]="pageType"
+            [sections]="sections"
+            [activeEditingSectionKey]="activeEditingSectionKey"
+            (revisionChanged)="onRevisionChange($event)"
+            (publish)="publishDraftRevision()"
+            (createDraft)="createDraftRevision()"
+            (clonePage)="openCloneModal()"
+            (unpublishPage)="confirmUnpublishPage()"
+            (discardDraft)="discardDraftRevision()"
+            (copyUrl)="copyPageUrl()"
+            (selectSection)="setActiveEditingSection($event)"
+          />
+
+
+
+
+
+
+        </section>
+
+        }
+
+      </div>
+
+      <!-- CONFIRMATION MODAL -->
+      @if (showUnpublishModal) {
+      <app-confirm-delete-modal
+        title="Unpublish Dynamic Page?"
+        message="Are you sure you want to unpublish this page? The currently published revision will be archived, and public URLs for this scope will return 404."
+        noticeText="Unpublishing archives the published version and returns 404 for public URLs."
+        [isDeleting]="isUnpublishing"
+        (cancelled)="showUnpublishModal = false"
+        (confirmed)="unpublishPage()"
+      />
+      }
+
+      <!-- CLONE PAGE MODAL -->
+      <app-clone-page-modal
+        [isOpen]="isCloneModalOpen"
+        [sourcePage]="editingPageId !== null ? { id: editingPageId, title: pageTitle } : null"
+        [sourceRevisionId]="selectedRevisionId"
+        [revisions]="revisions"
+        [cities]="cities"
+        [branches]="branches"
+        [classes]="classes"
+        (close)="isCloneModalOpen = false"
+        (cloned)="onPageCloned($event)"
+      />
+
+    </main>
+  </div>
+</div>
