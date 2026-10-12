@@ -109,9 +109,11 @@ export class DynamicPageWorkflowService {
           action: () => {
             ctx.confirmModal.show = false;
             ctx.selectedRevisionId = Number(existingDraft.id);
+            ctx.cdrDetectChanges();
             this.performSaveSections(ctx, ctx.editingPageId!, Number(existingDraft.id));
           },
         };
+        ctx.cdrDetectChanges();
         return;
       }
 
@@ -125,6 +127,7 @@ export class DynamicPageWorkflowService {
         action: () => {
           ctx.confirmModal.show = false;
           ctx.isSavingConfiguration = true;
+          ctx.cdrDetectChanges();
           this.revisionHandler
             .createDraft(ctx.editingPageId!, selectedRevision)
             .subscribe((res) => {
@@ -266,6 +269,7 @@ export class DynamicPageWorkflowService {
       action: () => {
         ctx.confirmModal.show = false;
         ctx.isPublishing = true;
+        ctx.cdrDetectChanges();
         const all12Sections = this.compile12Sections(ctx);
 
         this.revisionHandler
@@ -297,6 +301,7 @@ export class DynamicPageWorkflowService {
           });
       },
     };
+    ctx.cdrDetectChanges();
   }
 
   discardDraftRevision(ctx: WorkflowTarget): void {
@@ -323,12 +328,14 @@ export class DynamicPageWorkflowService {
       danger: true,
       action: () => {
         ctx.confirmModal.show = false;
+        ctx.cdrDetectChanges();
         this.revisionHandler
           .discardDraft(ctx.editingPageId!, Number(selectedRevision.id))
           .subscribe({
             next: (res) => {
               if (!res.success) {
                 ctx.showToast('Discard Failed', res.message || 'Failed to discard draft revision.', ctx.editingPageId, 'error');
+                ctx.cdrDetectChanges();
                 return;
               }
 
@@ -337,10 +344,12 @@ export class DynamicPageWorkflowService {
             },
             error: () => {
               ctx.showToast('Discard Error', 'Failed to discard draft revision.', ctx.editingPageId, 'error');
+              ctx.cdrDetectChanges();
             },
           });
       },
     };
+    ctx.cdrDetectChanges();
   }
 
   saveSection(ctx: WorkflowTarget, sectionKey: string, isToggle = false): void {

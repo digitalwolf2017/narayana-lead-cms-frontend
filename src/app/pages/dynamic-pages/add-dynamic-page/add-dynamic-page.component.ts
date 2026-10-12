@@ -53,6 +53,7 @@ import {
   BranchOption,
   ClassOption,
   PageRevision,
+  ConfirmModalState,
 } from '../models/dynamic-page-builder.types';
 import { DynamicPageMediaHandler } from '../services/dynamic-page-media.handler';
 import { DynamicPageRevisionHandler } from '../services/dynamic-page-revision.handler';
@@ -134,6 +135,15 @@ export class AddDynamicPageComponent implements OnInit {
   savingSectionKey: string | null = null;
   saveProgressText = '';
   showUnpublishModal = false;
+  confirmModal: ConfirmModalState = {
+    show: false,
+    title: '',
+    message: '',
+    confirmText: 'Confirm',
+    cancelText: 'Cancel',
+    danger: false,
+    action: () => {},
+  };
 
   // Section Configurations
   logos: LogoConfig[] = getDefaultLogos();
