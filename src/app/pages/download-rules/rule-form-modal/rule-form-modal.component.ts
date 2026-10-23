@@ -50,7 +50,7 @@ export class RuleFormModalComponent implements OnChanges {
   formEndsAt = '';
   formStatus = 'ACTIVE';
 
-  readonly commonIntents = ['ENQUIRY', 'BROCHURE', 'FEE_STRUCTURE', 'ADMISSION', 'SCHOLARSHIP', 'SYLLABUS', 'CONTACT'];
+  readonly commonIntents = ['ENQUIRY', 'BROCHURE', 'FEES'];
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['rule']) {
@@ -86,12 +86,38 @@ export class RuleFormModalComponent implements OnChanges {
     }
   }
 
+  onCityChange(): void {
+    if (this.formCityId && Number(this.formCityId) !== 0) {
+      const branchValid = this.branches.some(
+        (b) => Number(b.id) === Number(this.formBranchId) && Number(b.city_id) === Number(this.formCityId)
+      );
+      if (!branchValid) {
+        this.formBranchId = 0;
+      }
+    } else {
+      this.formBranchId = 0;
+    }
+  }
+
+  get isFormValid(): boolean {
+    if (!this.formIntent || !this.formIntent.trim()) return false;
+    if (this.formOutcomeType === 'DOCUMENT') {
+      return Number(this.formDocumentId) > 0;
+    }
+    if (this.formOutcomeType === 'URL') {
+      return !!this.formRedirectUrl && this.formRedirectUrl.trim().startsWith('https://');
+    }
+    return false;
+  }
+
   get filteredBranchesForForm(): Branch[] {
     if (!this.formCityId || Number(this.formCityId) === 0) return this.branches;
     return this.branches.filter((b) => Number(b.city_id) === Number(this.formCityId));
   }
 
   submit(): void {
+    if (!this.isFormValid) return;
+
     const payload: CreateDownloadRulePayload = {
       intent: this.formIntent.trim().toUpperCase(),
       city_id: Number(this.formCityId) > 0 ? Number(this.formCityId) : null,

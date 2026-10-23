@@ -65,6 +65,12 @@
               class="rounded-md px-2 py-1 text-[11px] font-semibold transition hover:bg-emerald-50">
               Active ({{ activeRulesCount }})
             </button>
+            <button type="button" (click)="statusFilter = 'INACTIVE'"
+              [class.bg-slate-700]="statusFilter === 'INACTIVE'" [class.text-white]="statusFilter === 'INACTIVE'"
+              [class.bg-slate-100]="statusFilter !== 'INACTIVE'" [class.text-slate-600]="statusFilter !== 'INACTIVE'"
+              class="rounded-md px-2 py-1 text-[11px] font-semibold transition hover:bg-slate-200">
+              Inactive ({{ inactiveRulesCount }})
+            </button>
           </div>
         </div>
 

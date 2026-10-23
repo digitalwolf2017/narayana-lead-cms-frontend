@@ -71,11 +71,7 @@ export class DownloadRulesComponent implements OnInit {
   readonly commonIntents = [
     'ENQUIRY',
     'BROCHURE',
-    'FEE_STRUCTURE',
-    'ADMISSION',
-    'SCHOLARSHIP',
-    'SYLLABUS',
-    'CONTACT',
+    'FEES',
   ];
 
   ngOnInit(): void {
@@ -168,6 +164,10 @@ export class DownloadRulesComponent implements OnInit {
 
   get activeRulesCount(): number {
     return this.rules.filter((r) => (r.status || 'ACTIVE').toUpperCase() === 'ACTIVE').length;
+  }
+
+  get inactiveRulesCount(): number {
+    return this.rules.filter((r) => (r.status || 'ACTIVE').toUpperCase() === 'INACTIVE').length;
   }
 
 
