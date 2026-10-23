@@ -179,15 +179,16 @@
                   track section.key
                   ) {
 
-                  <div (click)="setActiveEditingSection(section.key)"
-                    class="rounded-xl border bg-white shadow-2xs overflow-hidden transition cursor-pointer"
+                  <div
+                    class="rounded-xl border bg-white shadow-2xs overflow-hidden transition"
                     [class.border-[#8c7ae6]]="activeEditingSectionKey === section.key"
                     [class.ring-2]="activeEditingSectionKey === section.key"
                     [class.ring-[#8c7ae6]/25]="activeEditingSectionKey === section.key"
                     [class.border-slate-200]="activeEditingSectionKey !== section.key"
                     [class.hover:border-slate-300]="activeEditingSectionKey !== section.key">
 
-                    <div class="flex items-center justify-between gap-3 p-3.5"
+                    <div (click)="toggleSectionAccordion(section.key)"
+                      class="flex items-center justify-between gap-3 p-3.5 cursor-pointer select-none"
                       [class.bg-[#f5f3ff]/40]="activeEditingSectionKey === section.key"
                       [class.bg-slate-50/60]="activeEditingSectionKey !== section.key">
 
@@ -234,7 +235,7 @@
                     <!-- SECTION FORM (EXPANDED ACCORDION BODY) -->
                     @if (activeEditingSectionKey === section.key) {
 
-                    <div class="border-t border-slate-100 p-5 bg-white">
+                    <div class="border-t border-slate-100 p-5 bg-white" (click)="$event.stopPropagation()">
 
 
                       @if (section.key === 'header') {

@@ -164,8 +164,12 @@ export class AddDynamicPageComponent implements OnInit {
     return this.sections.find((s) => s.key === this.activeEditingSectionKey)?.title || 'Section';
   }
 
-  setActiveEditingSection(key: string): void {
+  toggleSectionAccordion(key: string): void {
     this.activeEditingSectionKey = this.activeEditingSectionKey === key ? '' : key;
+  }
+
+  setActiveEditingSection(key: string): void {
+    this.activeEditingSectionKey = key;
   }
 
   saveActiveSection(): void {
