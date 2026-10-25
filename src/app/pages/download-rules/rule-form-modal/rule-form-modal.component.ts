@@ -50,7 +50,7 @@ export class RuleFormModalComponent implements OnChanges {
   formEndsAt = '';
   formStatus = 'ACTIVE';
 
-  readonly commonIntents = ['ENQUIRY', 'BROCHURE', 'FEES'];
+  readonly commonIntents = ['ENQUIRY', 'BROCHURE', 'FEES', 'CALLBACK'];
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['rule']) {
@@ -99,6 +99,11 @@ export class RuleFormModalComponent implements OnChanges {
     }
   }
 
+  get isIntentSupported(): boolean {
+    const intent = this.formIntent.trim().toUpperCase();
+    return this.commonIntents.includes(intent);
+  }
+
   get isFormValid(): boolean {
     if (!this.formIntent || !this.formIntent.trim()) return false;
     if (this.formOutcomeType === 'DOCUMENT') {
@@ -126,8 +131,8 @@ export class RuleFormModalComponent implements OnChanges {
       document_id: this.formOutcomeType === 'DOCUMENT' && Number(this.formDocumentId) > 0 ? Number(this.formDocumentId) : null,
       redirect_url: this.formOutcomeType === 'URL' && this.formRedirectUrl.trim() ? this.formRedirectUrl.trim() : null,
       priority: Number(this.formPriority) || 0,
-      starts_at: this.formStartsAt ? new Date(this.formStartsAt).toISOString() : null,
-      ends_at: this.formEndsAt ? new Date(this.formEndsAt).toISOString() : null,
+      starts_at: this.toSqlDatetime(this.formStartsAt),
+      ends_at: this.toSqlDatetime(this.formEndsAt),
       status: this.formStatus,
     };
     this.submitted.emit(payload);
@@ -138,5 +143,17 @@ export class RuleFormModalComponent implements OnChanges {
       const d = new Date(isoStr);
       return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
     } catch { return ''; }
+  }
+
+  private toSqlDatetime(val: string): string | null {
+    if (!val) return null;
+    try {
+      const d = new Date(val);
+      if (isNaN(d.getTime())) return null;
+      const pad = (n: number) => n.toString().padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    } catch {
+      return null;
+    }
   }
 }

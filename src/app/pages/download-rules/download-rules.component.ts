@@ -72,6 +72,7 @@ export class DownloadRulesComponent implements OnInit {
     'ENQUIRY',
     'BROCHURE',
     'FEES',
+    'CALLBACK',
   ];
 
   ngOnInit(): void {
@@ -141,9 +142,13 @@ export class DownloadRulesComponent implements OnInit {
     const term = this.searchTerm.trim().toLowerCase();
     return this.rules.filter((rule) => {
       // Status filter
-      if (this.statusFilter !== 'ALL') {
+      // Status filter
+      if (this.statusFilter === 'ACTIVE') {
         const ruleStatus = (rule.status || 'ACTIVE').toUpperCase();
-        if (ruleStatus !== this.statusFilter) return false;
+        if (ruleStatus !== 'ACTIVE') return false;
+      } else if (this.statusFilter === 'INACTIVE') {
+        const ruleStatus = (rule.status || 'ACTIVE').toUpperCase();
+        if (ruleStatus === 'ACTIVE') return false;
       }
 
       // Intent filter
@@ -167,7 +172,7 @@ export class DownloadRulesComponent implements OnInit {
   }
 
   get inactiveRulesCount(): number {
-    return this.rules.filter((r) => (r.status || 'ACTIVE').toUpperCase() === 'INACTIVE').length;
+    return this.rules.filter((r) => (r.status || 'ACTIVE').toUpperCase() !== 'ACTIVE').length;
   }
 
 
@@ -298,7 +303,17 @@ export class DownloadRulesComponent implements OnInit {
   }
 
   private extractErrorMessage(err: unknown): string {
-    const e = err as { error?: { message?: string; errors?: Record<string, string[] | string> }; message?: string };
+    const e = err as {
+      error?: {
+        message?: string;
+        error?: { message?: string };
+        errors?: Record<string, string[] | string>;
+      };
+      message?: string;
+    };
+    if (e?.error?.error?.message) {
+      return e.error.error.message;
+    }
     if (e?.error?.errors && typeof e.error.errors === 'object') {
       const messages = Object.values(e.error.errors).flat();
       if (messages.length) return messages.join(' ');

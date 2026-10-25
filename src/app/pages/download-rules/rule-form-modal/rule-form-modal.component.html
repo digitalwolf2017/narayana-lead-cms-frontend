@@ -38,9 +38,18 @@
             </button>
             }
           </div>
-          <input type="text" [(ngModel)]="formIntent" name="intent" required placeholder="e.g. ENQUIRY, BROCHURE, FEES"
+          <input type="text" [(ngModel)]="formIntent" name="intent" required placeholder="e.g. ENQUIRY, BROCHURE, FEES, CALLBACK"
             class="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-800 outline-none uppercase font-semibold transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10" />
-          <p class="mt-0.5 text-[10px] text-slate-400">Defines which submission or lead intent triggers this rule.</p>
+          @if (!isIntentSupported && formIntent.trim()) {
+          <p class="mt-1 text-[11px] font-medium text-amber-600 flex items-center gap-1">
+            <svg class="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            Supported API intents: <strong>ENQUIRY</strong>, <strong>BROCHURE</strong>, <strong>FEES</strong>, <strong>CALLBACK</strong>. Other intents will be rejected by the backend.
+          </p>
+          } @else {
+          <p class="mt-0.5 text-[10px] text-slate-400">Canonical lead intents: ENQUIRY, BROCHURE, FEES, CALLBACK.</p>
+          }
         </div>
 
         <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-3.5 space-y-3">
@@ -90,9 +99,9 @@
           @if (formOutcomeType === 'URL') {
           <div>
             <label class="mb-1 block text-xs font-semibold text-slate-700">Allowlisted HTTPS URL</label>
-            <input type="url" [(ngModel)]="formRedirectUrl" name="redirectUrl" placeholder="https://example.com/thank-you"
+            <input type="url" [(ngModel)]="formRedirectUrl" name="redirectUrl" placeholder="https://wbnarayanaschools.in/admissions"
               class="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10" />
-            <p class="mt-0.5 text-[10px] text-slate-400">Must start with https://</p>
+            <p class="mt-0.5 text-[10px] text-slate-400">Must be an allowlisted HTTPS URL (e.g. https://wbnarayanaschools.in/...)</p>
           </div>
           }
         </div>
