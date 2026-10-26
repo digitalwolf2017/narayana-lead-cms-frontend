@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService, AuthUser } from '../../services/auth.service';
+import { SidebarService } from '../../services/sidebar.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -9,13 +10,20 @@ import { AuthService, AuthUser } from '../../services/auth.service';
   templateUrl: './sidebar.component.html',
 })
 export class SidebarComponent {
+  private readonly sidebarService = inject(SidebarService);
   isMenuOpen = false;
   isLoggingOut = false;
+
+  readonly isMobileOpen = this.sidebarService.isOpen;
 
   constructor(
     private readonly authService: AuthService,
     private readonly router: Router,
   ) {}
+
+  closeMobileSidebar(): void {
+    this.sidebarService.close();
+  }
 
   get currentUser(): AuthUser | null {
     return this.authService.currentUser() ?? this.authService.getUser();

@@ -68,17 +68,59 @@
                     d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
-              <div class="flex items-center gap-1.5">
-                <span class="text-[11px] font-semibold text-slate-500">From:</span>
-                <input type="date" [(ngModel)]="dateFrom" (ngModelChange)="onDateFilterChange()"
-                  class="h-8.5 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-medium text-slate-700 outline-none transition focus:border-slate-900" />
+              <!-- RANGE CALENDAR DATE PICKER -->
+              <app-date-range-picker
+                [startDate]="dateFrom"
+                [endDate]="dateTo"
+                (rangeChange)="onDateRangeChange($event)"
+                (startDateChange)="dateFrom = $event"
+                (endDateChange)="dateTo = $event" />
+              <!-- EXCLUDE TEST LEADS BUTTON -->
+              <button type="button" (click)="toggleExcludeTestLeads()"
+                [class.bg-[#f5f3ff]]="excludeTestLeads"
+                [class.border-[#8c7ae6]]="excludeTestLeads"
+                [class.text-[#7158e2]]="excludeTestLeads"
+                [class.bg-white]="!excludeTestLeads"
+                [class.border-slate-200]="!excludeTestLeads"
+                [class.text-slate-600]="!excludeTestLeads"
+                class="inline-flex h-8.5 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-semibold shadow-2xs transition hover:bg-slate-50">
+                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                </svg>
+                <span>Exclude "Test"</span>
+                @if (testLeadsCount > 0) {
+                  <span class="rounded-full px-1.5 py-0.2 text-[10px] font-bold"
+                    [class.bg-purple-200]="excludeTestLeads"
+                    [class.text-purple-800]="excludeTestLeads"
+                    [class.bg-slate-100]="!excludeTestLeads"
+                    [class.text-slate-500]="!excludeTestLeads">
+                    {{ testLeadsCount }}
+                  </span>
+                }
+              </button>
+
+              <!-- PHONE DUPLICATE SELECTOR -->
+              <div class="flex items-center gap-1">
+                <div class="relative inline-flex items-center">
+                  <select [ngModel]="phoneFilterMode" (ngModelChange)="setPhoneFilterMode($event)"
+                    class="h-8.5 appearance-none rounded-lg border border-slate-200 bg-white pl-2.5 pr-7 text-xs font-semibold text-slate-700 shadow-2xs outline-none transition hover:bg-slate-50 focus:border-[#8c7ae6] focus:ring-1 focus:ring-[#8c7ae6]/20">
+                    <option value="all">Phone: All</option>
+                    <option value="unique">Phone: Unique Only</option>
+                    <option value="duplicates_only">Phone: Duplicates Only</option>
+                  </select>
+                  <svg class="pointer-events-none absolute right-2 h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+                @if (duplicatePhoneCount > 0 && phoneFilterMode === 'all') {
+                  <span class="hidden xl:inline-flex rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold text-amber-700 border border-amber-200" title="{{ duplicatePhoneCount }} records have repeated phone numbers">
+                    {{ duplicatePhoneCount }} dups
+                  </span>
+                }
               </div>
-              <div class="flex items-center gap-1.5">
-                <span class="text-[11px] font-semibold text-slate-500">To:</span>
-                <input type="date" [(ngModel)]="dateTo" (ngModelChange)="onDateFilterChange()"
-                  class="h-8.5 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-medium text-slate-700 outline-none transition focus:border-slate-900" />
-              </div>
-              @if (searchTerm || dateFrom || dateTo) {
+
+              @if (searchTerm || dateFrom || dateTo || hasActiveFrontendFilters) {
               <button type="button" (click)="resetFilters()"
                 class="inline-flex h-8.5 items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100">
                 Reset
@@ -158,6 +200,28 @@
             </div>
           </div>
         </div>
+        @if (hasActiveFrontendFilters && leads.length > 0) {
+        <div class="border-b border-indigo-100 bg-[#fbfaff] px-4 py-2 flex flex-wrap items-center justify-between text-xs">
+          <div class="flex items-center gap-2 text-slate-700">
+            <span class="flex h-2 w-2 rounded-full bg-[#8c7ae6]"></span>
+            <span>
+              Showing <strong class="text-slate-900">{{ displayedLeads.length }}</strong> of <strong class="text-slate-900">{{ leads.length }}</strong> leads on this page
+              @if (excludeTestLeads) {
+                <span class="text-purple-700 font-medium"> • "Test" leads excluded ({{ testLeadsCount }} hidden)</span>
+              }
+              @if (phoneFilterMode === 'unique') {
+                <span class="text-indigo-700 font-medium"> • Phone deduplicated (unique only)</span>
+              } @else if (phoneFilterMode === 'duplicates_only') {
+                <span class="text-amber-700 font-medium"> • Showing only duplicate phone records</span>
+              }
+            </span>
+          </div>
+          <button type="button" (click)="clearFrontendFilters()"
+            class="text-[11px] font-semibold text-[#8c7ae6] hover:underline">
+            Clear frontend filters
+          </button>
+        </div>
+        }
         <div class="overflow-x-auto">
           <table class="w-max min-w-full table-fixed border-collapse text-left">
             <thead class="border-b border-slate-200 bg-slate-50">
@@ -196,8 +260,21 @@
                   </div>
                 </td>
               </tr>
+              } @else if (displayedLeads.length === 0) {
+              <tr>
+                <td [attr.colspan]="visibleColumnCount" class="py-10 text-center">
+                  <div class="flex flex-col items-center justify-center">
+                    <p class="text-xs font-semibold text-slate-700">No leads match frontend filters</p>
+                    <p class="text-[11px] text-slate-400 mt-0.5">All leads on this page were filtered out by your "Test" or "Phone Duplicate" filters.</p>
+                    <button type="button" (click)="clearFrontendFilters()"
+                      class="mt-3 inline-flex items-center gap-1 rounded-lg bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-[#7158e2] hover:bg-indigo-100 transition">
+                      Clear Frontend Filters
+                    </button>
+                  </div>
+                </td>
+              </tr>
               } @else {
-              @for (lead of leads; track lead.id) {
+              @for (lead of displayedLeads; track lead.id) {
               <tr class="group transition-colors duration-150 hover:bg-slate-50/70">
                 @for (col of visibleColumns; track col.key) {
                 @switch (col.key) {
@@ -215,12 +292,27 @@
                 }
                 @case ('name') {
                 <td class="whitespace-nowrap px-2.5 py-1.5 text-xs font-semibold text-slate-800">
-                  {{ lead.name }}
+                  <div class="flex items-center gap-1.5">
+                    <span>{{ lead.name }}</span>
+                    @if (isTestLead(lead)) {
+                      <span class="inline-flex items-center rounded bg-rose-50 px-1 py-0.2 text-[9px] font-bold text-rose-600 border border-rose-200" title="Contains test keyword">
+                        Test
+                      </span>
+                    }
+                  </div>
                 </td>
                 }
                 @case ('phone') {
                 <td class="whitespace-nowrap px-2.5 py-1.5 text-xs font-medium text-slate-700">
-                  {{ lead.phone }}
+                  <div class="flex items-center gap-1.5">
+                    <span>{{ lead.phone }}</span>
+                    @if (getPhoneDuplicateCount(lead) > 1) {
+                      <span class="inline-flex items-center rounded-md bg-amber-50 px-1.5 py-0.2 text-[9px] font-bold text-amber-700 border border-amber-200"
+                        title="This phone number appears {{ getPhoneDuplicateCount(lead) }} times on this page">
+                        {{ getPhoneDuplicateCount(lead) }}x
+                      </span>
+                    }
+                  </div>
                 </td>
                 }
                 @case ('parent_email') {

@@ -21,6 +21,7 @@
   --radius-xl: 0.5rem;
   --radius-2xl: 0.5rem;
   --radius-3xl: 0.5rem;
+  --spacing-57\.5: 230px;
 }
 
 @custom-variant dark (&:where(.dark, .dark *));

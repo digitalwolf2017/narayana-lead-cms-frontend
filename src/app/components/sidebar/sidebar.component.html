@@ -1,18 +1,44 @@
-<aside class="fixed inset-y-0 left-0 z-40 hidden w-[230px] border-r border-slate-100 bg-white lg:flex lg:flex-col">
-  <div class="flex h-14 items-center border-b border-slate-100 px-4">
-    <div
-      class="flex h-8 w-8 items-center justify-center rounded-lg bg-[#0f172a] text-xs font-black text-white shadow-xs">
-      <span class="text-[#8c7ae6]">L</span>
+<!-- BACKDROP OVERLAY FOR MOBILE -->
+@if (isMobileOpen()) {
+  <div
+    (click)="closeMobileSidebar()"
+    class="fixed inset-0 z-40 bg-slate-950/40 backdrop-blur-xs transition-opacity lg:hidden"
+    aria-hidden="true">
+  </div>
+}
+
+<aside
+  class="fixed inset-y-0 left-0 z-50 flex w-[240px] flex-col border-r border-slate-100 bg-white transition-transform duration-300 ease-in-out lg:z-40 lg:w-[230px] lg:translate-x-0"
+  [class.-translate-x-full]="!isMobileOpen()"
+  [class.translate-x-0]="isMobileOpen()"
+  [class.shadow-2xl]="isMobileOpen()">
+  <div class="flex h-14 items-center justify-between border-b border-slate-100 px-4">
+    <div class="flex items-center">
+      <div
+        class="flex h-8 w-8 items-center justify-center rounded-lg bg-[#0f172a] text-xs font-black text-white shadow-xs">
+        <span class="text-[#8c7ae6]">L</span>
+      </div>
+
+      <div class="ml-2.5 min-w-0">
+        <h1 class="truncate text-sm font-bold tracking-tight text-slate-900">
+          Leads CMS
+        </h1>
+        <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+          Admin Console
+        </p>
+      </div>
     </div>
 
-    <div class="ml-2.5 min-w-0">
-      <h1 class="truncate text-sm font-bold tracking-tight text-slate-900">
-        Leads CMS
-      </h1>
-      <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-        Admin Console
-      </p>
-    </div>
+    <!-- MOBILE CLOSE BUTTON -->
+    <button
+      type="button"
+      (click)="closeMobileSidebar()"
+      aria-label="Close navigation"
+      class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition lg:hidden">
+      <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
   </div>
   <nav class="flex-1 overflow-y-auto px-2.5 py-4">
     <p class="mb-2 px-2.5 text-[11px] font-bold uppercase tracking-wider text-slate-400">

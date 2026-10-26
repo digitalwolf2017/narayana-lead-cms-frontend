@@ -16,6 +16,7 @@ export class LoginComponent implements OnInit {
   showPassword = false;
   isLoading = false;
   errorMessage = '';
+  infoMessage = '';
 
   constructor(
     private readonly authService: AuthService,
@@ -33,6 +34,17 @@ export class LoginComponent implements OnInit {
     this.showPassword = !this.showPassword;
   }
 
+  onForgotPassword(): void {
+    this.infoMessage =
+      'To reset administrator credentials, please contact your SuperAdmin or IT support team at support@wbnarayanaschools.in.';
+    this.errorMessage = '';
+  }
+
+  clearMessages(): void {
+    this.errorMessage = '';
+    this.infoMessage = '';
+  }
+
   login(): void {
     const trimmedEmail = this.email.trim();
     if (!trimmedEmail || !this.password) {
@@ -42,6 +54,7 @@ export class LoginComponent implements OnInit {
 
     this.isLoading = true;
     this.errorMessage = '';
+    this.infoMessage = '';
 
     this.authService
       .login(trimmedEmail, this.password, 'Leads CMS Admin')

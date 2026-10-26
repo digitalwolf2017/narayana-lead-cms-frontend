@@ -21,6 +21,7 @@ import {
 
 import { SidebarComponent } from '../../components/sidebar/sidebar.component';
 import { TopbarComponent } from '../../components/topbar/topbar.component';
+import { DateRangePickerComponent } from '../../components/date-range-picker/date-range-picker.component';
 import {
   LeadItem,
   LeadMeta,
@@ -39,7 +40,7 @@ export interface ColumnConfig {
   selector: 'app-leads',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush, // Step 1: OnPush
-  imports: [CommonModule, FormsModule, TopbarComponent, SidebarComponent],
+  imports: [CommonModule, FormsModule, TopbarComponent, SidebarComponent, DateRangePickerComponent],
   templateUrl: './leads.component.html',
 })
 export class LeadsComponent implements OnInit, OnDestroy {
@@ -64,12 +65,21 @@ export class LeadsComponent implements OnInit, OnDestroy {
   dateFrom = '';
   dateTo = '';
   perPage = 25;
-  currentPage = 1;  selectedLead: LeadItem | null = null;
+  currentPage = 1;
+  selectedLead: LeadItem | null = null;
   isDetailModalOpen = false;
-  copiedField = '';  isExporting = false;
+  copiedField = '';
+  isExporting = false;
   toastMessage = '';
-  toastType: 'success' | 'error' = 'success';  isColumnsDropdownOpen = false;
+  toastType: 'success' | 'error' = 'success';
+  isColumnsDropdownOpen = false;
   private readonly STORAGE_KEY = 'leads_column_prefs';
+
+  // Frontend Filters: Test Leads & Duplicate Phone
+  excludeTestLeads = false;
+  testKeyword = 'test';
+  phoneFilterMode: 'all' | 'unique' | 'duplicates_only' = 'all';
+  isFilterMenuOpen = false;
 
   columns: ColumnConfig[] = [
     { key: 'id', label: 'ID', visible: true, optional: true },
@@ -203,9 +213,16 @@ export class LeadsComponent implements OnInit, OnDestroy {
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
-    if (!(event.target as HTMLElement).closest('#columns-dropdown-wrapper')) {
+    const target = event.target as HTMLElement;
+    if (!target.closest('#columns-dropdown-wrapper')) {
       if (this.isColumnsDropdownOpen) {
         this.isColumnsDropdownOpen = false;
+        this.cdr.markForCheck();
+      }
+    }
+    if (!target.closest('#filter-clean-menu-wrapper')) {
+      if (this.isFilterMenuOpen) {
+        this.isFilterMenuOpen = false;
         this.cdr.markForCheck();
       }
     }
@@ -410,16 +427,133 @@ export class LeadsComponent implements OnInit, OnDestroy {
     this.dateSubject.next(); // Step 7: debounced
   }
 
+  onDateRangeChange(range: { startDate: string; endDate: string }): void {
+    this.dateFrom = range.startDate;
+    this.dateTo = range.endDate;
+    this.currentPage = 1;
+    this.clearPageCache();
+    this.fetchLeads();
+  }
+
   onPerPageChange(): void {
     this.currentPage = 1;
     this.clearPageCache();
     this.fetchLeads();
   }
 
+  normalizePhone(phone?: string): string {
+    if (!phone) return '';
+    return phone.replace(/\D/g, '').slice(-10);
+  }
+
+  isTestLead(lead: LeadItem): boolean {
+    const raw = this.testKeyword.trim().toLowerCase();
+    const defaultKeywords = ['test', 'demo', 'dummy', 'sample', 'testing', 'trial'];
+    const keywords = raw ? Array.from(new Set([raw, ...defaultKeywords])) : defaultKeywords;
+
+    const name = (lead.name || '').toLowerCase();
+    const email = (lead.parent_email || '').toLowerCase();
+    const phone = (lead.phone || '').trim();
+
+    const matchesWord = keywords.some(
+      (k) => name.includes(k) || email.includes(k)
+    );
+    const isDummyPhone =
+      /^([0-9])\1{9}$/.test(phone) ||
+      phone === '1234567890' ||
+      phone === '9876543210' ||
+      phone === '0123456789';
+
+    return matchesWord || isDummyPhone;
+  }
+
+  get phoneCounts(): Map<string, number> {
+    const counts = new Map<string, number>();
+    for (const lead of this.leads) {
+      const p = this.normalizePhone(lead.phone);
+      if (p) {
+        counts.set(p, (counts.get(p) || 0) + 1);
+      }
+    }
+    return counts;
+  }
+
+  getPhoneDuplicateCount(lead: LeadItem): number {
+    const p = this.normalizePhone(lead.phone);
+    if (!p) return 0;
+    return this.phoneCounts.get(p) || 0;
+  }
+
+  get displayedLeads(): LeadItem[] {
+    let result = this.leads;
+
+    // 1. Exclude test leads if enabled
+    if (this.excludeTestLeads) {
+      result = result.filter((lead) => !this.isTestLead(lead));
+    }
+
+    // 2. Phone duplicate filter
+    if (this.phoneFilterMode === 'unique') {
+      const seenPhones = new Set<string>();
+      result = result.filter((lead) => {
+        const p = this.normalizePhone(lead.phone);
+        if (!p) return true; // keep leads without phone
+        if (seenPhones.has(p)) return false;
+        seenPhones.add(p);
+        return true;
+      });
+    } else if (this.phoneFilterMode === 'duplicates_only') {
+      const counts = this.phoneCounts;
+      result = result.filter((lead) => {
+        const p = this.normalizePhone(lead.phone);
+        return p ? (counts.get(p) || 0) > 1 : false;
+      });
+    }
+
+    return result;
+  }
+
+  get testLeadsCount(): number {
+    return this.leads.filter((l) => this.isTestLead(l)).length;
+  }
+
+  get duplicatePhoneCount(): number {
+    const counts = this.phoneCounts;
+    let dupCount = 0;
+    for (const count of counts.values()) {
+      if (count > 1) {
+        dupCount += count;
+      }
+    }
+    return dupCount;
+  }
+
+  get hasActiveFrontendFilters(): boolean {
+    return this.excludeTestLeads || this.phoneFilterMode !== 'all';
+  }
+
+  toggleExcludeTestLeads(): void {
+    this.excludeTestLeads = !this.excludeTestLeads;
+    this.cdr.markForCheck();
+  }
+
+  setPhoneFilterMode(mode: 'all' | 'unique' | 'duplicates_only'): void {
+    this.phoneFilterMode = mode;
+    this.cdr.markForCheck();
+  }
+
+  clearFrontendFilters(): void {
+    this.excludeTestLeads = false;
+    this.phoneFilterMode = 'all';
+    this.cdr.markForCheck();
+  }
+
   resetFilters(): void {
     this.searchTerm = '';
     this.dateFrom = '';
     this.dateTo = '';
+    this.excludeTestLeads = false;
+    this.phoneFilterMode = 'all';
     this.currentPage = 1;
     this.clearPageCache();
     this.fetchLeads();

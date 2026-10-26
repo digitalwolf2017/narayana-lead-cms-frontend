@@ -1,6 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService, AuthUser } from '../../services/auth.service';
+import { SidebarService } from '../../services/sidebar.service';
 
 @Component({
   selector: 'app-topbar',
@@ -17,7 +18,12 @@ export class TopbarComponent implements OnInit {
   constructor(
     private readonly authService: AuthService,
     private readonly router: Router,
+    private readonly sidebarService: SidebarService,
   ) {}
+
+  toggleMobileSidebar(): void {
+    this.sidebarService.toggle();
+  }
 
   ngOnInit(): void {
     // Call on panel reload: fetches safe profile & updates token last_used_at
