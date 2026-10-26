@@ -32,6 +32,7 @@ export class PageRevisionPanelComponent {
   @Output() unpublishPage = new EventEmitter<void>();
   @Output() discardDraft = new EventEmitter<void>();
   @Output() copyUrl = new EventEmitter<void>();
+  @Output() openUrl = new EventEmitter<void>();
   @Output() selectSection = new EventEmitter<string>();
 
   get currentRevision(): PageRevision | undefined {

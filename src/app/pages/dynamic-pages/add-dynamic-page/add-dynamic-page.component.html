@@ -72,6 +72,7 @@
           (saveMetadata)="saveDraftMetadata()"
           (discardDraft)="discardDraftRevision()"
           (copyUrl)="copyPageUrl()"
+          (openUrl)="openPageUrl()"
         />
 
 
@@ -113,6 +114,15 @@
 
                     <div class="mt-1 flex items-center gap-2 font-mono text-xs text-slate-600">
                       <span class="truncate max-w-md">{{ domainName }}{{ generatedSlug }}</span>
+                      <button type="button" (click)="openPageUrl()" data-tooltip="Open page in new tab"
+                        class="inline-flex items-center gap-1 font-sans font-bold text-xs text-[#8c7ae6] hover:text-[#7158e2] hover:underline">
+                        <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                        Open
+                      </button>
+                      <span class="text-slate-300">•</span>
                       <button type="button" (click)="copyPageUrl()" data-tooltip="Copy link"
                         class="font-sans font-bold text-xs text-[#8c7ae6] hover:text-[#7158e2] hover:underline">
                         Copy
@@ -350,6 +360,7 @@
             (unpublishPage)="confirmUnpublishPage()"
             (discardDraft)="discardDraftRevision()"
             (copyUrl)="copyPageUrl()"
+            (openUrl)="openPageUrl()"
             (selectSection)="setActiveEditingSection($event)"
           />
 

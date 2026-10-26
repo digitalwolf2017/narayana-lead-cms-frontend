@@ -102,7 +102,7 @@ export class AddDynamicPageComponent implements OnInit {
   private readonly toastService = inject(ToastService);
   private readonly cdr = inject(ChangeDetectorRef);
 
-  readonly domainName = 'http://localhost:4200';
+  readonly domainName = 'https://wbnarayanaschools.in';
 
   selectedCityId: number | null = null;
   selectedBranchId: number | null = null;
@@ -501,6 +501,11 @@ export class AddDynamicPageComponent implements OnInit {
     navigator.clipboard?.writeText(fullUrl).then(() => {
       this.showToast('Copied to Clipboard', fullUrl, this.editingPageId, 'info');
     });
+  }
+
+  openPageUrl(): void {
+    const fullUrl = `${this.domainName}${this.generatedSlug}`;
+    window.open(fullUrl, '_blank', 'noopener,noreferrer');
   }
 
   resetAddPage(): void {
