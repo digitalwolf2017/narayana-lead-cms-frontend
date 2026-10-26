@@ -1,0 +1,122 @@
+<div class="mb-3 overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-xs transition-all">
+  <!-- BAR HEADER -->
+  <div class="flex items-center justify-between border-b border-slate-100 px-3.5 py-2 bg-slate-50/70">
+    <div class="flex items-center gap-2">
+      <div class="flex h-5 w-5 items-center justify-center rounded-md bg-indigo-50 text-indigo-600">
+        <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+      </div>
+      <div>
+        <span class="text-xs font-bold text-slate-800">Lead Analytics & Averages</span>
+        <span class="ml-1.5 text-[11px] font-medium text-slate-400">
+          ({{ metrics.dateSpanLabel }})
+        </span>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <!-- CUSTOM ANALYSIS POPUP BUTTON -->
+      <button
+        type="button"
+        (click)="onOpenCustomAnalysis()"
+        class="inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-white px-2.5 py-1 text-[11px] font-bold text-indigo-700 shadow-2xs transition hover:bg-indigo-50 active:scale-[0.98]">
+        <svg class="h-3.5 w-3.5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+        </svg>
+        <span>Custom Analysis</span>
+        @if (hasActiveCustomFilters) {
+        <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
+        }
+      </button>
+
+      <!-- HIDE / SHOW TOGGLE BUTTON -->
+      <button
+        type="button"
+        (click)="onToggleOpen()"
+        class="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold text-slate-500 transition hover:bg-slate-200/60 hover:text-slate-800">
+        <span>{{ isOpen ? 'Hide' : 'Show' }}</span>
+        <svg class="h-3 w-3 text-slate-400 transition-transform duration-200"
+          [class.rotate-180]="isOpen" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- 4 COMPACT ANALYTICS KPI CARDS -->
+  @if (isOpen) {
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 p-2.5 bg-linear-to-b from-white to-slate-50/40">
+    
+    <!-- 1. AVG LEADS PER DAY -->
+    <div class="flex items-center gap-2.5 rounded-lg border border-indigo-100/80 bg-white px-3 py-2 shadow-2xs transition hover:border-indigo-200">
+      <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+      </div>
+      <div class="min-w-0 flex-1">
+        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 truncate">Avg. Leads / Day</p>
+        <div class="flex items-baseline gap-1">
+          <span class="text-base font-bold text-slate-950">{{ metrics.avgLeadsPerDay }}</span>
+          <span class="text-[11px] text-slate-500 font-medium truncate">leads/day</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. OTP VERIFIED RATE -->
+    <div class="flex items-center gap-2.5 rounded-lg border border-emerald-100/80 bg-white px-3 py-2 shadow-2xs transition hover:border-emerald-200">
+      <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+        </svg>
+      </div>
+      <div class="min-w-0 flex-1">
+        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 truncate">OTP Verified</p>
+        <div class="flex items-baseline gap-1">
+          <span class="text-base font-bold text-emerald-600">{{ metrics.otpVerifiedRate }}%</span>
+          <span class="text-[11px] text-slate-500 font-medium truncate">({{ metrics.otpVerifiedCount }}/{{ leads.length }})</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. UNIQUE PHONE RATIO -->
+    <div class="flex items-center gap-2.5 rounded-lg border border-sky-100/80 bg-white px-3 py-2 shadow-2xs transition hover:border-sky-200">
+      <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sky-50 text-sky-600">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+      </div>
+      <div class="min-w-0 flex-1">
+        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 truncate">Unique Contacts</p>
+        <div class="flex items-baseline gap-1">
+          <span class="text-base font-bold text-sky-600">{{ metrics.uniquePhoneRate }}%</span>
+          <span class="text-[11px] text-slate-500 font-medium truncate">({{ metrics.duplicateRate }}% dups)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. PEAK INFLOW DAY -->
+    <div class="flex items-center gap-2.5 rounded-lg border border-purple-100/80 bg-white px-3 py-2 shadow-2xs transition hover:border-purple-200">
+      <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-purple-50 text-purple-600">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      </div>
+      <div class="min-w-0 flex-1">
+        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 truncate">Peak Day</p>
+        <div class="flex items-baseline gap-1">
+          <span class="text-base font-bold text-purple-700">{{ metrics.peakCount }}</span>
+          <span class="text-[11px] text-slate-500 font-medium truncate">leads on {{ metrics.peakDate }}</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  }
+</div>

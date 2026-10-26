@@ -28,19 +28,33 @@ import {
   LeadModule,
   LeadService,
 } from '../../services/lead.service';
+import {
+  ColumnConfig,
+  CustomAnalysisFilterParams,
+} from './models/lead-analysis.model';
+import {
+  computePhoneCounts,
+  isTestLead,
+  normalizePhone,
+} from './utils/lead-filters.util';
+import { LeadAnalyticsBarComponent } from './components/lead-analytics-bar/lead-analytics-bar.component';
+import { CustomAnalysisModalComponent } from './components/custom-analysis-modal/custom-analysis-modal.component';
 
-export interface ColumnConfig {
-  key: string;
-  label: string;
-  visible: boolean;
-  optional: boolean;
-}
+export type { ColumnConfig };
 
 @Component({
   selector: 'app-leads',
   standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush, // Step 1: OnPush
-  imports: [CommonModule, FormsModule, TopbarComponent, SidebarComponent, DateRangePickerComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    CommonModule,
+    FormsModule,
+    TopbarComponent,
+    SidebarComponent,
+    DateRangePickerComponent,
+    LeadAnalyticsBarComponent,
+    CustomAnalysisModalComponent,
+  ],
   templateUrl: './leads.component.html',
 })
 export class LeadsComponent implements OnInit, OnDestroy {
@@ -48,38 +62,53 @@ export class LeadsComponent implements OnInit, OnDestroy {
   private readonly toastService = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly cdr = inject(ChangeDetectorRef);
+  protected readonly cdr = inject(ChangeDetectorRef);
 
   private routeSub?: Subscription;
   private fetchSub?: Subscription;
   private searchSubject = new Subject<string>();
   private searchSub?: Subscription;
-  private dateSubject = new Subject<void>(); // Step 7: debounced date filter
-  private dateSub?: Subscription;  private readonly fetchTrigger$ = new Subject<Record<string, unknown>>();  private pageCache = new Map<string, { leads: LeadItem[]; meta: LeadMeta }>();
-  private currentCacheKey = '';  readonly skeletonRows = Array(10).fill(0);  modules: LeadModule[] = [];
+  private dateSubject = new Subject<void>();
+  private dateSub?: Subscription;
+  private readonly fetchTrigger$ = new Subject<Record<string, unknown>>();
+  private pageCache = new Map<string, { leads: LeadItem[]; meta: LeadMeta }>();
+  private currentCacheKey = '';
+
+  readonly skeletonRows = Array(10).fill(0);
+
+  // Lead modules
+  modules: LeadModule[] = [];
   selectedModuleKey = '';
-  isLoadingModules = false;  leads: LeadItem[] = [];
+  isLoadingModules = false;
+
+  // Leads data
+  leads: LeadItem[] = [];
   meta: LeadMeta = { page: 1, per_page: 25, total: 0, filtered: 0, total_pages: 1 };
   isLoadingLeads = false;
-  loadError = '';  searchTerm = '';
+  loadError = '';
+
+  // Query & Filter state
+  searchTerm = '';
   dateFrom = '';
   dateTo = '';
   perPage = 25;
   currentPage = 1;
-  selectedLead: LeadItem | null = null;
-  isDetailModalOpen = false;
-  copiedField = '';
   isExporting = false;
-  toastMessage = '';
-  toastType: 'success' | 'error' = 'success';
+
+  // Columns & dropdown
   isColumnsDropdownOpen = false;
   private readonly STORAGE_KEY = 'leads_column_prefs';
+  private readonly WIDTHS_STORAGE_KEY = 'leads_column_widths';
 
-  // Frontend Filters: Test Leads & Duplicate Phone
+  // Frontend Quality & Deduplication Filters
   excludeTestLeads = false;
   testKeyword = 'test';
   phoneFilterMode: 'all' | 'unique' | 'duplicates_only' = 'all';
   isFilterMenuOpen = false;
+
+  // Analytics & Custom Analysis popup state
+  isAnalyticsBarOpen = true;
+  isCustomAnalysisOpen = false;
 
   columns: ColumnConfig[] = [
     { key: 'id', label: 'ID', visible: true, optional: true },
@@ -103,7 +132,8 @@ export class LeadsComponent implements OnInit, OnDestroy {
     { key: 'utm_term', label: 'UTM Term', visible: false, optional: true },
     { key: 'redirect_from', label: 'Redirect From', visible: false, optional: true },
     { key: 'page_section', label: 'Page Section', visible: false, optional: true },
-  ];  private readonly WIDTHS_STORAGE_KEY = 'leads_column_widths';
+  ];
+
   readonly defaultColWidths: Record<string, number> = {
     id: 65,
     entrydate: 140,
@@ -130,19 +160,24 @@ export class LeadsComponent implements OnInit, OnDestroy {
   colWidths: Record<string, number> = { ...this.defaultColWidths };
   private resizingColKey: string | null = null;
   private startX = 0;
-  private startWidth = 0;  colVisibility: Record<string, boolean> = {};   // O(1) lookup replaces isColVisible()
-  visibleColumns: ColumnConfig[] = [];           // replaces optionalColumns getter
-  visibleColumnCount = 0;                        // replaces visibleColumnCount getter
-  activeModuleLabel = '';                        // replaces activeModule getter in template
-  cachedDisplayedPages: number[] = [];           // replaces displayedPages getter
+  private startWidth = 0;
+
+  colVisibility: Record<string, boolean> = {};
+  visibleColumns: ColumnConfig[] = [];
+  visibleColumnCount = 0;
+  activeModuleLabel = '';
+  cachedDisplayedPages: number[] = [];
 
   get activeModule(): LeadModule | undefined {
     return this.modules.find((m) => m.key === this.selectedModuleKey);
   }
+
   ngOnInit(): void {
     this.loadColumnPrefs();
     this.loadColWidths();
-    this.updateColumnCache();    this.fetchSub = this.fetchTrigger$
+    this.updateColumnCache();
+
+    this.fetchSub = this.fetchTrigger$
       .pipe(
         switchMap((params) =>
           this.leadService.getLeads(params as any).pipe(
@@ -168,7 +203,8 @@ export class LeadsComponent implements OnInit, OnDestroy {
             total: this.leads.length,
             filtered: this.leads.length,
             total_pages: 1,
-          };          this.pageCache.set(this.currentCacheKey, {
+          };
+          this.pageCache.set(this.currentCacheKey, {
             leads: this.leads,
             meta: this.meta,
           });
@@ -177,10 +213,9 @@ export class LeadsComponent implements OnInit, OnDestroy {
           this.loadError = response.message || 'Unable to load leads.';
         }
         this.updateDisplayedPages();
-        this.cdr.markForCheck(); // Step 1: markForCheck instead of detectChanges
+        this.cdr.markForCheck();
       });
 
-    // Search debounce
     this.searchSub = this.searchSubject
       .pipe(debounceTime(350), distinctUntilChanged())
       .subscribe((term) => {
@@ -188,7 +223,9 @@ export class LeadsComponent implements OnInit, OnDestroy {
         this.currentPage = 1;
         this.clearPageCache();
         this.fetchLeads();
-      });    this.dateSub = this.dateSubject
+      });
+
+    this.dateSub = this.dateSubject
       .pipe(debounceTime(400))
       .subscribe(() => {
         this.currentPage = 1;
@@ -207,6 +244,7 @@ export class LeadsComponent implements OnInit, OnDestroy {
     this.fetchTrigger$.complete();
     this.searchSubject.complete();
     this.dateSubject.complete();
+
     document.removeEventListener('mousemove', this.onResizing);
     document.removeEventListener('mouseup', this.onResizeEnd);
   }
@@ -220,13 +258,8 @@ export class LeadsComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       }
     }
-    if (!target.closest('#filter-clean-menu-wrapper')) {
-      if (this.isFilterMenuOpen) {
-        this.isFilterMenuOpen = false;
-        this.cdr.markForCheck();
-      }
-    }
   }
+
   toggleColumn(key: string): void {
     const col = this.columns.find((c) => c.key === key);
     if (col) {
@@ -237,7 +270,6 @@ export class LeadsComponent implements OnInit, OnDestroy {
     }
   }
 
-  /** Step 2 & 3: Rebuild all column-derived caches in one pass */
   private updateColumnCache(): void {
     const map: Record<string, boolean> = {};
     const visible: ColumnConfig[] = [];
@@ -259,7 +291,7 @@ export class LeadsComponent implements OnInit, OnDestroy {
           if (prefs[col.key] !== undefined) col.visible = prefs[col.key];
         });
       }
-    } catch {    }
+    } catch {}
   }
 
   private saveColumnPrefs(): void {
@@ -267,6 +299,7 @@ export class LeadsComponent implements OnInit, OnDestroy {
     this.columns.forEach((c) => (prefs[c.key] = c.visible));
     localStorage.setItem(this.STORAGE_KEY, JSON.stringify(prefs));
   }
+
   onResizeStart(event: MouseEvent, colKey: string): void {
     event.preventDefault();
     event.stopPropagation();
@@ -302,13 +335,13 @@ export class LeadsComponent implements OnInit, OnDestroy {
       if (saved) {
         this.colWidths = { ...this.defaultColWidths, ...JSON.parse(saved) };
       }
-    } catch {    }
+    } catch {}
   }
 
   private saveColWidths(): void {
     try {
       localStorage.setItem(this.WIDTHS_STORAGE_KEY, JSON.stringify(this.colWidths));
-    } catch {    }
+    } catch {}
   }
 
   resetColWidths(): void {
@@ -316,6 +349,7 @@ export class LeadsComponent implements OnInit, OnDestroy {
     this.saveColWidths();
     this.cdr.markForCheck();
   }
+
   loadModules(): void {
     this.isLoadingModules = true;
     this.cdr.markForCheck();
@@ -382,11 +416,13 @@ export class LeadsComponent implements OnInit, OnDestroy {
 
     this.fetchLeads();
   }
+
   fetchLeads(): void {
     if (!this.selectedModuleKey) return;
 
     this.loadError = '';
-    this.currentCacheKey = this.buildCacheKey();    const cached = this.pageCache.get(this.currentCacheKey);
+    this.currentCacheKey = this.buildCacheKey();
+    const cached = this.pageCache.get(this.currentCacheKey);
     if (cached) {
       this.leads = cached.leads;
       this.meta = cached.meta;
@@ -397,7 +433,8 @@ export class LeadsComponent implements OnInit, OnDestroy {
     }
 
     this.isLoadingLeads = true;
-    this.cdr.markForCheck();    this.fetchTrigger$.next(this.buildParams());
+    this.cdr.markForCheck();
+    this.fetchTrigger$.next(this.buildParams());
   }
 
   private buildParams(): Record<string, unknown> {
@@ -419,12 +456,9 @@ export class LeadsComponent implements OnInit, OnDestroy {
   private clearPageCache(): void {
     this.pageCache.clear();
   }
+
   onSearchInput(value: string): void {
     this.searchSubject.next(value);
-  }
-
-  onDateFilterChange(): void {
-    this.dateSubject.next(); // Step 7: debounced
   }
 
   onDateRangeChange(range: { startDate: string; endDate: string }): void {
@@ -441,45 +475,16 @@ export class LeadsComponent implements OnInit, OnDestroy {
     this.fetchLeads();
   }
 
-  normalizePhone(phone?: string): string {
-    if (!phone) return '';
-    return phone.replace(/\D/g, '').slice(-10);
-  }
-
-  isTestLead(lead: LeadItem): boolean {
-    const raw = this.testKeyword.trim().toLowerCase();
-    const defaultKeywords = ['test', 'demo', 'dummy', 'sample', 'testing', 'trial'];
-    const keywords = raw ? Array.from(new Set([raw, ...defaultKeywords])) : defaultKeywords;
-
-    const name = (lead.name || '').toLowerCase();
-    const email = (lead.parent_email || '').toLowerCase();
-    const phone = (lead.phone || '').trim();
-
-    const matchesWord = keywords.some(
-      (k) => name.includes(k) || email.includes(k)
-    );
-    const isDummyPhone =
-      /^([0-9])\1{9}$/.test(phone) ||
-      phone === '1234567890' ||
-      phone === '9876543210' ||
-      phone === '0123456789';
-
-    return matchesWord || isDummyPhone;
+  isLeadTest(lead: LeadItem): boolean {
+    return isTestLead(lead, this.testKeyword);
   }
 
   get phoneCounts(): Map<string, number> {
-    const counts = new Map<string, number>();
-    for (const lead of this.leads) {
-      const p = this.normalizePhone(lead.phone);
-      if (p) {
-        counts.set(p, (counts.get(p) || 0) + 1);
-      }
-    }
-    return counts;
+    return computePhoneCounts(this.leads);
   }
 
   getPhoneDuplicateCount(lead: LeadItem): number {
-    const p = this.normalizePhone(lead.phone);
+    const p = normalizePhone(lead.phone);
     if (!p) return 0;
     return this.phoneCounts.get(p) || 0;
   }
@@ -487,17 +492,15 @@ export class LeadsComponent implements OnInit, OnDestroy {
   get displayedLeads(): LeadItem[] {
     let result = this.leads;
 
-    // 1. Exclude test leads if enabled
     if (this.excludeTestLeads) {
-      result = result.filter((lead) => !this.isTestLead(lead));
+      result = result.filter((lead) => !isTestLead(lead, this.testKeyword));
     }
 
-    // 2. Phone duplicate filter
     if (this.phoneFilterMode === 'unique') {
       const seenPhones = new Set<string>();
       result = result.filter((lead) => {
-        const p = this.normalizePhone(lead.phone);
-        if (!p) return true; // keep leads without phone
+        const p = normalizePhone(lead.phone);
+        if (!p) return true;
         if (seenPhones.has(p)) return false;
         seenPhones.add(p);
         return true;
@@ -505,7 +508,7 @@ export class LeadsComponent implements OnInit, OnDestroy {
     } else if (this.phoneFilterMode === 'duplicates_only') {
       const counts = this.phoneCounts;
       result = result.filter((lead) => {
-        const p = this.normalizePhone(lead.phone);
+        const p = normalizePhone(lead.phone);
         return p ? (counts.get(p) || 0) > 1 : false;
       });
     }
@@ -514,7 +517,7 @@ export class LeadsComponent implements OnInit, OnDestroy {
   }
 
   get testLeadsCount(): number {
-    return this.leads.filter((l) => this.isTestLead(l)).length;
+    return this.leads.filter((l) => isTestLead(l, this.testKeyword)).length;
   }
 
   get duplicatePhoneCount(): number {
@@ -548,6 +551,33 @@ export class LeadsComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
+  toggleAnalyticsBar(): void {
+    this.isAnalyticsBarOpen = !this.isAnalyticsBarOpen;
+    this.cdr.markForCheck();
+  }
+
+  openCustomAnalysis(): void {
+    this.isCustomAnalysisOpen = true;
+    this.cdr.markForCheck();
+  }
+
+  closeCustomAnalysis(): void {
+    this.isCustomAnalysisOpen = false;
+    this.cdr.markForCheck();
+  }
+
+  onApplyCustomAnalysisFilters(params: CustomAnalysisFilterParams): void {
+    if (params.dateFrom) this.dateFrom = params.dateFrom;
+    if (params.dateTo) this.dateTo = params.dateTo;
+    this.excludeTestLeads = params.excludeTest;
+    this.phoneFilterMode = params.phoneMode;
+    this.currentPage = 1;
+    this.clearPageCache();
+    this.fetchLeads();
+    this.toastService.success('Applied custom analysis filters to leads table.');
+    this.cdr.markForCheck();
+  }
+
   resetFilters(): void {
     this.searchTerm = '';
     this.dateFrom = '';
@@ -565,7 +595,7 @@ export class LeadsComponent implements OnInit, OnDestroy {
     this.currentPage = page;
     this.fetchLeads();
   }
-  /** Step 2: computed only when page/totalPages changes */
+
   private updateDisplayedPages(): void {
     const totalPages = this.meta.total_pages || 1;
     const current = this.currentPage;
@@ -576,28 +606,6 @@ export class LeadsComponent implements OnInit, OnDestroy {
     if (current >= totalPages - 2) start = Math.max(1, totalPages - 4);
     for (let i = start; i <= end; i++) pages.push(i);
     this.cachedDisplayedPages = pages;
-  }
-  openLeadDetail(lead: LeadItem): void {
-    this.selectedLead = lead;
-    this.isDetailModalOpen = true;
-    this.cdr.markForCheck();
-  }
-
-  closeLeadDetail(): void {
-    this.isDetailModalOpen = false;
-    this.selectedLead = null;
-    this.cdr.markForCheck();
-  }
-
-  copyToClipboard(text: string, fieldName: string): void {
-    if (!text) return;
-    navigator.clipboard.writeText(text);
-    this.copiedField = fieldName;
-    this.cdr.markForCheck();
-    setTimeout(() => {
-      this.copiedField = '';
-      this.cdr.markForCheck();
-    }, 2000);
   }
 
   getCellValue(lead: LeadItem, key: string): string {
@@ -627,23 +635,15 @@ export class LeadsComponent implements OnInit, OnDestroy {
         a.click();
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
-        this.showToast('Lead export downloaded successfully.', 'success');
+        this.toastService.success('Lead export downloaded successfully.');
         this.cdr.markForCheck();
       },
       error: (err) => {
         this.isExporting = false;
-        this.showToast('Failed to export leads.', 'error');
+        this.toastService.error('Failed to export leads.');
         this.cdr.markForCheck();
         console.error('Export error:', err);
       },
     });
-  }
-
-  showToast(message: string, type: 'success' | 'error' = 'success'): void {
-    if (type === 'success') {
-      this.toastService.success(message);
-    } else {
-      this.toastService.error(message);
-    }
   }
 }
