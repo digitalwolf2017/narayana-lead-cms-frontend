@@ -223,37 +223,78 @@
             </button>
           </div>
 
-          <div class="flex items-center gap-1">
-            <button
-              type="button"
-              (click)="setAnalysisPhoneMode('all')"
-              [class.bg-slate-900]="analysisPhoneMode === 'all'"
-              [class.text-white]="analysisPhoneMode === 'all'"
-              [class.bg-white]="analysisPhoneMode !== 'all'"
-              [class.text-slate-600]="analysisPhoneMode !== 'all'"
-              class="flex-1 rounded border border-slate-200 py-1 text-[10px] font-bold transition shadow-2xs">
-              All
-            </button>
-            <button
-              type="button"
-              (click)="setAnalysisPhoneMode('unique')"
-              [class.bg-slate-900]="analysisPhoneMode === 'unique'"
-              [class.text-white]="analysisPhoneMode === 'unique'"
-              [class.bg-white]="analysisPhoneMode !== 'unique'"
-              [class.text-slate-600]="analysisPhoneMode !== 'unique'"
-              class="flex-1 rounded border border-slate-200 py-1 text-[10px] font-bold transition shadow-2xs">
-              Unique
-            </button>
-            <button
-              type="button"
-              (click)="setAnalysisPhoneMode('duplicates_only')"
-              [class.bg-slate-900]="analysisPhoneMode === 'duplicates_only'"
-              [class.text-white]="analysisPhoneMode === 'duplicates_only'"
-              [class.bg-white]="analysisPhoneMode !== 'duplicates_only'"
-              [class.text-slate-600]="analysisPhoneMode !== 'duplicates_only'"
-              class="flex-1 rounded border border-slate-200 py-1 text-[10px] font-bold transition shadow-2xs">
-              Dups Only
-            </button>
+          <div class="space-y-2">
+            <div>
+              <div class="mb-1 text-[10px] font-semibold text-slate-500">Phone Deduplication</div>
+              <div class="flex items-center gap-1">
+                <button
+                  type="button"
+                  (click)="setAnalysisPhoneMode('all')"
+                  [class.bg-slate-900]="analysisPhoneMode === 'all'"
+                  [class.text-white]="analysisPhoneMode === 'all'"
+                  [class.bg-white]="analysisPhoneMode !== 'all'"
+                  [class.text-slate-600]="analysisPhoneMode !== 'all'"
+                  class="flex-1 rounded border border-slate-200 py-1 text-[10px] font-bold transition shadow-2xs">
+                  All
+                </button>
+                <button
+                  type="button"
+                  (click)="setAnalysisPhoneMode('unique')"
+                  [class.bg-slate-900]="analysisPhoneMode === 'unique'"
+                  [class.text-white]="analysisPhoneMode === 'unique'"
+                  [class.bg-white]="analysisPhoneMode !== 'unique'"
+                  [class.text-slate-600]="analysisPhoneMode !== 'unique'"
+                  class="flex-1 rounded border border-slate-200 py-1 text-[10px] font-bold transition shadow-2xs">
+                  Unique
+                </button>
+                <button
+                  type="button"
+                  (click)="setAnalysisPhoneMode('duplicates_only')"
+                  [class.bg-slate-900]="analysisPhoneMode === 'duplicates_only'"
+                  [class.text-white]="analysisPhoneMode === 'duplicates_only'"
+                  [class.bg-white]="analysisPhoneMode !== 'duplicates_only'"
+                  [class.text-slate-600]="analysisPhoneMode !== 'duplicates_only'"
+                  class="flex-1 rounded border border-slate-200 py-1 text-[10px] font-bold transition shadow-2xs">
+                  Dups Only
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <div class="mb-1 text-[10px] font-semibold text-slate-500">Name Deduplication</div>
+              <div class="flex items-center gap-1">
+                <button
+                  type="button"
+                  (click)="setAnalysisNameMode('all')"
+                  [class.bg-slate-900]="analysisNameMode === 'all'"
+                  [class.text-white]="analysisNameMode === 'all'"
+                  [class.bg-white]="analysisNameMode !== 'all'"
+                  [class.text-slate-600]="analysisNameMode !== 'all'"
+                  class="flex-1 rounded border border-slate-200 py-1 text-[10px] font-bold transition shadow-2xs">
+                  All
+                </button>
+                <button
+                  type="button"
+                  (click)="setAnalysisNameMode('unique')"
+                  [class.bg-slate-900]="analysisNameMode === 'unique'"
+                  [class.text-white]="analysisNameMode === 'unique'"
+                  [class.bg-white]="analysisNameMode !== 'unique'"
+                  [class.text-slate-600]="analysisNameMode !== 'unique'"
+                  class="flex-1 rounded border border-slate-200 py-1 text-[10px] font-bold transition shadow-2xs">
+                  Unique
+                </button>
+                <button
+                  type="button"
+                  (click)="setAnalysisNameMode('duplicates_only')"
+                  [class.bg-slate-900]="analysisNameMode === 'duplicates_only'"
+                  [class.text-white]="analysisNameMode === 'duplicates_only'"
+                  [class.bg-white]="analysisNameMode !== 'duplicates_only'"
+                  [class.text-slate-600]="analysisNameMode !== 'duplicates_only'"
+                  class="flex-1 rounded border border-slate-200 py-1 text-[10px] font-bold transition shadow-2xs">
+                  Dups Only
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 

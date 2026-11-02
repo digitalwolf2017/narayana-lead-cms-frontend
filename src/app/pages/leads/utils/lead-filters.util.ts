@@ -9,6 +9,14 @@ export function normalizePhone(phone?: string): string {
 }
 
 /**
+ * Normalizes lead names for accurate deduplication (lowercase, trimmed, collapsed whitespace).
+ */
+export function normalizeName(name?: string): string {
+  if (!name) return '';
+  return name.trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+/**
  * Detects if a lead is a dummy or test record based on common keywords and test numbers.
  */
 export function isTestLead(lead: LeadItem, testKeyword = 'test'): boolean {
@@ -42,6 +50,20 @@ export function computePhoneCounts(leads: LeadItem[]): Map<string, number> {
     const p = normalizePhone(lead.phone);
     if (p) {
       counts.set(p, (counts.get(p) || 0) + 1);
+    }
+  }
+  return counts;
+}
+
+/**
+ * Computes a frequency map of normalized names across a lead list.
+ */
+export function computeNameCounts(leads: LeadItem[]): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const lead of leads) {
+    const n = normalizeName(lead.name);
+    if (n) {
+      counts.set(n, (counts.get(n) || 0) + 1);
     }
   }
   return counts;

@@ -134,10 +134,47 @@
                   </svg>
                 </div>
                 @if (duplicatePhoneCount > 0 && phoneFilterMode === 'all') {
-                  <span class="hidden xl:inline-flex rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold text-amber-700 border border-amber-200" title="{{ duplicatePhoneCount }} records have repeated phone numbers">
+                  <span class="hidden xl:inline-flex shrink-0 whitespace-nowrap rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold text-amber-700 border border-amber-200" title="{{ duplicatePhoneCount }} records have repeated phone numbers">
                     {{ duplicatePhoneCount }} dups
                   </span>
                 }
+              </div>
+
+              <!-- NAME DUPLICATE SELECTOR -->
+              <div class="flex items-center gap-1">
+                <div class="relative inline-flex items-center">
+                  <select [ngModel]="nameFilterMode" (ngModelChange)="setNameFilterMode($event)"
+                    class="h-8.5 appearance-none rounded-lg border border-slate-200 bg-white pl-2.5 pr-7 text-xs font-semibold text-slate-700 shadow-2xs outline-none transition hover:bg-slate-50 focus:border-[#8c7ae6] focus:ring-1 focus:ring-[#8c7ae6]/20">
+                    <option value="all">Name: All</option>
+                    <option value="unique">Name: Unique Only</option>
+                    <option value="duplicates_only">Name: Duplicates Only</option>
+                  </select>
+                  <svg class="pointer-events-none absolute right-2 h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+                @if (duplicateNameCount > 0 && nameFilterMode === 'all') {
+                  <span class="hidden xl:inline-flex shrink-0 whitespace-nowrap rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold text-amber-700 border border-amber-200" title="{{ duplicateNameCount }} records have repeated names">
+                    {{ duplicateNameCount }} dups
+                  </span>
+                }
+              </div>
+
+              <!-- SORT SELECTOR -->
+              <div class="flex items-center gap-1">
+                <div class="relative inline-flex items-center">
+                  <select [ngModel]="currentSortOption" (ngModelChange)="setSortOption($event)"
+                    class="h-8.5 appearance-none rounded-lg border border-slate-200 bg-white pl-2.5 pr-7 text-xs font-semibold text-slate-700 shadow-2xs outline-none transition hover:bg-slate-50 focus:border-[#8c7ae6] focus:ring-1 focus:ring-[#8c7ae6]/20">
+                    <option value="">Sort: Default</option>
+                    <option value="entrydate_desc">Date: Newest First</option>
+                    <option value="entrydate_asc">Date: Oldest First</option>
+                    <option value="name_asc">Name: A → Z</option>
+                    <option value="name_desc">Name: Z → A</option>
+                  </select>
+                  <svg class="pointer-events-none absolute right-2 h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+                  </svg>
+                </div>
               </div>
 
               <!-- RESET BUTTON -->
@@ -194,23 +231,108 @@
 
                 @if (isColumnsDropdownOpen) {
                 <div
-                  class="absolute right-0 z-30 mt-1.5 max-h-72 w-56 overflow-y-auto rounded-lg border border-slate-200 bg-white p-2 shadow-lg">
-                  <div class="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                    Visible Columns
+                  class="absolute right-0 z-30 mt-1.5 w-72 rounded-xl border border-slate-200 bg-white shadow-xl ring-1 ring-black/5 overflow-hidden">
+                  
+                  <!-- HEADER -->
+                  <div class="border-b border-slate-100 bg-slate-50/70 px-3 py-2 flex items-center justify-between gap-2">
+                    <div class="min-w-0 flex-1">
+                      <div class="text-xs font-bold text-slate-800">Customize Columns</div>
+                      <div class="text-[10px] text-slate-400 truncate">Drag to reorder • Check to toggle</div>
+                    </div>
+                    <span class="inline-flex shrink-0 items-center whitespace-nowrap rounded-md bg-indigo-50 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-700 border border-indigo-100/80">
+                      {{ visibleColumnCount }} visible
+                    </span>
                   </div>
-                  <div class="space-y-0.5">
-                    @for (col of columns; track col.key) {
-                    <label
-                      class="flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-xs text-slate-700 hover:bg-slate-50">
-                      <input type="checkbox" [checked]="col.visible" (change)="toggleColumn(col.key)"
-                        class="h-3.5 w-3.5 rounded border-slate-300 text-slate-900 focus:ring-slate-900" />
-                      <span class="font-medium">{{ col.label }}</span>
-                    </label>
+
+                  <!-- QUICK ACTIONS -->
+                  <div class="flex items-center justify-between border-b border-slate-100 px-3 py-1.5 bg-white text-[11px]">
+                    <div class="flex items-center gap-2">
+                      <button type="button" (click)="toggleAllColumns(true)" class="font-semibold text-indigo-600 hover:text-indigo-800 transition">
+                        Show all
+                      </button>
+                      <span class="text-slate-300">•</span>
+                      <button type="button" (click)="toggleAllColumns(false)" class="font-semibold text-slate-500 hover:text-slate-700 transition">
+                        Hide all
+                      </button>
+                    </div>
+                    <button type="button" (click)="resetColumnOrder()" class="text-[10px] font-semibold text-slate-400 hover:text-slate-600 transition" title="Reset to original column order">
+                      Reset order
+                    </button>
+                  </div>
+
+                  <!-- DRAGGABLE COLUMN LIST -->
+                  <div class="max-h-80 overflow-y-auto p-1.5 space-y-1">
+                    @for (col of columns; track col.key; let idx = $index) {
+                    <div
+                      draggable="true"
+                      (dragstart)="onColumnDragStart($event, idx)"
+                      (dragover)="onColumnDragOver($event, idx)"
+                      (dragleave)="onColumnDragLeave($event, idx)"
+                      (drop)="onColumnDrop($event, idx)"
+                      (dragend)="onColumnDragEnd()"
+                      class="group/item flex items-center justify-between gap-1.5 rounded-lg border px-2 py-1.5 text-xs transition select-none"
+                      [class.bg-indigo-50]="dragOverColIndex === idx"
+                      [class.border-indigo-400]="dragOverColIndex === idx"
+                      [class.ring-2]="dragOverColIndex === idx"
+                      [class.ring-indigo-200]="dragOverColIndex === idx"
+                      [class.opacity-40]="draggedColIndex === idx"
+                      [class.border-dashed]="draggedColIndex === idx"
+                      [class.bg-white]="dragOverColIndex !== idx && col.visible"
+                      [class.border-slate-200]="dragOverColIndex !== idx && col.visible"
+                      [class.bg-slate-50/70]="dragOverColIndex !== idx && !col.visible"
+                      [class.border-slate-100]="dragOverColIndex !== idx && !col.visible"
+                      [class.hover:border-slate-300]="dragOverColIndex !== idx">
+
+                      <!-- LEFT: DRAG HANDLE + CHECKBOX + LABEL -->
+                      <div class="flex items-center gap-2 min-w-0 flex-1 cursor-grab active:cursor-grabbing">
+                        <!-- DRAG HANDLE ICON -->
+                        <span class="text-slate-400 group-hover/item:text-slate-700 transition cursor-grab active:cursor-grabbing shrink-0" title="Drag to reorder">
+                          <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
+                            <circle cx="8" cy="6" r="1.5"/>
+                            <circle cx="16" cy="6" r="1.5"/>
+                            <circle cx="8" cy="12" r="1.5"/>
+                            <circle cx="16" cy="12" r="1.5"/>
+                            <circle cx="8" cy="18" r="1.5"/>
+                            <circle cx="16" cy="18" r="1.5"/>
+                          </svg>
+                        </span>
+
+                        <!-- CHECKBOX -->
+                        <input type="checkbox" [checked]="col.visible" (change)="toggleColumn(col.key)" (click)="$event.stopPropagation()"
+                          class="h-3.5 w-3.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer" />
+
+                        <!-- LABEL -->
+                        <span class="truncate font-medium text-xs" [class.text-slate-800]="col.visible" [class.text-slate-400]="!col.visible">
+                          {{ col.label }}
+                        </span>
+                      </div>
+
+                      <!-- RIGHT: UP/DOWN BUTTONS (FOR QUICK/ACCESSIBLE REORDERING) -->
+                      <div class="flex items-center gap-0.5 shrink-0 opacity-60 group-hover/item:opacity-100 transition">
+                        <button type="button" (click)="moveColumn(idx, 'up', $event)" [disabled]="idx === 0"
+                          class="rounded p-0.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700 disabled:opacity-20 disabled:hover:bg-transparent disabled:hover:text-slate-400 transition"
+                          title="Move column up">
+                          <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
+                          </svg>
+                        </button>
+                        <button type="button" (click)="moveColumn(idx, 'down', $event)" [disabled]="idx === columns.length - 1"
+                          class="rounded p-0.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700 disabled:opacity-20 disabled:hover:bg-transparent disabled:hover:text-slate-400 transition"
+                          title="Move column down">
+                          <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
+                      </div>
+
+                    </div>
                     }
                   </div>
-                  <div class="mt-2 border-t border-slate-100 pt-2">
+
+                  <!-- FOOTER: RESET WIDTHS -->
+                  <div class="border-t border-slate-100 bg-slate-50/50 p-2">
                     <button type="button" (click)="resetColWidths()"
-                      class="flex w-full items-center justify-center gap-1.5 rounded py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">
+                      class="flex w-full items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white py-1.5 text-xs font-semibold text-slate-600 shadow-2xs hover:bg-slate-50 hover:text-slate-900 transition">
                       <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round"
                           d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -218,6 +340,7 @@
                       Reset Column Widths
                     </button>
                   </div>
+
                 </div>
                 }
               </div>
@@ -259,11 +382,19 @@
               } @else if (phoneFilterMode === 'duplicates_only') {
                 <span class="text-amber-700 font-medium"> • Showing only duplicate phone records</span>
               }
+              @if (nameFilterMode === 'unique') {
+                <span class="text-indigo-700 font-medium"> • Name deduplicated (unique only)</span>
+              } @else if (nameFilterMode === 'duplicates_only') {
+                <span class="text-amber-700 font-medium"> • Showing only duplicate name records</span>
+              }
+              @if (sortKey) {
+                <span class="text-indigo-700 font-medium"> • Sorted by {{ getSortLabel() }}</span>
+              }
             </span>
           </div>
           <button type="button" (click)="clearFrontendFilters()"
             class="text-[11px] font-semibold text-[#8c7ae6] hover:underline">
-            Clear frontend filters
+            Clear filters
           </button>
         </div>
         }
@@ -275,8 +406,29 @@
               <tr>
                 @for (col of visibleColumns; track col.key) {
                 <th [style.width.px]="colWidths[col.key]" [style.minWidth.px]="colWidths[col.key]"
-                  class="relative group/th select-none px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 overflow-hidden text-ellipsis whitespace-nowrap border-r border-slate-200/60">
-                  <span>{{ col.label }}</span>
+                  (click)="toggleSort(col.key)"
+                  [class.bg-indigo-50/70]="sortKey === col.key"
+                  [class.text-indigo-900]="sortKey === col.key"
+                  class="relative group/th select-none px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 overflow-hidden text-ellipsis whitespace-nowrap border-r border-slate-200/60 cursor-pointer hover:bg-slate-100 hover:text-slate-800 transition-colors"
+                  title="Click to sort by {{ col.label }}">
+                  <div class="flex items-center justify-between gap-1 pr-1.5">
+                    <span class="truncate">{{ col.label }}</span>
+                    @if (sortKey === col.key) {
+                      @if (sortOrder === 'asc') {
+                        <svg class="h-3 w-3 text-indigo-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
+                        </svg>
+                      } @else if (sortOrder === 'desc') {
+                        <svg class="h-3 w-3 text-indigo-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      }
+                    } @else {
+                      <svg class="h-3 w-3 text-slate-300 opacity-0 group-hover/th:opacity-100 shrink-0 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                      </svg>
+                    }
+                  </div>
                   <div
                     class="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize flex justify-end items-center group-hover/th:bg-slate-300/30 hover:!bg-indigo-500 z-10 transition-colors"
                     (mousedown)="onResizeStart($event, col.key)" title="Drag to resize">
@@ -311,11 +463,11 @@
               <tr>
                 <td [attr.colspan]="visibleColumnCount" class="py-10 text-center">
                   <div class="flex flex-col items-center justify-center">
-                    <p class="text-xs font-semibold text-slate-700">No leads match frontend filters</p>
-                    <p class="text-[11px] text-slate-400 mt-0.5">All leads on this page were filtered out by your "Test" or "Phone Duplicate" filters.</p>
+                    <p class="text-xs font-semibold text-slate-700">No leads match filters</p>
+                    <p class="text-[11px] text-slate-400 mt-0.5">All leads on this page were filtered out by your "Test", "Phone Duplicate", or "Name Duplicate" filters.</p>
                     <button type="button" (click)="clearFrontendFilters()"
                       class="mt-3 inline-flex items-center gap-1 rounded-lg bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-[#7158e2] hover:bg-indigo-100 transition">
-                      Clear Frontend Filters
+                      Clear filters
                     </button>
                   </div>
                 </td>
@@ -327,34 +479,40 @@
                 @switch (col.key) {
                 @case ('id') {
                 <td class="px-2.5 py-1.5">
-                  <span class="inline-block px-1 py-0.5 rounded bg-slate-100 text-[10px] font-bold text-slate-600">
+                  <span class="inline-block px-1 py-0.5 rounded bg-slate-100 text-[11px] font-bold text-slate-600">
                     #{{ lead.id }}
                   </span>
                 </td>
                 }
                 @case ('entrydate') {
-                <td class="whitespace-nowrap px-2.5 py-1.5 text-[11px] font-medium text-slate-600">
+                <td class="whitespace-nowrap px-2.5 py-1.5 text-xs font-medium text-slate-600">
                   {{ lead.entrydate }}
                 </td>
                 }
                 @case ('name') {
-                <td class="whitespace-nowrap px-2.5 py-1.5 text-xs font-semibold text-slate-800">
+                <td class="whitespace-nowrap px-2.5 py-1.5 text-[13px] font-semibold text-slate-800">
                   <div class="flex items-center gap-1.5">
                     <span>{{ lead.name }}</span>
                     @if (isLeadTest(lead)) {
-                      <span class="inline-flex items-center rounded bg-rose-50 px-1 py-0.2 text-[9px] font-bold text-rose-600 border border-rose-200" title="Contains test keyword">
+                      <span class="inline-flex items-center rounded bg-rose-50 px-1 py-0.2 text-[10px] font-bold text-rose-600 border border-rose-200" title="Contains test keyword">
                         Test
+                      </span>
+                    }
+                    @if (getNameDuplicateCount(lead) > 1) {
+                      <span class="inline-flex items-center rounded-md bg-amber-50 px-1.5 py-0.2 text-[10px] font-bold text-amber-700 border border-amber-200"
+                        title="This name appears {{ getNameDuplicateCount(lead) }} times on this page">
+                        {{ getNameDuplicateCount(lead) }}x
                       </span>
                     }
                   </div>
                 </td>
                 }
                 @case ('phone') {
-                <td class="whitespace-nowrap px-2.5 py-1.5 text-xs font-medium text-slate-700">
+                <td class="whitespace-nowrap px-2.5 py-1.5 text-[13px] font-medium text-slate-700">
                   <div class="flex items-center gap-1.5">
                     <span>{{ lead.phone }}</span>
                     @if (getPhoneDuplicateCount(lead) > 1) {
-                      <span class="inline-flex items-center rounded-md bg-amber-50 px-1.5 py-0.2 text-[9px] font-bold text-amber-700 border border-amber-200"
+                      <span class="inline-flex items-center rounded-md bg-amber-50 px-1.5 py-0.2 text-[10px] font-bold text-amber-700 border border-amber-200"
                         title="This phone number appears {{ getPhoneDuplicateCount(lead) }} times on this page">
                         {{ getPhoneDuplicateCount(lead) }}x
                       </span>
@@ -364,7 +522,7 @@
                 }
                 @case ('parent_email') {
                 <td class="px-2.5 py-1.5 overflow-hidden">
-                  <p class="truncate text-xs text-slate-600" [title]="lead.parent_email">
+                  <p class="truncate text-[13px] text-slate-600" [title]="lead.parent_email">
                     {{ lead.parent_email || '—' }}
                   </p>
                 </td>
@@ -374,12 +532,12 @@
                   @if (lead.otp_validation === 'VALID' || lead.otp_validation === 'Valid' || lead.otp_validation ===
                   'Verified' || lead.otp_validation === '1') {
                   <span
-                    class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700">
+                    class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">
                     <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span> {{ lead.otp_validation }}
                   </span>
                   } @else {
                   <span
-                    class="inline-flex items-center gap-1 rounded-full bg-orange-50 px-1.5 py-0.5 text-[9px] font-bold text-orange-600">
+                    class="inline-flex items-center gap-1 rounded-full bg-orange-50 px-1.5 py-0.5 text-[10px] font-bold text-orange-600">
                     <span class="h-1.5 w-1.5 rounded-full bg-orange-500"></span> {{ lead.otp_validation || 'INVALID' }}
                   </span>
                   }
@@ -388,16 +546,16 @@
                 @case ('utm_source') {
                 <td class="whitespace-nowrap px-2.5 py-1.5">
                   @if (lead.utm_source) {
-                  <span class="rounded bg-slate-100 px-1 py-0.5 text-[10px] font-medium text-slate-700">
+                  <span class="rounded bg-slate-100 px-1 py-0.5 text-[11px] font-medium text-slate-700">
                     {{ lead.utm_source }}
                   </span>
                   } @else {
-                  <span class="text-xs text-slate-400">—</span>
+                  <span class="text-[13px] text-slate-400">—</span>
                   }
                 </td>
                 }
                 @default {
-                <td class="whitespace-nowrap px-2.5 py-1.5 text-xs text-slate-600">
+                <td class="whitespace-nowrap px-2.5 py-1.5 text-[13px] text-slate-600">
                   {{ getCellValue(lead, col.key) }}
                 </td>
                 }
@@ -457,6 +615,7 @@
         [initialDateTo]="dateTo"
         [initialExcludeTest]="excludeTestLeads"
         [initialPhoneMode]="phoneFilterMode"
+        [initialNameMode]="nameFilterMode"
         (close)="closeCustomAnalysis()"
         (applyFilters)="onApplyCustomAnalysisFilters($event)" />
 

@@ -63,4 +63,5 @@ export interface CustomAnalysisFilterParams {
   dateTo?: string;
   excludeTest: boolean;
   phoneMode: 'all' | 'unique' | 'duplicates_only';
+  nameMode?: 'all' | 'unique' | 'duplicates_only';
 }

@@ -33,8 +33,10 @@ import {
   CustomAnalysisFilterParams,
 } from './models/lead-analysis.model';
 import {
+  computeNameCounts,
   computePhoneCounts,
   isTestLead,
+  normalizeName,
   normalizePhone,
 } from './utils/lead-filters.util';
 import { LeadAnalyticsBarComponent } from './components/lead-analytics-bar/lead-analytics-bar.component';
@@ -104,13 +106,16 @@ export class LeadsComponent implements OnInit, OnDestroy {
   excludeTestLeads = false;
   testKeyword = 'test';
   phoneFilterMode: 'all' | 'unique' | 'duplicates_only' = 'all';
+  nameFilterMode: 'all' | 'unique' | 'duplicates_only' = 'all';
+  sortKey: string | null = null;
+  sortOrder: 'asc' | 'desc' | null = null;
   isFilterMenuOpen = false;
 
   // Analytics & Custom Analysis popup state
   isAnalyticsBarOpen = true;
   isCustomAnalysisOpen = false;
 
-  columns: ColumnConfig[] = [
+  readonly defaultColumns: ColumnConfig[] = [
     { key: 'id', label: 'ID', visible: true, optional: true },
     { key: 'entrydate', label: 'Entry Date', visible: true, optional: true },
     { key: 'name', label: 'Name', visible: true, optional: true },
@@ -133,6 +138,10 @@ export class LeadsComponent implements OnInit, OnDestroy {
     { key: 'redirect_from', label: 'Redirect From', visible: false, optional: true },
     { key: 'page_section', label: 'Page Section', visible: false, optional: true },
   ];
+
+  columns: ColumnConfig[] = this.defaultColumns.map((c) => ({ ...c }));
+  draggedColIndex: number | null = null;
+  dragOverColIndex: number | null = null;
 
   readonly defaultColWidths: Record<string, number> = {
     id: 65,
@@ -286,18 +295,143 @@ export class LeadsComponent implements OnInit, OnDestroy {
     try {
       const saved = localStorage.getItem(this.STORAGE_KEY);
       if (saved) {
-        const prefs: Record<string, boolean> = JSON.parse(saved);
-        this.columns.forEach((col) => {
-          if (prefs[col.key] !== undefined) col.visible = prefs[col.key];
-        });
+        const parsed = JSON.parse(saved);
+        if (parsed && Array.isArray(parsed.order)) {
+          const map = new Map(this.defaultColumns.map((c) => [c.key, { ...c }]));
+          const reordered: ColumnConfig[] = [];
+          for (const key of parsed.order) {
+            const col = map.get(key);
+            if (col) {
+              if (parsed.visibility && parsed.visibility[key] !== undefined) {
+                col.visible = Boolean(parsed.visibility[key]);
+              }
+              reordered.push(col);
+              map.delete(key);
+            }
+          }
+          // Append any remaining default columns that might not have been in saved order
+          for (const col of map.values()) {
+            if (parsed.visibility && parsed.visibility[col.key] !== undefined) {
+              col.visible = Boolean(parsed.visibility[col.key]);
+            }
+            reordered.push(col);
+          }
+          this.columns = reordered;
+        } else if (parsed && typeof parsed === 'object') {
+          // Legacy format: Record<string, boolean>
+          this.columns = this.defaultColumns.map((c) => ({
+            ...c,
+            visible: parsed[c.key] !== undefined ? Boolean(parsed[c.key]) : c.visible,
+          }));
+        }
       }
     } catch {}
   }
 
   private saveColumnPrefs(): void {
-    const prefs: Record<string, boolean> = {};
-    this.columns.forEach((c) => (prefs[c.key] = c.visible));
-    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(prefs));
+    try {
+      const prefs = {
+        order: this.columns.map((c) => c.key),
+        visibility: this.columns.reduce(
+          (acc, c) => {
+            acc[c.key] = c.visible;
+            return acc;
+          },
+          {} as Record<string, boolean>
+        ),
+      };
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(prefs));
+    } catch {}
+  }
+
+  onColumnDragStart(event: DragEvent, index: number): void {
+    this.draggedColIndex = index;
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', index.toString());
+    }
+  }
+
+  onColumnDragOver(event: DragEvent, index: number): void {
+    event.preventDefault();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'move';
+    }
+    if (this.draggedColIndex === null) return;
+    if (this.dragOverColIndex !== index) {
+      this.dragOverColIndex = index;
+      this.cdr.markForCheck();
+    }
+  }
+
+  onColumnDragLeave(event: DragEvent, index: number): void {
+    const target = event.currentTarget as HTMLElement;
+    const related = event.relatedTarget as Node | null;
+    if (!target.contains(related)) {
+      if (this.dragOverColIndex === index) {
+        this.dragOverColIndex = null;
+        this.cdr.markForCheck();
+      }
+    }
+  }
+
+  onColumnDrop(event: DragEvent, targetIndex: number): void {
+    event.preventDefault();
+    if (this.draggedColIndex === null || this.draggedColIndex === targetIndex) {
+      this.draggedColIndex = null;
+      this.dragOverColIndex = null;
+      return;
+    }
+
+    const item = this.columns.splice(this.draggedColIndex, 1)[0];
+    this.columns.splice(targetIndex, 0, item);
+
+    this.draggedColIndex = null;
+    this.dragOverColIndex = null;
+
+    this.saveColumnPrefs();
+    this.updateColumnCache();
+    this.cdr.markForCheck();
+  }
+
+  onColumnDragEnd(): void {
+    this.draggedColIndex = null;
+    this.dragOverColIndex = null;
+    this.cdr.markForCheck();
+  }
+
+  moveColumn(index: number, direction: 'up' | 'down', event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+      event.preventDefault();
+    }
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= this.columns.length) return;
+
+    const item = this.columns.splice(index, 1)[0];
+    this.columns.splice(targetIndex, 0, item);
+
+    this.saveColumnPrefs();
+    this.updateColumnCache();
+    this.cdr.markForCheck();
+  }
+
+  resetColumnOrder(): void {
+    this.columns = this.defaultColumns.map((c) => ({ ...c }));
+    this.saveColumnPrefs();
+    this.updateColumnCache();
+    this.toastService.success('Column order and visibility reset to default.');
+    this.cdr.markForCheck();
+  }
+
+  toggleAllColumns(selectAll: boolean): void {
+    this.columns.forEach((c) => (c.visible = selectAll));
+    if (!selectAll && this.columns.length > 0) {
+      this.columns[0].visible = true;
+    }
+    this.saveColumnPrefs();
+    this.updateColumnCache();
+    this.cdr.markForCheck();
   }
 
   onResizeStart(event: MouseEvent, colKey: string): void {
@@ -489,6 +623,16 @@ export class LeadsComponent implements OnInit, OnDestroy {
     return this.phoneCounts.get(p) || 0;
   }
 
+  get nameCounts(): Map<string, number> {
+    return computeNameCounts(this.leads);
+  }
+
+  getNameDuplicateCount(lead: LeadItem): number {
+    const n = normalizeName(lead.name);
+    if (!n) return 0;
+    return this.nameCounts.get(n) || 0;
+  }
+
   get displayedLeads(): LeadItem[] {
     let result = this.leads;
 
@@ -513,6 +657,52 @@ export class LeadsComponent implements OnInit, OnDestroy {
       });
     }
 
+    if (this.nameFilterMode === 'unique') {
+      const seenNames = new Set<string>();
+      result = result.filter((lead) => {
+        const n = normalizeName(lead.name);
+        if (!n) return true;
+        if (seenNames.has(n)) return false;
+        seenNames.add(n);
+        return true;
+      });
+    } else if (this.nameFilterMode === 'duplicates_only') {
+      const counts = this.nameCounts;
+      result = result.filter((lead) => {
+        const n = normalizeName(lead.name);
+        return n ? (counts.get(n) || 0) > 1 : false;
+      });
+    }
+
+    if (this.sortKey && this.sortOrder) {
+      const key = this.sortKey;
+      const orderMultiplier = this.sortOrder === 'asc' ? 1 : -1;
+
+      result = [...result].sort((a, b) => {
+        if (key === 'entrydate') {
+          const timeA = a.entrydate ? new Date(a.entrydate.replace(' ', 'T')).getTime() || 0 : 0;
+          const timeB = b.entrydate ? new Date(b.entrydate.replace(' ', 'T')).getTime() || 0 : 0;
+          return (timeA - timeB) * orderMultiplier;
+        }
+
+        if (key === 'id') {
+          const idA = Number(a.id) || 0;
+          const idB = Number(b.id) || 0;
+          return (idA - idB) * orderMultiplier;
+        }
+
+        const valA = (this.getCellValue(a, key) || (a as unknown as Record<string, unknown>)[key] || '')
+          .toString()
+          .trim()
+          .toLowerCase();
+        const valB = (this.getCellValue(b, key) || (b as unknown as Record<string, unknown>)[key] || '')
+          .toString()
+          .trim()
+          .toLowerCase();
+        return valA.localeCompare(valB, undefined, { numeric: true, sensitivity: 'base' }) * orderMultiplier;
+      });
+    }
+
     return result;
   }
 
@@ -531,8 +721,24 @@ export class LeadsComponent implements OnInit, OnDestroy {
     return dupCount;
   }
 
+  get duplicateNameCount(): number {
+    const counts = this.nameCounts;
+    let dupCount = 0;
+    for (const count of counts.values()) {
+      if (count > 1) {
+        dupCount += count;
+      }
+    }
+    return dupCount;
+  }
+
   get hasActiveFrontendFilters(): boolean {
-    return this.excludeTestLeads || this.phoneFilterMode !== 'all';
+    return (
+      this.excludeTestLeads ||
+      this.phoneFilterMode !== 'all' ||
+      this.nameFilterMode !== 'all' ||
+      this.sortKey !== null
+    );
   }
 
   toggleExcludeTestLeads(): void {
@@ -545,9 +751,59 @@ export class LeadsComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
+  setNameFilterMode(mode: 'all' | 'unique' | 'duplicates_only'): void {
+    this.nameFilterMode = mode;
+    this.cdr.markForCheck();
+  }
+
+  get currentSortOption(): string {
+    if (!this.sortKey || !this.sortOrder) return '';
+    return `${this.sortKey}_${this.sortOrder}`;
+  }
+
+  setSortOption(option: string): void {
+    if (!option) {
+      this.sortKey = null;
+      this.sortOrder = null;
+    } else {
+      const [key, order] = option.split('_');
+      this.sortKey = key;
+      this.sortOrder = (order as 'asc' | 'desc') || 'asc';
+    }
+    this.cdr.markForCheck();
+  }
+
+  toggleSort(key: string): void {
+    if (this.sortKey !== key) {
+      this.sortKey = key;
+      this.sortOrder = key === 'entrydate' ? 'desc' : 'asc';
+    } else if (this.sortOrder === 'asc') {
+      this.sortOrder = 'desc';
+    } else if (this.sortOrder === 'desc') {
+      this.sortKey = null;
+      this.sortOrder = null;
+    } else {
+      this.sortOrder = 'asc';
+    }
+    this.cdr.markForCheck();
+  }
+
+  getSortLabel(): string {
+    if (!this.sortKey || !this.sortOrder) return '';
+    const col = this.columns.find((c) => c.key === this.sortKey);
+    const label = col ? col.label : this.sortKey;
+    if (this.sortKey === 'entrydate') {
+      return this.sortOrder === 'desc' ? `${label} (Newest first)` : `${label} (Oldest first)`;
+    }
+    return this.sortOrder === 'asc' ? `${label} (A → Z)` : `${label} (Z → A)`;
+  }
+
   clearFrontendFilters(): void {
     this.excludeTestLeads = false;
     this.phoneFilterMode = 'all';
+    this.nameFilterMode = 'all';
+    this.sortKey = null;
+    this.sortOrder = null;
     this.cdr.markForCheck();
   }
 
@@ -571,6 +827,7 @@ export class LeadsComponent implements OnInit, OnDestroy {
     if (params.dateTo) this.dateTo = params.dateTo;
     this.excludeTestLeads = params.excludeTest;
     this.phoneFilterMode = params.phoneMode;
+    if (params.nameMode) this.nameFilterMode = params.nameMode;
     this.currentPage = 1;
     this.clearPageCache();
     this.fetchLeads();
@@ -584,6 +841,9 @@ export class LeadsComponent implements OnInit, OnDestroy {
     this.dateTo = '';
     this.excludeTestLeads = false;
     this.phoneFilterMode = 'all';
+    this.nameFilterMode = 'all';
+    this.sortKey = null;
+    this.sortOrder = null;
     this.currentPage = 1;
     this.clearPageCache();
     this.fetchLeads();

@@ -22,8 +22,10 @@ import {
   CustomAnalysisTimeframe,
 } from '../../models/lead-analysis.model';
 import {
+  computeNameCounts,
   isOtpVerified,
   isTestLead,
+  normalizeName,
   normalizePhone,
 } from '../../utils/lead-filters.util';
 
@@ -44,6 +46,7 @@ export class CustomAnalysisModalComponent implements OnChanges {
   @Input() initialDateTo = '';
   @Input() initialExcludeTest = false;
   @Input() initialPhoneMode: 'all' | 'unique' | 'duplicates_only' = 'all';
+  @Input() initialNameMode: 'all' | 'unique' | 'duplicates_only' = 'all';
 
   @Output() close = new EventEmitter<void>();
   @Output() applyFilters = new EventEmitter<CustomAnalysisFilterParams>();
@@ -55,6 +58,7 @@ export class CustomAnalysisModalComponent implements OnChanges {
   analysisDayFilter: CustomAnalysisDayFilter = 'all';
   analysisExcludeTest = false;
   analysisPhoneMode: 'all' | 'unique' | 'duplicates_only' = 'all';
+  analysisNameMode: 'all' | 'unique' | 'duplicates_only' = 'all';
 
   readonly dayOptions: { key: CustomAnalysisDayFilter; short: string; label: string }[] = [
     { key: 'mon', short: 'Mon', label: 'Monday' },
@@ -76,6 +80,7 @@ export class CustomAnalysisModalComponent implements OnChanges {
       }
       this.analysisExcludeTest = this.initialExcludeTest;
       this.analysisPhoneMode = this.initialPhoneMode;
+      this.analysisNameMode = this.initialNameMode;
       this.cdr.markForCheck();
     }
   }
@@ -97,6 +102,7 @@ export class CustomAnalysisModalComponent implements OnChanges {
       this.analysisDayFilter !== 'all' ||
       this.analysisExcludeTest ||
       this.analysisPhoneMode !== 'all' ||
+      this.analysisNameMode !== 'all' ||
       !!this.analysisCustomDateFrom ||
       !!this.analysisCustomDateTo
     );
@@ -174,6 +180,11 @@ export class CustomAnalysisModalComponent implements OnChanges {
     this.cdr.markForCheck();
   }
 
+  setAnalysisNameMode(mode: 'all' | 'unique' | 'duplicates_only'): void {
+    this.analysisNameMode = mode;
+    this.cdr.markForCheck();
+  }
+
   onDimensionChange(): void {
     this.cdr.markForCheck();
   }
@@ -184,6 +195,7 @@ export class CustomAnalysisModalComponent implements OnChanges {
       dateTo: this.analysisCustomDateTo,
       excludeTest: this.analysisExcludeTest,
       phoneMode: this.analysisPhoneMode,
+      nameMode: this.analysisNameMode,
     });
     this.onClose();
   }
@@ -221,12 +233,13 @@ export class CustomAnalysisModalComponent implements OnChanges {
 
     const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-    // Pre-calculate phone occurrences for duplicate filtering
+    // Pre-calculate phone and name occurrences for duplicate filtering
     const phoneCounts = new Map<string, number>();
     for (const lead of baseLeads) {
       const p = normalizePhone(lead.phone);
       if (p) phoneCounts.set(p, (phoneCounts.get(p) || 0) + 1);
     }
+    const nameCounts = computeNameCounts(baseLeads);
 
     const filtered: LeadItem[] = [];
 
@@ -238,6 +251,11 @@ export class CustomAnalysisModalComponent implements OnChanges {
       const normPhone = normalizePhone(lead.phone);
       if (this.analysisPhoneMode === 'duplicates_only') {
         if (!normPhone || (phoneCounts.get(normPhone) || 0) <= 1) continue;
+      }
+
+      const normName = normalizeName(lead.name);
+      if (this.analysisNameMode === 'duplicates_only') {
+        if (!normName || (nameCounts.get(normName) || 0) <= 1) continue;
       }
 
       const rawDate = lead.entrydate ? lead.entrydate.split(' ')[0] : '';
@@ -273,6 +291,17 @@ export class CustomAnalysisModalComponent implements OnChanges {
         if (!p) return true;
         if (seen.has(p)) return false;
         seen.add(p);
+        return true;
+      });
+    }
+
+    if (this.analysisNameMode === 'unique') {
+      const seen = new Set<string>();
+      analyzedLeads = analyzedLeads.filter((l) => {
+        const n = normalizeName(l.name);
+        if (!n) return true;
+        if (seen.has(n)) return false;
+        seen.add(n);
         return true;
       });
     }
