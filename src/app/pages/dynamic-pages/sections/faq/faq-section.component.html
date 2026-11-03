@@ -123,7 +123,8 @@
       <div class="overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
 
         <!-- Card Header -->
-        <div class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div (click)="toggleFaq(item.id)"
+          class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between cursor-pointer select-none hover:bg-slate-100/70 transition">
 
           <div class="flex min-w-0 items-center gap-3">
 
@@ -153,21 +154,18 @@
 
           <div class="flex shrink-0 items-center gap-2">
 
-            <!-- Open / Close -->
-            <button type="button" (click)="toggleFaq(item.id)"
-              class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100">
-              {{
-              isFaqOpen(item.id)
-              ? 'Close'
-              : 'Open'
-              }}
-            </button>
-
             <!-- Remove -->
-            <button type="button" (click)="removeFaq(item.id)"
-              class="rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50">
+            <button type="button" (click)="$event.stopPropagation(); removeFaq(item.id)"
+              class="rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-50">
               Remove
             </button>
+
+            <!-- Arrow Indicator -->
+            <div class="h-8 w-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors">
+              <svg class="h-4 w-4 transition-transform duration-200" [class.rotate-180]="isFaqOpen(item.id)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
 
           </div>
 
@@ -176,7 +174,7 @@
         <!-- FAQ Content -->
         @if (isFaqOpen(item.id)) {
 
-        <div class="border-t border-slate-200 bg-white p-5">
+        <div class="border-t border-slate-200 bg-white p-5 animate-fadeIn">
 
           <div class="space-y-5">
 

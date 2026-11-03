@@ -2,6 +2,7 @@ import {
   Component,
   EventEmitter,
   Input,
+  OnInit,
   Output,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -14,15 +15,27 @@ export interface LimitedSeatsLogo {
   mediaId?: number | null;
 }
 
+export interface LimitedSeatsCard {
+  id: number;
+  title: string;
+  label: string;
+  value: string;
+  image: string;
+  mediaId?: number | null;
+}
+
 export interface LimitedSeatsConfig {
+  backgroundImage?: string;
+  backgroundMediaId?: number | null;
+  background_media_id?: number | null;
   image: string;
   mediaId?: number | null;
   feature_media_id?: number | null;
-  background_media_id?: number | null;
   heading: string;
   subHeading: string;
   buttonText: string;
-  logos: LimitedSeatsLogo[];
+  cards?: LimitedSeatsCard[];
+  logos?: LimitedSeatsLogo[];
   schoolName: string;
   numberOfSchools: string;
   isActive: boolean;
@@ -44,16 +57,37 @@ export interface LimitedSeatsConfig {
     }
   `,
 })
-export class LimitedSeatsComponent {
+export class LimitedSeatsComponent implements OnInit {
 
   @Input() limitedSeats: LimitedSeatsConfig = {
+    backgroundImage: '',
+    backgroundMediaId: null,
+    background_media_id: null,
     image: '',
-    heading: 'Limited Seats',
-    subHeading: '',
-    buttonText: 'Apply Now',
+    heading: 'Limited seats available for 2027-28 academic year.',
+    subHeading: 'Secure your spot today!',
+    buttonText: 'Download Brochure',
+    cards: [
+      {
+        id: 1,
+        title: 'Narayana Schools',
+        label: 'Pan India Campuses',
+        value: '300+',
+        image: '',
+        mediaId: null,
+      },
+      {
+        id: 2,
+        title: 'Student Body',
+        label: 'Enrolled Students',
+        value: '100,000+',
+        image: '',
+        mediaId: null,
+      },
+    ],
     logos: [],
-    schoolName: '',
-    numberOfSchools: '',
+    schoolName: 'Narayana Schools',
+    numberOfSchools: '300+',
     isActive: true,
     desktopActive: true,
     mobileActive: true,
@@ -64,168 +98,168 @@ export class LimitedSeatsComponent {
 
   isSectionOpen = false;
 
-  isContentOpen = true;
-  isLogosOpen = true;
-  isSchoolDetailsOpen = true;
+  activeSubSection: 'content' | 'cards' | null = 'content';
 
-  openLogoId: number | null = null;
+  get isContentOpen(): boolean {
+    return this.activeSubSection === 'content';
+  }
 
-  private nextLogoId = 1;
+  get isCardsOpen(): boolean {
+    return this.activeSubSection === 'cards';
+  }
+
+  openCardId: number | null = 1;
+
+  private nextCardId = 3;
+
+  ngOnInit(): void {
+    this.ensureCards();
+  }
+
+  ensureCards(): void {
+    if (!this.limitedSeats.cards || this.limitedSeats.cards.length === 0) {
+      this.limitedSeats.cards = [
+        {
+          id: 1,
+          title: this.limitedSeats.schoolName || 'Narayana Schools',
+          label: 'Pan India Campuses',
+          value: this.limitedSeats.numberOfSchools || '300+',
+          image: '',
+          mediaId: null,
+        },
+        {
+          id: 2,
+          title: 'Student Body',
+          label: 'Enrolled Students',
+          value: '100,000+',
+          image: '',
+          mediaId: null,
+        },
+      ];
+      this.nextCardId = 3;
+    } else {
+      const maxId = Math.max(...this.limitedSeats.cards.map((c) => c.id), 0);
+      this.nextCardId = maxId + 1;
+    }
+  }
 
   toggleSection(): void {
-    this.isSectionOpen =
-      !this.isSectionOpen;
+    this.isSectionOpen = !this.isSectionOpen;
   }
 
   toggleActive(): void {
-    this.limitedSeats.isActive =
-      !this.limitedSeats.isActive;
-
+    this.limitedSeats.isActive = !this.limitedSeats.isActive;
     this.emitChange();
   }
 
   toggleDesktop(): void {
-    this.limitedSeats.desktopActive =
-      !this.limitedSeats.desktopActive;
-
+    this.limitedSeats.desktopActive = !this.limitedSeats.desktopActive;
     this.emitChange();
   }
 
   toggleMobile(): void {
-    this.limitedSeats.mobileActive =
-      !this.limitedSeats.mobileActive;
-
+    this.limitedSeats.mobileActive = !this.limitedSeats.mobileActive;
     this.emitChange();
   }
 
   toggleContent(): void {
-    this.isContentOpen =
-      !this.isContentOpen;
+    this.activeSubSection = this.activeSubSection === 'content' ? null : 'content';
   }
 
-  toggleLogos(): void {
-    this.isLogosOpen =
-      !this.isLogosOpen;
+  toggleCards(): void {
+    this.activeSubSection = this.activeSubSection === 'cards' ? null : 'cards';
   }
 
-  toggleSchoolDetails(): void {
-    this.isSchoolDetailsOpen =
-      !this.isSchoolDetailsOpen;
+  toggleCard(cardId: number): void {
+    this.openCardId = this.openCardId === cardId ? null : cardId;
   }
 
-  toggleLogo(logoId: number): void {
-    this.openLogoId =
-      this.openLogoId === logoId
-        ? null
-        : logoId;
+  isCardOpen(cardId: number): boolean {
+    return this.openCardId === cardId;
   }
 
-  isLogoOpen(logoId: number): boolean {
-    return this.openLogoId === logoId;
-  }
-
-  addLogo(): void {
-    const newLogo: LimitedSeatsLogo = {
-      id: this.nextLogoId++,
-      name: '',
+  addCard(): void {
+    this.ensureCards();
+    const newCard: LimitedSeatsCard = {
+      id: this.nextCardId++,
+      title: '',
+      label: '',
+      value: '',
       image: '',
+      mediaId: null,
     };
 
-    this.limitedSeats.logos.push(newLogo);
-
-    this.openLogoId = newLogo.id;
+    this.limitedSeats.cards!.push(newCard);
+    this.activeSubSection = 'cards';
+    this.openCardId = newCard.id;
 
     this.emitChange();
   }
 
-  removeLogo(logoId: number): void {
-    this.limitedSeats.logos =
-      this.limitedSeats.logos.filter(
-        (logo) => logo.id !== logoId
-      );
+  removeCard(cardId: number): void {
+    if (!this.limitedSeats.cards) return;
+    this.limitedSeats.cards = this.limitedSeats.cards.filter(
+      (card) => card.id !== cardId
+    );
 
-    if (this.openLogoId === logoId) {
-      this.openLogoId =
-        this.limitedSeats.logos[0]?.id ?? null;
+    if (this.openCardId === cardId) {
+      this.openCardId = this.limitedSeats.cards[0]?.id ?? null;
     }
 
     this.emitChange();
   }
 
+  onBackgroundImageChange(image: string): void {
+    this.limitedSeats.backgroundImage = image;
+    this.emitChange();
+  }
+
+  onBackgroundMediaIdChange(mediaId: number | null): void {
+    this.limitedSeats.backgroundMediaId = mediaId;
+    this.limitedSeats.background_media_id = mediaId;
+    this.emitChange();
+  }
+
   onImageChange(image: string): void {
     this.limitedSeats.image = image;
-
     this.emitChange();
   }
 
   onMediaIdChange(mediaId: number | null): void {
     this.limitedSeats.mediaId = mediaId;
     this.limitedSeats.feature_media_id = mediaId;
-    this.limitedSeats.background_media_id = mediaId;
     this.emitChange();
   }
 
-  onLogoMediaIdChange(logoId: number, mediaId: number | null): void {
-    const logo = this.limitedSeats.logos.find((item) => item.id === logoId);
-    if (!logo) return;
-    logo.mediaId = mediaId;
+  onCardImageChange(cardId: number, image: string): void {
+    const card = this.limitedSeats.cards?.find((item) => item.id === cardId);
+    if (!card) return;
+    card.image = image;
     this.emitChange();
   }
 
-  onLogoImageChange(
-    logoId: number,
-    image: string
-  ): void {
-    const logo =
-      this.limitedSeats.logos.find(
-        (item) => item.id === logoId
-      );
-
-    if (!logo) {
-      return;
-    }
-
-    logo.image = image;
-
+  onCardMediaIdChange(cardId: number, mediaId: number | null): void {
+    const card = this.limitedSeats.cards?.find((item) => item.id === cardId);
+    if (!card) return;
+    card.mediaId = mediaId;
     this.emitChange();
   }
 
   emitChange(): void {
+    const firstCard = this.limitedSeats.cards?.[0];
+    if (firstCard) {
+      if (firstCard.title) this.limitedSeats.schoolName = firstCard.title;
+      if (firstCard.value) this.limitedSeats.numberOfSchools = firstCard.value;
+    }
+
     this.limitedSeatsChange.emit({
-      image: this.limitedSeats.image,
-      mediaId: this.limitedSeats.mediaId,
-      feature_media_id: this.limitedSeats.feature_media_id,
-      background_media_id: this.limitedSeats.background_media_id,
-
-      heading: this.limitedSeats.heading,
-
-      subHeading:
-        this.limitedSeats.subHeading,
-
-      buttonText:
-        this.limitedSeats.buttonText,
-
-      logos:
-        this.limitedSeats.logos.map(
-          (logo) => ({
-            ...logo,
-          })
-        ),
-
-      schoolName:
-        this.limitedSeats.schoolName,
-
-      numberOfSchools:
-        this.limitedSeats.numberOfSchools,
-
-      isActive:
-        this.limitedSeats.isActive,
-
-      desktopActive:
-        this.limitedSeats.desktopActive,
-
-      mobileActive:
-        this.limitedSeats.mobileActive,
+      ...this.limitedSeats,
+      cards: (this.limitedSeats.cards || []).map((card) => ({
+        ...card,
+      })),
+      logos: (this.limitedSeats.logos || []).map((logo) => ({
+        ...logo,
+      })),
     });
   }
 }

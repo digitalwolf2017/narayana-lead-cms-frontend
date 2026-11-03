@@ -41,18 +41,18 @@ export function buildAll12Sections(config: DynamicPageConfiguration): PageBuilde
   const s = config.sections as SectionConfig[];
 
   return [
-    buildHeaderSection(config.logos, s),
     buildBannerSection(config.banner as unknown as Record<string, unknown>, s),
-    buildClassesSection(s),
+    buildClassesSection(config.classesConfig, s),
     buildWhyUsSection((config.whyUs || {}) as Partial<WhyUsConfig>, s),
     buildCoursesSection((config.course || {}) as Partial<CourseConfig>, s),
+    buildFacilitiesSection((config.facilities || {}) as Partial<FacilitiesConfig>, s),
     buildRightSchoolSection((config.rightSchool || {}) as Partial<RightSchoolConfig>, s),
     buildAcademicResultsSection((config.academicResults || {}) as Partial<AcademicResultsConfig>, s),
-    buildImageSection((config.imageSection || {}) as Partial<ImageSectionConfig>, s),
     buildParentsSaySection((config.parentsSay || {}) as Partial<ParentsSayConfig>, s),
-    buildFacilitiesSection((config.facilities || {}) as Partial<FacilitiesConfig>, s),
     buildFaqSection((config.faq || {}) as Partial<FaqConfig>, s),
     buildLimitedSeatsSection((config.limitedSeatsConfig || {}) as Partial<LimitedSeatsConfig>, s),
+    buildHeaderSection(config.logos, s),
+    buildImageSection((config.imageSection || {}) as Partial<ImageSectionConfig>, s),
   ];
 }
 

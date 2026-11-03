@@ -144,3 +144,19 @@ textarea::placeholder {
   background-color: #574b90;
   transform: scale(0.98);
 }
+
+/* Accordion Smooth Reveal Animation */
+@keyframes accordionFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: accordionFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

@@ -3,6 +3,9 @@ import {
   Component,
   EventEmitter,
   Input,
+  OnInit,
+  OnChanges,
+  SimpleChanges,
   Output,
   inject,
 } from '@angular/core';
@@ -14,7 +17,7 @@ import { normalizeImageUrl } from '../../models/dynamic-page.model';
   standalone: true,
   templateUrl: './image-upload.component.html',
 })
-export class ImageUploadComponent {
+export class ImageUploadComponent implements OnInit, OnChanges {
   private readonly mediaService = inject(MediaService);
   private readonly cdr = inject(ChangeDetectorRef);
 
@@ -30,9 +33,78 @@ export class ImageUploadComponent {
   errorMessage = '';
   isDragging = false;
   isUploading = false;
+  isHydrating = false;
 
   selectedFileName = '';
   selectedFileSize = '';
+
+  ngOnInit(): void {
+    this.hydrateMissingImage();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['mediaId'] || changes['imagePreview']) {
+      this.hydrateMissingImage();
+    }
+  }
+
+  /**
+   * If a mediaId exists but imagePreview is empty, look up in cache or fetch from /backend/media/{id}
+   */
+  private hydrateMissingImage(): void {
+    const numericId = Number(this.mediaId);
+    if (!Number.isInteger(numericId) || numericId <= 0) {
+      return;
+    }
+
+    if (this.imagePreview) {
+      return;
+    }
+
+    // 1. Check in-memory MediaService cache
+    const cached = this.mediaService.getMedia(numericId);
+    if (cached && cached.public_url) {
+      this.imagePreview = cached.public_url;
+      this.imageChange.emit(this.imagePreview);
+      this.cdr.markForCheck();
+      return;
+    }
+
+    // 2. Fetch directly from backend media endpoint GET /api/v1/backend/media/{id}
+    if (this.isHydrating) return;
+    this.isHydrating = true;
+
+    this.mediaService.getMediaById(numericId).subscribe({
+      next: (res) => {
+        this.isHydrating = false;
+        if (res.success && res.data) {
+          const d = res.data as Record<string, unknown>;
+          const rawUrl = String(
+            d['public_url'] ??
+            d['url'] ??
+            d['file_url'] ??
+            d['path'] ??
+            d['relative_path'] ??
+            (d['media'] as Record<string, unknown>)?.['url'] ??
+            (d['media'] as Record<string, unknown>)?.['public_url'] ??
+            ''
+          ).trim();
+
+          if (rawUrl) {
+            const url = normalizeImageUrl(rawUrl);
+            this.imagePreview = url;
+            this.mediaService.registerMedia(numericId, url);
+            this.imageChange.emit(url);
+            this.cdr.markForCheck();
+          }
+        }
+      },
+      error: () => {
+        this.isHydrating = false;
+        this.cdr.markForCheck();
+      },
+    });
+  }
 
   // =========================================================
   // DRAG OVER
@@ -153,6 +225,7 @@ export class ImageUploadComponent {
         if (resolvedUrl) {
           this.imagePreview = resolvedUrl;
         }
+        this.mediaService.registerMedia(newMediaId, resolvedUrl || this.imagePreview);
         this.mediaIdChange.emit(newMediaId);
         this.imageChange.emit(this.imagePreview);
         this.fileChange.emit(file);

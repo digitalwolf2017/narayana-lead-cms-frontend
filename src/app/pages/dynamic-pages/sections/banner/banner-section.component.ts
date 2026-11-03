@@ -7,6 +7,14 @@ import {
 import { FormsModule } from '@angular/forms';
 import { ImageUploadComponent } from '../../shared/image-upload/image-upload.component';
 
+export interface BannerBullet {
+  id: number;
+  text: string;
+  show_desktop?: boolean;
+  show_mobile?: boolean;
+  sort_order?: number;
+}
+
 interface BannerStat {
   id: number;
   value: string;
@@ -16,15 +24,17 @@ interface BannerStat {
 export interface BannerConfig {
   subHeading: string;
   heading: string;
+  h1?: string;
+  bullets?: BannerBullet[];
   stats: BannerStat[];
-  buttonText: string;
-  buttonUrl: string;
+  buttonText?: string;
+  buttonUrl?: string;
   backgroundImage: string;
   mediaId?: number | null;
   desktop_background_media_id?: number | null;
   mobile_background_media_id?: number | null;
-  desktopActive: boolean;
-  mobileActive: boolean;
+  desktopActive?: boolean;
+  mobileActive?: boolean;
 }
 
 @Component({
@@ -44,8 +54,31 @@ export interface BannerConfig {
 export class BannerSectionComponent {
 
   @Input() banner: BannerConfig = {
-    subHeading: '',
-    heading: '',
+    subHeading: 'Empowering Education Since 1977',
+    heading: 'Welcome to Narayana Schools',
+    bullets: [
+      {
+        id: 1,
+        text: 'Technologically driven stress-free curriculum',
+        show_desktop: true,
+        show_mobile: true,
+        sort_order: 1,
+      },
+      {
+        id: 2,
+        text: "Asia's one of the largest educational conglomerates",
+        show_desktop: true,
+        show_mobile: true,
+        sort_order: 2,
+      },
+      {
+        id: 3,
+        text: 'Learning that leads to careers, not just certificates',
+        show_desktop: true,
+        show_mobile: true,
+        sort_order: 3,
+      },
+    ],
     stats: [
       {
         id: 1,
@@ -68,7 +101,7 @@ export class BannerSectionComponent {
         label: 'Learners All Over India',
       },
     ],
-    buttonText: '',
+    buttonText: 'Get Admission Fees Details',
     buttonUrl: '',
     backgroundImage: '',
     desktopActive: true,
@@ -81,14 +114,58 @@ export class BannerSectionComponent {
   isSectionOpen = false;
   isActive = true;
 
-  isContentOpen = true;
-  isStatisticsOpen = true;
-  isCtaOpen = false;
-  isBackgroundOpen = false;
+  activeSubSection: 'content' | 'statistics' | 'bullets' | 'cta' | 'background' | null = 'content';
+
+  get isContentOpen(): boolean {
+    return this.activeSubSection === 'content';
+  }
+
+  get isBulletsOpen(): boolean {
+    return this.activeSubSection === 'bullets';
+  }
+
+  get isStatisticsOpen(): boolean {
+    return this.activeSubSection === 'statistics';
+  }
+
+  get isCtaOpen(): boolean {
+    return this.activeSubSection === 'cta';
+  }
+
+  get isBackgroundOpen(): boolean {
+    return this.activeSubSection === 'background';
+  }
 
   openStatId: number | null = 1;
 
   private nextStatId = 5;
+  private nextBulletId = 4;
+
+  toggleBullets(): void {
+    this.activeSubSection = this.activeSubSection === 'bullets' ? null : 'bullets';
+  }
+
+  addBullet(): void {
+    if (!this.banner.bullets) {
+      this.banner.bullets = [];
+    }
+    const newBullet: BannerBullet = {
+      id: this.nextBulletId++,
+      text: '',
+      show_desktop: true,
+      show_mobile: true,
+      sort_order: this.banner.bullets.length + 1,
+    };
+    this.banner.bullets.push(newBullet);
+    this.activeSubSection = 'bullets';
+    this.emitChange();
+  }
+
+  removeBullet(bulletId: number): void {
+    if (!this.banner.bullets) return;
+    this.banner.bullets = this.banner.bullets.filter((b) => b.id !== bulletId);
+    this.emitChange();
+  }
 
   toggleSection(): void {
     this.isSectionOpen = !this.isSectionOpen;
@@ -115,23 +192,19 @@ export class BannerSectionComponent {
   }
 
   toggleContent(): void {
-    this.isContentOpen =
-      !this.isContentOpen;
+    this.activeSubSection = this.activeSubSection === 'content' ? null : 'content';
   }
 
   toggleStatistics(): void {
-    this.isStatisticsOpen =
-      !this.isStatisticsOpen;
+    this.activeSubSection = this.activeSubSection === 'statistics' ? null : 'statistics';
   }
 
   toggleCta(): void {
-    this.isCtaOpen =
-      !this.isCtaOpen;
+    this.activeSubSection = this.activeSubSection === 'cta' ? null : 'cta';
   }
 
   toggleBackground(): void {
-    this.isBackgroundOpen =
-      !this.isBackgroundOpen;
+    this.activeSubSection = this.activeSubSection === 'background' ? null : 'background';
   }
 
   toggleStat(statId: number): void {
@@ -153,9 +226,8 @@ export class BannerSectionComponent {
     };
 
     this.banner.stats.push(newStat);
-
+    this.activeSubSection = 'statistics';
     this.openStatId = newStat.id;
-
     this.emitChange();
   }
 
@@ -196,8 +268,15 @@ export class BannerSectionComponent {
       heading:
         this.banner.heading,
 
+      bullets:
+        (this.banner.bullets || []).map(
+          (b) => ({
+            ...b,
+          })
+        ),
+
       stats:
-        this.banner.stats.map(
+        (this.banner.stats || []).map(
           (stat) => ({
             ...stat,
           })

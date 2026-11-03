@@ -22,6 +22,7 @@ export interface WorkflowTarget {
   sections: SectionConfig[];
   logos: LogoConfig[];
   banner: unknown;
+  classesConfig?: unknown;
   whyUs: unknown;
   course: unknown;
   rightSchool: unknown;
@@ -56,6 +57,7 @@ export class DynamicPageWorkflowService {
     return buildAll12Sections({
       logos: ctx.logos,
       banner: ctx.banner as any,
+      classesConfig: ctx.classesConfig as any,
       whyUs: ctx.whyUs as any,
       course: ctx.course as any,
       rightSchool: ctx.rightSchool as any,
@@ -367,10 +369,74 @@ export class DynamicPageWorkflowService {
       return;
     }
 
+    const selectedRevision = ctx.revisions.find(
+      (r) => Number(r.id) === ctx.selectedRevisionId
+    );
+
+    if (selectedRevision && selectedRevision.status !== 'DRAFT') {
+      const existingDraft = ctx.revisions.find((r) => r.status === 'DRAFT');
+
+      if (existingDraft) {
+        ctx.confirmModal = {
+          show: true,
+          title: 'Switch to Draft Revision?',
+          message: `Version ${selectedRevision.version_no} is ${selectedRevision.status} and cannot be edited directly. Switch to Draft Version ${existingDraft.version_no} to save changes?`,
+          confirmText: 'Switch & Save',
+          cancelText: 'Cancel',
+          danger: false,
+          action: () => {
+            ctx.confirmModal.show = false;
+            ctx.selectedRevisionId = Number(existingDraft.id);
+            ctx.cdrDetectChanges();
+            this.saveSection(ctx, sectionKey, isToggle);
+          },
+        };
+        ctx.cdrDetectChanges();
+        return;
+      }
+
+      ctx.confirmModal = {
+        show: true,
+        title: 'Create New Draft Revision?',
+        message: `Version ${selectedRevision.version_no} is ${selectedRevision.status}. A new Draft revision must be created to make changes. Proceed to create a new Draft?`,
+        confirmText: 'Create Draft & Save',
+        cancelText: 'Cancel',
+        danger: false,
+        action: () => {
+          ctx.confirmModal.show = false;
+          ctx.savingSectionKey = sectionKey;
+          ctx.cdrDetectChanges();
+          this.revisionHandler
+            .createDraft(ctx.editingPageId!, selectedRevision)
+            .subscribe((res) => {
+              if (!res.success) {
+                ctx.savingSectionKey = null;
+                ctx.showToast('Draft Error', res.message || 'Failed to create draft revision.', ctx.editingPageId, 'error');
+                return;
+              }
+              const draftData = res.data as { revisions?: PageRevision[]; revision_id?: number; id?: number };
+              const draftRev = draftData.revisions?.find((r) => r.status === 'DRAFT') || draftData.revisions?.[0];
+              const newDraftId = Number(draftRev?.id || draftData.revision_id || draftData.id);
+
+              if (newDraftId) {
+                ctx.selectedRevisionId = newDraftId;
+                this.saveSection(ctx, sectionKey, isToggle);
+              } else {
+                ctx.savingSectionKey = null;
+                ctx.loadPageBuilderData();
+              }
+            });
+        },
+      };
+      ctx.cdrDetectChanges();
+      return;
+    }
+
     const all12Sections = this.compile12Sections(ctx);
     const singleSection = buildSingleSection(sectionKey, {
       logos: ctx.logos,
       banner: ctx.banner as any,
+      classesConfig: ctx.classesConfig as any,
       whyUs: ctx.whyUs as any,
       course: ctx.course as any,
       rightSchool: ctx.rightSchool as any,
@@ -404,10 +470,11 @@ export class DynamicPageWorkflowService {
               'Section Updated',
               isToggle
                 ? `${typeName} section is now ${stateText}.`
-                : `${typeName} section saved successfully.`,
+                : `${typeName} section saved to draft. (Publish version to update live site)`,
               ctx.editingPageId,
               'success'
             );
+            ctx.loadPageBuilderData();
           }
           ctx.cdrDetectChanges();
         },

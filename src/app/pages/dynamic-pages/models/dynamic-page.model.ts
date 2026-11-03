@@ -5,6 +5,7 @@ import { ParentsSayConfig } from '../sections/parents-say/parents-say.component'
 import { AcademicResultsConfig } from '../sections/academic-results/academic-results.component';
 import { RightSchoolConfig } from '../sections/right-school/right-school.component';
 import { CourseConfig } from '../sections/course/course.component';
+import { ClassesConfig } from '../sections/classes/classes.component';
 import { FaqConfig } from '../sections/faq/faq-section.component';
 import { LimitedSeatsConfig } from '../sections/limited-seats/limited-seats.component';
 
@@ -41,6 +42,7 @@ export interface DynamicPageConfiguration {
 
   sections: SectionConfig[];
 
+  classesConfig?: ClassesConfig;
   whyUs: WhyUsConfig;
   course: CourseConfig;
   rightSchool: RightSchoolConfig;
@@ -61,14 +63,34 @@ export interface LogoConfig {
   mobileActive: boolean;
 }
 
+export interface BannerBullet {
+  id: number;
+  text: string;
+  show_desktop?: boolean;
+  show_mobile?: boolean;
+  sort_order?: number;
+}
+
+export interface BannerStat {
+  id: number;
+  value: string;
+  label: string;
+}
+
 export interface BannerConfig {
   heading: string;
-  h1: string;
+  h1?: string;
   subHeading: string;
   backgroundImage: string;
   mediaId?: number | null;
   desktop_background_media_id?: number | null;
   mobile_background_media_id?: number | null;
+  bullets?: BannerBullet[];
+  stats: BannerStat[];
+  buttonText?: string;
+  buttonUrl?: string;
+  desktopActive?: boolean;
+  mobileActive?: boolean;
 }
 
 export interface SectionConfig {
@@ -92,4 +114,4 @@ export function normalizeImageUrl(url: string | null | undefined): string {
   }
   const cleanPath = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
   return `https://apiframework.wbnarayanaschools.in${cleanPath}`;
-}
+}

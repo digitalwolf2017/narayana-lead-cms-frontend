@@ -5,6 +5,7 @@ import {
   SectionConfig,
   normalizeImageUrl,
 } from './dynamic-page.model';
+import { ClassesConfig } from '../sections/classes/classes.component';
 import { WhyUsConfig } from '../sections/why-us/why-us';
 import { CourseConfig } from '../sections/course/course.component';
 import { RightSchoolConfig } from '../sections/right-school/right-school.component';
@@ -19,6 +20,7 @@ export interface DeserializerTargetState {
   sections: SectionConfig[];
   logos: LogoConfig[];
   banner: BannerConfig;
+  classesConfig?: ClassesConfig;
   whyUs: WhyUsConfig;
   course: CourseConfig;
   rightSchool: RightSchoolConfig;
@@ -156,9 +158,18 @@ export function populateSectionsFromBackend(
         if (c) {
           if (c['heading']) state.banner.heading = String(c['heading']);
           if (c['heading']) state.banner.h1 = String(c['heading']);
-          const bullets = c['bullets'];
-          if (Array.isArray(bullets) && bullets[0]?.text) {
-            state.banner.subHeading = String(bullets[0].text);
+          const rawBullets = c['bullets'];
+          if (Array.isArray(rawBullets) && rawBullets.length > 0) {
+            state.banner.bullets = rawBullets.map((b: Record<string, unknown>, idx: number) => ({
+              id: idx + 1,
+              text: String(b['text'] || ''),
+              show_desktop: Boolean(b['show_desktop'] ?? true),
+              show_mobile: Boolean(b['show_mobile'] ?? true),
+              sort_order: idx + 1,
+            }));
+            if (rawBullets[0]?.text) {
+              state.banner.subHeading = String(rawBullets[0].text);
+            }
           }
           const desktopMediaId =
             c['desktop_background_media_id'] ??
@@ -189,6 +200,39 @@ export function populateSectionsFromBackend(
       case 'CLASSES': {
         const sec = state.sections.find((x) => x.key === 'classes');
         if (sec) sec.active = isEnabled;
+        const c = s.content as Record<string, unknown>;
+        if (c && state.classesConfig) {
+          if (c['heading']) state.classesConfig.sectionHeading = String(c['heading']);
+          if (c['subheading']) state.classesConfig.sectionSubHeading = String(c['subheading']);
+          const programs = c['programs'];
+          if (Array.isArray(programs) && programs.length > 0) {
+            state.classesConfig.cards = programs.map((p: Record<string, unknown>, idx: number) => {
+              const desktopMediaId = p['desktop_media_id'] ?? p['media_id'];
+              const existingCard = state.classesConfig?.cards?.[idx];
+              const cardImg = resolveMediaUrl(desktopMediaId, mediaMap, existingCard?.image || '');
+              const features = (p['features'] as Array<Record<string, unknown>>) || [];
+              const feesCta = p['fees_cta'] as Record<string, unknown> | undefined;
+              const brochureCta = p['brochure_cta'] as Record<string, unknown> | undefined;
+
+              return {
+                id: idx + 1,
+                image: cardImg,
+                mediaId: desktopMediaId ? Number(desktopMediaId) : 1,
+                heading: String(p['name'] || existingCard?.heading || `Program ${idx + 1}`),
+                subHeading: String(p['class_range'] || existingCard?.subHeading || ''),
+                h3Heading: String(p['summary'] || existingCard?.h3Heading || ''),
+                listItems: features.map((f, fIdx) => ({
+                  id: fIdx + 1,
+                  text: String(f['text'] || ''),
+                })),
+                button1Text: String(feesCta?.['label'] || existingCard?.button1Text || 'Fee Structure'),
+                button1Url: String(feesCta?.['url'] || existingCard?.button1Url || ''),
+                button2Text: String(brochureCta?.['label'] || existingCard?.button2Text || 'Download Brochure'),
+                button2Url: String(brochureCta?.['url'] || existingCard?.button2Url || ''),
+              };
+            });
+          }
+        }
         break;
       }
 
@@ -203,7 +247,8 @@ export function populateSectionsFromBackend(
           if (Array.isArray(items) && items.length > 0) {
             state.whyUs.boxes = items.map((item: Record<string, unknown>, idx: number) => {
               const iconMediaId = item['icon_media_id'] ?? item['media_id'];
-              const iconUrl = resolveMediaUrl(iconMediaId, mediaMap, String(item['image'] ?? ''));
+              const existingBox = state.whyUs.boxes?.[idx];
+              const iconUrl = resolveMediaUrl(iconMediaId, mediaMap, existingBox?.image || '');
               return {
                 id: idx + 1,
                 heading: String(item['title'] || ''),
@@ -230,8 +275,9 @@ export function populateSectionsFromBackend(
               const points = (fg?.['points'] as Array<Record<string, unknown>>) || [];
               const courseMediaId1 = p['desktop_primary_media_id'] ?? p['media_id'] ?? p['image_media_id'];
               const courseMediaId2 = p['desktop_secondary_media_id'];
-              const courseImg = resolveMediaUrl(courseMediaId1, mediaMap, String(p['image'] ?? ''));
-              const courseImg2 = resolveMediaUrl(courseMediaId2, mediaMap);
+              const existingCourse = state.course.courses?.[idx];
+              const courseImg = resolveMediaUrl(courseMediaId1, mediaMap, existingCourse?.image1 || '');
+              const courseImg2 = resolveMediaUrl(courseMediaId2, mediaMap, existingCourse?.image2 || '');
               return {
                 id: idx + 1,
                 heading: String(p['name'] || ''),
@@ -275,7 +321,8 @@ export function populateSectionsFromBackend(
           if (Array.isArray(items) && items.length > 0) {
             state.rightSchool.cards = items.map((item: Record<string, unknown>, idx: number) => {
               const cardMediaId = item['media_id'] ?? item['image_media_id'];
-              const cardImg = resolveMediaUrl(cardMediaId, mediaMap, String(item['image'] ?? ''));
+              const existingCard = state.rightSchool.cards?.[idx];
+              const cardImg = resolveMediaUrl(cardMediaId, mediaMap, existingCard?.image || '');
               return {
                 id: idx + 1,
                 image: cardImg,
@@ -300,7 +347,8 @@ export function populateSectionsFromBackend(
           if (Array.isArray(results) && results.length > 0) {
             state.academicResults.results = results.map((r: Record<string, unknown>, idx: number) => {
               const studentMediaId = r['student_photo_media_id'] ?? r['media_id'] ?? r['photo_media_id'];
-              const studentImg = resolveMediaUrl(studentMediaId, mediaMap, String(r['image'] ?? ''));
+              const existingRes = state.academicResults.results?.[idx];
+              const studentImg = resolveMediaUrl(studentMediaId, mediaMap, existingRes?.image || '');
               return {
                 id: idx + 1,
                 image: studentImg,
@@ -346,7 +394,8 @@ export function populateSectionsFromBackend(
           if (Array.isArray(testimonials) && testimonials.length > 0) {
             state.parentsSay.reviews = testimonials.map((t: Record<string, unknown>, idx: number) => {
               const parentMediaId = t['parent_photo_media_id'] ?? t['media_id'] ?? t['avatar_media_id'] ?? t['photo_media_id'];
-              const parentImg = resolveMediaUrl(parentMediaId, mediaMap, String(t['image'] ?? ''));
+              const existingRev = state.parentsSay.reviews?.[idx];
+              const parentImg = resolveMediaUrl(parentMediaId, mediaMap, existingRev?.image || '');
               return {
                 id: idx + 1,
                 name: String(t['name'] || ''),
@@ -373,7 +422,8 @@ export function populateSectionsFromBackend(
           if (Array.isArray(items) && items.length > 0) {
             state.facilities.facilities = items.map((f: Record<string, unknown>, idx: number) => {
               const facMediaId = f['facility_photo_media_id'] ?? f['media_id'] ?? f['photo_media_id'];
-              const facImg = resolveMediaUrl(facMediaId, mediaMap, String(f['image'] ?? ''));
+              const existingFac = state.facilities.facilities?.[idx];
+              const facImg = resolveMediaUrl(facMediaId, mediaMap, existingFac?.image || '');
               return {
                 id: idx + 1,
                 image: facImg,
@@ -412,12 +462,46 @@ export function populateSectionsFromBackend(
         if (c) {
           if (c['availability_text']) state.limitedSeatsConfig.subHeading = String(c['availability_text']);
           if (c['urgency_text']) state.limitedSeatsConfig.heading = String(c['urgency_text']);
-          const bgMediaId = c['background_media_id'] ?? c['media_id'];
-          const featMediaId = c['feature_media_id'];
-          const mediaId = featMediaId ?? bgMediaId;
-          if (mediaId) {
-            state.limitedSeatsConfig.mediaId = Number(mediaId);
-            state.limitedSeatsConfig.image = resolveMediaUrl(mediaId, mediaMap, state.limitedSeatsConfig.image);
+          if (c['brochure_cta'] && typeof c['brochure_cta'] === 'object') {
+            const b = c['brochure_cta'] as Record<string, unknown>;
+            if (b['label']) state.limitedSeatsConfig.buttonText = String(b['label']);
+          }
+
+          // Background Media
+          const bgMediaId = c['background_media_id'] ?? c['desktop_background_media_id'];
+          if (bgMediaId) {
+            state.limitedSeatsConfig.backgroundMediaId = Number(bgMediaId);
+            state.limitedSeatsConfig.background_media_id = Number(bgMediaId);
+            state.limitedSeatsConfig.backgroundImage = resolveMediaUrl(bgMediaId, mediaMap, state.limitedSeatsConfig.backgroundImage || '');
+          }
+
+          // Feature Media (Left card)
+          const featMediaId = c['feature_media_id'] ?? c['media_id'];
+          if (featMediaId) {
+            state.limitedSeatsConfig.mediaId = Number(featMediaId);
+            state.limitedSeatsConfig.feature_media_id = Number(featMediaId);
+            state.limitedSeatsConfig.image = resolveMediaUrl(featMediaId, mediaMap, state.limitedSeatsConfig.image || '');
+          }
+
+          // Statistics / Cards
+          const stats = c['statistics'];
+          if (Array.isArray(stats) && stats.length > 0) {
+            state.limitedSeatsConfig.cards = stats.map((st: Record<string, unknown>, idx: number) => {
+              const logoMediaId = st['logo_media_id'] ? Number(st['logo_media_id']) : null;
+              const logoImg = logoMediaId ? resolveMediaUrl(logoMediaId, mediaMap, '') : '';
+              return {
+                id: idx + 1,
+                title: String(st['title'] || (idx === 0 ? 'Narayana Schools' : 'Student Body')),
+                label: String(st['label'] || (idx === 0 ? 'Pan India Campuses' : 'Enrolled Students')),
+                value: String(st['value'] || (idx === 0 ? '300+' : '100,000+')),
+                image: logoImg,
+                mediaId: logoMediaId,
+              };
+            });
+            if (state.limitedSeatsConfig.cards[0]) {
+              state.limitedSeatsConfig.schoolName = state.limitedSeatsConfig.cards[0].title;
+              state.limitedSeatsConfig.numberOfSchools = state.limitedSeatsConfig.cards[0].value;
+            }
           }
         }
         break;

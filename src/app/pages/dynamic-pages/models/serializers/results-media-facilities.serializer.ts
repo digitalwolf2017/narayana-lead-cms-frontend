@@ -43,12 +43,12 @@ export function buildImageSection(
   imageSec: Partial<ImageSectionConfig>,
   sections: SectionConfig[],
 ): PageBuilderSection {
-  const isEnabled = Boolean(sections.find((s) => s.key === 'image-section')?.active ?? true);
+  const isEnabled = Boolean(sections.find((s) => s.key === 'image-section')?.active ?? false);
   const u = imageSec as unknown as Record<string, unknown>;
   return {
     section_type: 'IMAGE_SECTION',
     is_enabled: isEnabled,
-    sort_order: 8,
+    sort_order: 12,
     content: {
       desktop_media_id: Number(u['desktop_media_id'] || u['mediaId'] || 1),
       desktop_alt: String(u['title'] || 'Campus Gallery Showcase'),
@@ -75,7 +75,7 @@ export function buildParentsSaySection(
   return {
     section_type: 'PARENTS_SAY',
     is_enabled: isEnabled,
-    sort_order: 9,
+    sort_order: 8,
     content: {
       heading: 'What Parents Say About Us',
       subheading: 'Real experiences and heartfelt stories from our parent community',
@@ -110,7 +110,7 @@ export function buildFacilitiesSection(
   return {
     section_type: 'FACILITIES',
     is_enabled: isEnabled,
-    sort_order: 10,
+    sort_order: 5,
     content: {
       heading: facilities.sectionHeading || 'World-Class Campus Facilities',
       subheading: facilities.sectionSubHeading || 'Equipped with contemporary infrastructure to support comprehensive education',

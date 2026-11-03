@@ -9,7 +9,7 @@ import { FormsModule } from '@angular/forms';
 
 import { HeaderSectionComponent } from '../sections/header/header-section.component';
 import { BannerSectionComponent } from '../sections/banner/banner-section.component';
-import { ClassesComponent } from '../sections/classes/classes.component';
+import { ClassesComponent, ClassesConfig } from '../sections/classes/classes.component';
 import { WhyUs, WhyUsConfig } from '../sections/why-us/why-us';
 import { FacilitiesComponent, FacilitiesConfig } from '../sections/facilities/facilities.component';
 import { ImageSectionComponent, ImageSectionConfig } from '../sections/image-section/image-section.component';
@@ -26,17 +26,20 @@ import { PageRevisionPanelComponent } from './page-revision-panel/page-revision-
 import {
   LogoConfig,
   SectionConfig,
+  normalizeImageUrl,
 } from '../models/dynamic-page.model';
 import {
   CreateDynamicPageRequest,
   PageBuilderSection,
   DynamicPageStatus,
 } from '../../../services/dynamic-page.service';
+import { MediaService } from '../../../services/media.service';
 import { populateSectionsFromBackend } from '../models/dynamic-page.deserializer';
 import { resetSectionsToDefaults } from '../models/dynamic-page-snapshot.util';
 import {
   getDefaultAcademicResults,
   getDefaultBanner,
+  getDefaultClasses,
   getDefaultCourse,
   getDefaultFacilities,
   getDefaultFaq,
@@ -99,6 +102,7 @@ export class AddDynamicPageComponent implements OnInit {
   private readonly workflowService = inject(DynamicPageWorkflowService);
   private readonly mediaHandler = inject(DynamicPageMediaHandler);
   private readonly revisionHandler = inject(DynamicPageRevisionHandler);
+  private readonly mediaService = inject(MediaService);
   private readonly toastService = inject(ToastService);
   private readonly cdr = inject(ChangeDetectorRef);
 
@@ -149,7 +153,8 @@ export class AddDynamicPageComponent implements OnInit {
   logos: LogoConfig[] = getDefaultLogos();
   banner = getDefaultBanner();
   sections: SectionConfig[] = getDefaultSections();
-  activeEditingSectionKey = 'header';
+  activeEditingSectionKey = '';
+  classesConfig: ClassesConfig = getDefaultClasses();
   whyUs: WhyUsConfig = getDefaultWhyUs();
   course: CourseConfig = getDefaultCourse();
   rightSchool: RightSchoolConfig = getDefaultRightSchool();
@@ -161,18 +166,62 @@ export class AddDynamicPageComponent implements OnInit {
   limitedSeatsConfig: LimitedSeatsConfig = getDefaultLimitedSeats();
 
   getActiveSectionTitle(): string {
-    return this.sections.find((s) => s.key === this.activeEditingSectionKey)?.title || 'Section';
+    return this.sections.find((s) => s.key === this.activeEditingSectionKey)?.title || '';
+  }
+
+  getActiveSectionsCount(): number {
+    return this.sections.filter((s) => s.active).length;
+  }
+
+  isSectionOpen(key: string): boolean {
+    return this.activeEditingSectionKey === key;
   }
 
   toggleSectionAccordion(key: string): void {
-    this.activeEditingSectionKey = this.activeEditingSectionKey === key ? '' : key;
+    if (this.activeEditingSectionKey === key) {
+      // If already open, close it
+      this.activeEditingSectionKey = '';
+    } else {
+      // Auto close any other open section and open this one
+      this.activeEditingSectionKey = key;
+      this.scrollToSection(key);
+    }
   }
 
   setActiveEditingSection(key: string): void {
-    this.activeEditingSectionKey = key;
+    if (this.activeEditingSectionKey === key) {
+      this.activeEditingSectionKey = '';
+    } else {
+      this.activeEditingSectionKey = key;
+      this.scrollToSection(key);
+    }
+  }
+
+  closeAllSections(): void {
+    this.activeEditingSectionKey = '';
+  }
+
+  expandFirstSection(): void {
+    if (this.sections.length > 0) {
+      this.activeEditingSectionKey = this.sections[0].key;
+      this.scrollToSection(this.sections[0].key);
+    }
+  }
+
+  scrollToSection(key: string): void {
+    setTimeout(() => {
+      const el = document.getElementById('section-accordion-' + key);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }, 100);
   }
 
   saveActiveSection(): void {
+    if (!this.activeEditingSectionKey) {
+      this.showToast('Notice', 'Please open a section to save.', null, 'warning');
+      return;
+    }
     this.saveSection(this.activeEditingSectionKey);
   }
 
@@ -338,6 +387,18 @@ export class AddDynamicPageComponent implements OnInit {
 
       const page = res.page;
       this.mediaDictionary = res.media;
+      if (res.media && typeof res.media === 'object') {
+        const rawMedia = res.media as Record<string, { id?: number | string; public_url?: string; url?: string }>;
+        for (const [k, v] of Object.entries(rawMedia)) {
+          if (v && typeof v === 'object') {
+            const url = v.public_url || v.url;
+            const mid = v.id ?? k;
+            if (url && mid) {
+              this.mediaService.registerMedia(mid, url);
+            }
+          }
+        }
+      }
       this.revisions = res.revisions ?? [];
 
       const draftRev = this.revisions.find((r) => r.status === 'DRAFT');
@@ -370,7 +431,75 @@ export class AddDynamicPageComponent implements OnInit {
     const revUnknown = rev as unknown as Record<string, unknown>;
     const sections = fallbackSections ?? (revUnknown?.['sections'] as PageBuilderSection[] | undefined);
     if (Array.isArray(sections) && sections.length > 0) {
-      populateSectionsFromBackend(sections, this, this.mediaDictionary);
+      const mergedMedia = {
+        ...(typeof this.mediaDictionary === 'object' && this.mediaDictionary ? (this.mediaDictionary as Record<string, unknown>) : {}),
+        ...this.mediaService.getAllMedia(),
+      };
+      populateSectionsFromBackend(sections, this, mergedMedia);
+      this.hydrateAllSectionsMedia(sections);
+    }
+  }
+
+  /**
+   * Scans draft section contents for any media_ids not yet returned in page media map,
+   * and fetches their public URLs from /backend/media/{id}
+   */
+  private hydrateAllSectionsMedia(sections: PageBuilderSection[]): void {
+    const mediaIdsToFetch: number[] = [];
+    const scan = (val: unknown) => {
+      if (!val || typeof val !== 'object') return;
+      if (Array.isArray(val)) {
+        for (const item of val) scan(item);
+        return;
+      }
+      for (const [k, v] of Object.entries(val as Record<string, unknown>)) {
+        if (
+          (k.toLowerCase().includes('media_id') || k.toLowerCase().includes('mediaid')) &&
+          typeof v === 'number' &&
+          Number.isInteger(v) &&
+          v > 0
+        ) {
+          if (!this.mediaService.getMedia(v)) {
+            mediaIdsToFetch.push(v);
+          }
+        } else if (typeof v === 'object') {
+          scan(v);
+        }
+      }
+    };
+
+    for (const sec of sections) {
+      scan(sec.content);
+    }
+
+    const uniqueIds = Array.from(new Set(mediaIdsToFetch));
+    if (uniqueIds.length === 0) return;
+
+    for (const id of uniqueIds) {
+      this.mediaService.getMediaById(id).subscribe({
+        next: (res) => {
+          if (res.success && res.data) {
+            const d = res.data as Record<string, unknown>;
+            const rawUrl = String(
+              d['public_url'] ??
+              d['url'] ??
+              d['file_url'] ??
+              d['path'] ??
+              d['relative_path'] ??
+              (d['media'] as Record<string, unknown>)?.['url'] ??
+              (d['media'] as Record<string, unknown>)?.['public_url'] ??
+              ''
+            ).trim();
+            if (rawUrl) {
+              const url = normalizeImageUrl(rawUrl);
+              this.mediaService.registerMedia(id, url);
+              const merged = { ...this.mediaService.getAllMedia() };
+              populateSectionsFromBackend(sections, this, merged);
+              this.cdr.detectChanges();
+            }
+          }
+        },
+      });
     }
   }
 
@@ -539,6 +668,12 @@ export class AddDynamicPageComponent implements OnInit {
   }
 
   saveSection(sectionKey: string, isToggle = false): void {
+    if (!sectionKey) {
+      if (!isToggle) {
+        this.showToast('Notice', 'Please open a section to save.', null, 'warning');
+      }
+      return;
+    }
     this.workflowService.saveSection(this as any, sectionKey, isToggle);
   }
 

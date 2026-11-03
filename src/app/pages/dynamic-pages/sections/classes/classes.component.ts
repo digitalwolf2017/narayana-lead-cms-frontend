@@ -7,12 +7,12 @@ import {
 import { FormsModule } from '@angular/forms';
 import { ImageUploadComponent } from '../../shared/image-upload/image-upload.component';
 
-interface ClassListItem {
+export interface ClassListItem {
   id: number;
   text: string;
 }
 
-interface ClassCard {
+export interface ClassCard {
   id: number;
   image: string;
   mediaId?: number | null;

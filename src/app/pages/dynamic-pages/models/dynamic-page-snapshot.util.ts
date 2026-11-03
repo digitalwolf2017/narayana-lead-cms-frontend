@@ -22,6 +22,7 @@ export function buildPageSnapshot(state: PageSnapshotState): Record<string, unkn
     classId: state.selectedClassId,
     logos: state.logos,
     banner: state.banner,
+    classesConfig: state.classesConfig,
     whyUs: state.whyUs,
     course: state.course,
     rightSchool: state.rightSchool,
@@ -47,6 +48,9 @@ export function restoreSectionsFromConfig(
   }
   if (config.banner) {
     target.banner = structuredClone(config.banner);
+  }
+  if (config.classesConfig) {
+    target.classesConfig = structuredClone(config.classesConfig);
   }
   if (config.whyUs) {
     target.whyUs = structuredClone(config.whyUs);
@@ -87,6 +91,9 @@ export function resetSectionsToDefaults(target: DeserializerTargetState): void {
   const config = getDefaultPageConfiguration();
   target.logos = config.logos;
   target.banner = config.banner;
+  if (config.classesConfig) {
+    target.classesConfig = config.classesConfig;
+  }
   target.whyUs = config.whyUs;
   target.course = config.course;
   target.rightSchool = config.rightSchool;

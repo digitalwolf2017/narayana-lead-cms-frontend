@@ -74,294 +74,279 @@
     </div>
   </div>
 
-    <!-- Main Content -->
-    <div class="overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+  <!-- Sub-Accordion 1: Content & Images -->
+  <div class="overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
 
-      <!-- Header -->
-      <div class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+    <!-- Header -->
+    <div (click)="toggleContent()"
+      class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between cursor-pointer select-none hover:bg-slate-100/70 transition">
 
-        <div>
-          <h3 class="text-base font-semibold text-slate-900">
-            Limited Seats Content
-          </h3>
+      <div>
+        <h3 class="text-base font-semibold text-slate-900">
+          Limited Seats & Footer Content
+        </h3>
 
-          <p class="mt-1 text-sm text-slate-500">
-            Configure image, heading, sub heading and button.
-          </p>
-        </div>
-
-        <button type="button" (click)="toggleContent()"
-          class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100">
-          {{ isContentOpen ? 'Close' : 'Open' }}
-        </button>
-
+        <p class="mt-1 text-sm text-slate-500">
+          Configure background image, featured image, heading, sub-heading and button.
+        </p>
       </div>
 
-      <!-- Content -->
-      @if (isContentOpen) {
-
-      <div class="space-y-5 border-t border-slate-200 bg-white p-5">
-
-        <!-- Image -->
-        <app-image-upload label="Limited Seats Image" description="Drag & drop image here or click to browse"
-          [imagePreview]="limitedSeats.image" (imageChange)="onImageChange($event)"
-          [mediaId]="limitedSeats.mediaId" (mediaIdChange)="onMediaIdChange($event)" />
-
-        <!-- Heading -->
-        <div>
-
-          <label class="mb-2 block text-sm font-semibold text-slate-700">
-            Heading / Text
-          </label>
-
-          <input type="text" [(ngModel)]="limitedSeats.heading" (ngModelChange)="emitChange()"
-            placeholder="Limited Seats"
-            class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100" />
-
-        </div>
-
-        <!-- Sub Heading -->
-        <div>
-
-          <label class="mb-2 block text-sm font-semibold text-slate-700">
-            Sub Heading
-          </label>
-
-          <textarea rows="4" [(ngModel)]="limitedSeats.subHeading" (ngModelChange)="emitChange()"
-            placeholder="Secure your child's admission before the seats are filled."
-            class="w-full resize-y rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100"></textarea>
-
-        </div>
-
-        <!-- Button -->
-        <div>
-
-          <label class="mb-2 block text-sm font-semibold text-slate-700">
-            Button Text
-          </label>
-
-          <input type="text" [(ngModel)]="limitedSeats.buttonText" (ngModelChange)="emitChange()"
-            placeholder="Apply Now"
-            class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100" />
-
-        </div>
-
+      <div class="h-8 w-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors">
+        <svg class="h-4 w-4 transition-transform duration-200" [class.rotate-180]="isContentOpen" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
       </div>
-
-      }
 
     </div>
 
-    <!-- Logos -->
-    <div class="overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+    <!-- Content -->
+    @if (isContentOpen) {
 
-      <!-- Logos Header -->
-      <div class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+    <div class="space-y-5 border-t border-slate-200 bg-white p-5 animate-fadeIn">
 
-        <div>
-          <h3 class="text-base font-semibold text-slate-900">
-            Logos
-          </h3>
+      <!-- Footer Background Image -->
+      <app-image-upload
+        label="Footer Background Image"
+        description="Upload full-width footer background image (recommended: 1920x800, jpg/webp)"
+        [imagePreview]="limitedSeats.backgroundImage || ''"
+        (imageChange)="onBackgroundImageChange($event)"
+        [mediaId]="limitedSeats.backgroundMediaId"
+        (mediaIdChange)="onBackgroundMediaIdChange($event)" />
 
-          <p class="mt-1 text-sm text-slate-500">
-            Add and manage logos for this section.
-          </p>
-        </div>
+      <!-- Featured Image (Left Student Card) -->
+      <app-image-upload
+        label="Featured Card Image (Left Side)"
+        description="Upload image for the student/campus card on the left (recommended: 600x450)"
+        [imagePreview]="limitedSeats.image"
+        (imageChange)="onImageChange($event)"
+        [mediaId]="limitedSeats.mediaId"
+        (mediaIdChange)="onMediaIdChange($event)" />
 
-        <div class="flex shrink-0 items-center gap-2">
+      <!-- Heading -->
+      <div>
 
-          <button type="button" (click)="addLogo()"
-            class="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800">
-            + Add Logo
-          </button>
+        <label class="mb-2 block text-sm font-semibold text-slate-700">
+          Heading / Urgency Text
+        </label>
 
-          <button type="button" (click)="toggleLogos()"
-            class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100">
-            {{ isLogosOpen ? 'Close' : 'Open' }}
-          </button>
-
-        </div>
-
-      </div>
-
-      <!-- Logos Content -->
-      @if (isLogosOpen) {
-
-      <div class="space-y-3 border-t border-slate-200 bg-white p-5">
-
-        @for (
-        logo of limitedSeats.logos;
-        track logo.id
-        ) {
-
-        <div class="overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
-
-          <!-- Logo Header -->
-          <div class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-
-            <div class="flex min-w-0 items-center gap-3">
-
-              <div
-                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-sm font-bold text-slate-600">
-                {{ $index + 1 }}
-              </div>
-
-              <div class="min-w-0">
-
-                <h4 class="truncate text-sm font-semibold text-slate-900">
-                  {{
-                  logo.name || 'Untitled Logo'
-                  }}
-                </h4>
-
-                <p class="mt-0.5 text-xs text-slate-500">
-                  Logo #{{ $index + 1 }}
-                </p>
-
-              </div>
-
-            </div>
-
-            <div class="flex shrink-0 items-center gap-2">
-
-              <button type="button" (click)="removeLogo(logo.id)"
-                class="rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50">
-                Remove
-              </button>
-
-              <button type="button" (click)="toggleLogo(logo.id)"
-                class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100">
-                {{
-                isLogoOpen(logo.id)
-                ? 'Close'
-                : 'Open'
-                }}
-              </button>
-
-            </div>
-
-          </div>
-
-          <!-- Logo Content -->
-          @if (isLogoOpen(logo.id)) {
-
-          <div class="space-y-5 border-t border-slate-200 bg-white p-5">
-
-            <!-- Logo Name -->
-            <div>
-
-              <label class="mb-2 block text-sm font-semibold text-slate-700">
-                Logo Name
-              </label>
-
-              <input type="text" [(ngModel)]="logo.name" (ngModelChange)="emitChange()" placeholder="Enter logo name"
-                class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100" />
-
-            </div>
-
-            <!-- Logo Image -->
-            <app-image-upload label="Logo Image" description="Drag & drop logo here or click to browse"
-              [imagePreview]="logo.image" (imageChange)="onLogoImageChange(logo.id, $event)"
-              [mediaId]="logo.mediaId" (mediaIdChange)="onLogoMediaIdChange(logo.id, $event)" />
-
-          </div>
-
-          }
-
-        </div>
-
-        }
-
-        <!-- Empty State -->
-        @if (limitedSeats.logos.length === 0) {
-
-        <div class="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center">
-
-          <h4 class="text-sm font-semibold text-slate-800">
-            No logos added
-          </h4>
-
-          <p class="mt-1 text-sm text-slate-500">
-            Click "Add Logo" to create your first logo.
-          </p>
-
-          <button type="button" (click)="addLogo()"
-            class="mt-4 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white">
-            + Add Logo
-          </button>
-
-        </div>
-
-        }
+        <input type="text" [(ngModel)]="limitedSeats.heading" (ngModelChange)="emitChange()"
+          placeholder="Limited seats available for 2027-28 academic year."
+          class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100" />
 
       </div>
 
-      }
+      <!-- Sub Heading -->
+      <div>
+
+        <label class="mb-2 block text-sm font-semibold text-slate-700">
+          Sub Heading / Availability Text
+        </label>
+
+        <textarea rows="3" [(ngModel)]="limitedSeats.subHeading" (ngModelChange)="emitChange()"
+          placeholder="Secure your spot today!"
+          class="w-full resize-y rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100"></textarea>
+
+      </div>
+
+      <!-- Button -->
+      <div>
+
+        <label class="mb-2 block text-sm font-semibold text-slate-700">
+          Button Text
+        </label>
+
+        <input type="text" [(ngModel)]="limitedSeats.buttonText" (ngModelChange)="emitChange()"
+          placeholder="Download Brochure"
+          class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100" />
+
+      </div>
 
     </div>
 
-    <!-- School Details -->
-    <div class="overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
-
-      <!-- Header -->
-      <div class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-
-        <div>
-          <h3 class="text-base font-semibold text-slate-900">
-            School Details
-          </h3>
-
-          <p class="mt-1 text-sm text-slate-500">
-            Add school name and number of schools.
-          </p>
-        </div>
-
-        <button type="button" (click)="toggleSchoolDetails()"
-          class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100">
-          {{
-          isSchoolDetailsOpen
-          ? 'Close'
-          : 'Open'
-          }}
-        </button>
-
-      </div>
-
-      <!-- Content -->
-      @if (isSchoolDetailsOpen) {
-
-      <div class="grid gap-5 border-t border-slate-200 bg-white p-5 md:grid-cols-2">
-
-        <!-- School Name -->
-        <div>
-
-          <label class="mb-2 block text-sm font-semibold text-slate-700">
-            School Name
-          </label>
-
-          <input type="text" [(ngModel)]="limitedSeats.schoolName" (ngModelChange)="emitChange()"
-            placeholder="Narayana School"
-            class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100" />
-
-        </div>
-
-        <!-- Number Of Schools -->
-        <div>
-
-          <label class="mb-2 block text-sm font-semibold text-slate-700">
-            No. of Schools
-          </label>
-
-          <input type="text" [(ngModel)]="limitedSeats.numberOfSchools" (ngModelChange)="emitChange()"
-            placeholder="900+"
-            class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100" />
-
-        </div>
-
-      </div>
-
-      }
-
-    </div>
+    }
 
   </div>
+
+  <!-- Sub-Accordion 2: School / Stat Cards -->
+  <div class="overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+
+    <!-- Cards Header -->
+    <div (click)="toggleCards()"
+      class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between cursor-pointer select-none hover:bg-slate-100/70 transition">
+
+      <div>
+        <h3 class="text-base font-semibold text-slate-900">
+          School & Statistics Cards
+        </h3>
+
+        <p class="mt-1 text-sm text-slate-500">
+          Manage bottom floating cards with logo/image, school name, subtitle, and count.
+        </p>
+      </div>
+
+      <div class="flex shrink-0 items-center gap-2">
+
+        <button type="button" (click)="$event.stopPropagation(); addCard()"
+          class="rounded-xl bg-slate-900 px-4 py-2 text-xs sm:text-sm font-semibold text-white transition hover:bg-slate-800">
+          + Add Card
+        </button>
+
+        <div class="h-8 w-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors">
+          <svg class="h-4 w-4 transition-transform duration-200" [class.rotate-180]="isCardsOpen" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Cards Content -->
+    @if (isCardsOpen) {
+
+    <div class="space-y-3 border-t border-slate-200 bg-white p-5 animate-fadeIn">
+
+      @for (
+      card of limitedSeats.cards;
+      track card.id
+      ) {
+
+      <div class="overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+
+        <!-- Card Header -->
+        <div (click)="toggleCard(card.id)"
+          class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between cursor-pointer select-none hover:bg-slate-100/60 transition">
+
+          <div class="flex min-w-0 items-center gap-3">
+
+            <div
+              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-sm font-bold text-slate-600 shadow-xs">
+              {{ $index + 1 }}
+            </div>
+
+            <div class="min-w-0">
+
+              <h4 class="truncate text-sm font-semibold text-slate-900">
+                {{ card.title || 'Untitled Card' }}
+              </h4>
+
+              <p class="mt-0.5 text-xs text-slate-500">
+                {{ card.label || 'Card #' + ($index + 1) }}
+              </p>
+
+            </div>
+
+          </div>
+
+          <div class="flex shrink-0 items-center gap-2">
+
+            @if (card.value) {
+            <span class="rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-600 border border-blue-200">
+              {{ card.value }}
+            </span>
+            }
+
+            <button type="button" (click)="$event.stopPropagation(); removeCard(card.id)"
+              class="rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50">
+              Remove
+            </button>
+
+            <div class="h-8 w-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors">
+              <svg class="h-4 w-4 transition-transform duration-200" [class.rotate-180]="isCardOpen(card.id)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- Card Body -->
+        @if (isCardOpen(card.id)) {
+
+        <div class="space-y-5 border-t border-slate-200 bg-white p-5 animate-fadeIn">
+
+          <!-- Card Logo / Image -->
+          <app-image-upload
+            label="School / Stat Logo Image"
+            description="Upload logo or thumbnail image for this card"
+            [imagePreview]="card.image || ''"
+            (imageChange)="onCardImageChange(card.id, $event)"
+            [mediaId]="card.mediaId"
+            (mediaIdChange)="onCardMediaIdChange(card.id, $event)" />
+
+          <!-- Form Fields Grid -->
+          <div class="grid gap-4 sm:grid-cols-3">
+
+            <!-- School Name / Title -->
+            <div>
+              <label class="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-600">
+                School Name / Title
+              </label>
+
+              <input type="text" [(ngModel)]="card.title" (ngModelChange)="emitChange()"
+                placeholder="e.g. Narayana Schools"
+                class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100" />
+            </div>
+
+            <!-- Subtitle / Label -->
+            <div>
+              <label class="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-600">
+                Subtitle / Label
+              </label>
+
+              <input type="text" [(ngModel)]="card.label" (ngModelChange)="emitChange()"
+                placeholder="e.g. Pan India Campuses"
+                class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100" />
+            </div>
+
+            <!-- Count / Value -->
+            <div>
+              <label class="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-600">
+                Count / Number
+              </label>
+
+              <input type="text" [(ngModel)]="card.value" (ngModelChange)="emitChange()"
+                placeholder="e.g. 300+"
+                class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-slate-800 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100" />
+            </div>
+
+          </div>
+
+        </div>
+
+        }
+
+      </div>
+
+      }
+
+      <!-- Empty State -->
+      @if (!limitedSeats.cards || limitedSeats.cards.length === 0) {
+
+      <div class="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center">
+
+        <h4 class="text-sm font-semibold text-slate-800">
+          No cards added
+        </h4>
+
+        <p class="mt-1 text-sm text-slate-500">
+          Click "Add Card" to create your first bottom school/stat card.
+        </p>
+
+        <button type="button" (click)="addCard()"
+          class="mt-4 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white">
+          + Add Card
+        </button>
+
+      </div>
+
+      }
+
+    </div>
+
+    }
+
+  </div>
+
+</div>

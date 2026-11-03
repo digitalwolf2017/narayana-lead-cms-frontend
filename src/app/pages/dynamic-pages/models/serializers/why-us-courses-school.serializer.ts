@@ -17,7 +17,7 @@ export function buildWhyUsSection(
   return {
     section_type: 'WHY_US',
     is_enabled: isEnabled,
-    sort_order: 4,
+    sort_order: 3,
     content: {
       heading: whyUs.sectionHeading || 'Why Choose Us',
       subheading: whyUs.sectionSubHeading || 'Discover what makes our educational institution unique',
@@ -42,41 +42,50 @@ export function buildCoursesSection(
   return {
     section_type: 'COURSES',
     is_enabled: isEnabled,
-    sort_order: 5,
+    sort_order: 4,
     content: {
       heading: course.sectionHeading || 'Courses & Programs',
       programs: courseList.length > 0
-        ? courseList.map((c, idx: number) => ({
-            code: `COURSE_${idx + 1}`,
-            name: c.heading || `Course Program ${idx + 1}`,
-            class_range: 'Grade 6 - 12',
-            desktop_primary_media_id: Number((c as unknown as Record<string, unknown>)['mediaId'] || 1),
-            desktop_secondary_media_id: null,
-            mobile_media_id: null,
-            image_alt: c.heading || 'Course Image',
-            badge_icon_media_id: null,
-            badge_icon_alt: 'Course Badge',
-            feature_groups: [{
-              icon_key: 'STAR',
-              title: c.subHeading1 || 'Key Features',
-              points: (Array.isArray(c.listItems1) && c.listItems1.length > 0
-                ? c.listItems1
-                : [{ id: 1, text: 'Specialized coaching' }]
-              ).map((p: { text?: string }, pIdx: number) => ({
-                text: p.text || 'Comprehensive syllabus coverage',
-                sort_order: pIdx + 1,
-              })),
-              sort_order: 1,
-            }],
-            mobile_highlights: [
-              { text: 'Comprehensive syllabus coverage', sort_order: 1 },
-              { text: 'Mock test series and micro-analysis', sort_order: 2 },
-            ],
-            fees_cta: { label: 'Check Fees', action: 'FEES_STRUCTURE', url: null },
-            brochure_cta: { label: 'Download Brochure', action: 'DOWNLOAD_BROCHURE', url: null },
-            callback_cta: { label: 'Request Callback', action: 'CALLBACK', url: null },
-            sort_order: idx + 1,
-          }))
+        ? courseList.map((c, idx: number) => {
+            const rawMedia1 = (c as unknown as Record<string, unknown>)['mediaId1'] ?? (c as unknown as Record<string, unknown>)['mediaId'];
+            const primaryId = Number(rawMedia1);
+            const desktopPrimaryMediaId = Number.isInteger(primaryId) && primaryId > 0 ? primaryId : 1;
+            const rawMedia2 = (c as unknown as Record<string, unknown>)['mediaId2'];
+            const secondaryId = Number(rawMedia2);
+            const desktopSecondaryMediaId = Number.isInteger(secondaryId) && secondaryId > 0 ? secondaryId : null;
+
+            return {
+              code: `COURSE_${idx + 1}`,
+              name: c.heading || `Course Program ${idx + 1}`,
+              class_range: 'Grade 6 - 12',
+              desktop_primary_media_id: desktopPrimaryMediaId,
+              desktop_secondary_media_id: desktopSecondaryMediaId,
+              mobile_media_id: null,
+              image_alt: c.heading || 'Course Image',
+              badge_icon_media_id: null,
+              badge_icon_alt: 'Course Badge',
+              feature_groups: [{
+                icon_key: 'STAR',
+                title: c.subHeading1 || 'Key Features',
+                points: (Array.isArray(c.listItems1) && c.listItems1.length > 0
+                  ? c.listItems1
+                  : [{ id: 1, text: 'Specialized coaching' }]
+                ).map((p: { text?: string }, pIdx: number) => ({
+                  text: p.text || 'Comprehensive syllabus coverage',
+                  sort_order: pIdx + 1,
+                })),
+                sort_order: 1,
+              }],
+              mobile_highlights: [
+                { text: 'Comprehensive syllabus coverage', sort_order: 1 },
+                { text: 'Mock test series and micro-analysis', sort_order: 2 },
+              ],
+              fees_cta: { label: 'Check Fees', action: 'FEES_STRUCTURE', url: null },
+              brochure_cta: { label: 'Download Brochure', action: 'DOWNLOAD_BROCHURE', url: null },
+              callback_cta: { label: 'Request Callback', action: 'CALLBACK', url: null },
+              sort_order: idx + 1,
+            };
+          })
         : [{
             code: 'COURSE_1', name: 'Integrated Competitive Curriculum', class_range: 'Grade 6 - 12',
             desktop_primary_media_id: 1, desktop_secondary_media_id: null, mobile_media_id: null,
