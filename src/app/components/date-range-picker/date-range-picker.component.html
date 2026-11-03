@@ -5,12 +5,12 @@
     (click)="toggleOpen()"
     [disabled]="disabled"
     class="group inline-flex h-8.5 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 shadow-2xs transition hover:border-slate-300 hover:bg-slate-50 focus:border-[#8c7ae6] focus:outline-none focus:ring-2 focus:ring-[#8c7ae6]/20 disabled:cursor-not-allowed disabled:opacity-50">
-    <svg class="h-3.5 w-3.5 text-slate-400 group-hover:text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <svg class="h-3.5 w-3.5 text-slate-400 group-hover:text-slate-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
         d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
     </svg>
 
-    <span [class.text-slate-400]="!hasSelection" [class.font-semibold]="hasSelection" [class.text-slate-800]="hasSelection">
+    <span [class.text-slate-400]="!hasSelection" [class.font-semibold]="hasSelection" [class.text-slate-800]="hasSelection" class="whitespace-nowrap">
       {{ displayText }}
     </span>
 
@@ -18,14 +18,14 @@
       <span
         (click)="clearSelection($event)"
         title="Clear date filter"
-        class="flex h-4 w-4 items-center justify-center rounded-full text-slate-400 hover:bg-slate-200 hover:text-slate-700">
+        class="flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-slate-400 hover:bg-slate-200 hover:text-slate-700">
         <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg>
       </span>
     }
 
-    <svg class="h-3.5 w-3.5 text-slate-400 transition-transform duration-200" [class.rotate-180]="isOpen" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <svg class="h-3.5 w-3.5 text-slate-400 transition-transform duration-200 shrink-0" [class.rotate-180]="isOpen" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
     </svg>
   </button>
@@ -33,10 +33,10 @@
   <!-- FLOATING RANGE CALENDAR POPOVER -->
   @if (isOpen) {
     <div
-      class="absolute left-0 top-full z-50 mt-2 flex flex-col md:flex-row overflow-hidden rounded-2xl border border-slate-800 bg-[#090d16] text-white shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+      class="absolute left-0 top-full z-[100] mt-2 flex flex-col md:flex-row overflow-hidden rounded-2xl border border-slate-800 bg-[#090d16] text-white shadow-2xl animate-in fade-in zoom-in-95 duration-150 w-max max-w-[calc(100vw-2rem)]">
       
       <!-- PRESETS SIDEBAR -->
-      <div class="flex flex-row md:flex-col gap-1 border-b md:border-b-0 md:border-r border-slate-800/80 bg-[#060910] p-3 text-xs overflow-x-auto">
+      <div class="flex flex-row md:flex-col gap-1 border-b md:border-b-0 md:border-r border-slate-800/80 bg-[#060910] p-3 text-xs overflow-x-auto w-auto md:w-[130px] shrink-0">
         <p class="hidden md:block mb-1 px-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
           Presets
         </p>
@@ -51,12 +51,12 @@
       </div>
 
       <!-- CALENDAR AREA -->
-      <div class="p-4">
+      <div class="p-4 shrink-0">
         <!-- MONTHS CONTAINER: DUAL MONTHS -->
         <div class="flex flex-col sm:flex-row gap-6">
 
           <!-- MONTH 1 (LEFT) -->
-          <div class="w-[252px]">
+          <div class="w-[252px] shrink-0">
             <!-- HEADER -->
             <div class="mb-3 flex items-center justify-between">
               <button
@@ -114,7 +114,7 @@
           </div>
 
           <!-- MONTH 2 (RIGHT) -->
-          <div class="w-[252px]">
+          <div class="w-[252px] shrink-0">
             <!-- HEADER -->
             <div class="mb-3 flex items-center justify-between">
               <div class="w-7 sm:hidden"></div>
