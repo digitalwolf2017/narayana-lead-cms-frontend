@@ -160,12 +160,10 @@
 
             <!-- Image -->
             <app-image-upload label="Facility Image" description="Drag & drop facility image here or click to browse"
-              [imagePreview]="facility.image" (imageChange)="
-                          onFacilityImageChange(
-                            facility.id,
-                            $event
-                          )
-                        " />
+              [imagePreview]="facility.image"
+              [mediaId]="facility.mediaId"
+              (imageChange)="onFacilityImageChange(facility.id, $event)"
+              (mediaIdChange)="onFacilityMediaIdChange(facility.id, $event)" />
 
             <!-- Heading -->
             <div>

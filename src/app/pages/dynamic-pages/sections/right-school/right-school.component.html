@@ -181,12 +181,10 @@
 
             <!-- Image -->
             <app-image-upload label="Card Image" description="Drag & drop card image here or click to browse"
-              [imagePreview]="card.image" (imageChange)="
-                          onCardImageChange(
-                            card.id,
-                            $event
-                          )
-                        " />
+              [imagePreview]="card.image"
+              [mediaId]="card.mediaId"
+              (imageChange)="onCardImageChange(card.id, $event)"
+              (mediaIdChange)="onCardMediaIdChange(card.id, $event)" />
 
             <!-- Heading -->
             <div>

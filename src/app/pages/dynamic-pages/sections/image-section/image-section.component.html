@@ -79,7 +79,10 @@
       </div>
 
       <app-image-upload label="Desktop Image" description="Drag & drop desktop image here or click to browse"
-        [imagePreview]="imageSection.desktopImage" (imageChange)="onDesktopImageChange($event)" />
+        [imagePreview]="imageSection.desktopImage"
+        [mediaId]="imageSection.desktop_media_id"
+        (imageChange)="onDesktopImageChange($event)"
+        (mediaIdChange)="onDesktopMediaIdChange($event)" />
     </div>
 
     <!-- Mobile Image -->
@@ -95,7 +98,10 @@
       </div>
 
       <app-image-upload label="Mobile Image" description="Drag & drop mobile image here or click to browse"
-        [imagePreview]="imageSection.mobileImage" (imageChange)="onMobileImageChange($event)" />
+        [imagePreview]="imageSection.mobileImage"
+        [mediaId]="imageSection.mobile_media_id"
+        (imageChange)="onMobileImageChange($event)"
+        (mediaIdChange)="onMobileMediaIdChange($event)" />
     </div>
   </div>
 </div>

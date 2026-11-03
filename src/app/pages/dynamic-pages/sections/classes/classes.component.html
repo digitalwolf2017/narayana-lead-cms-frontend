@@ -180,12 +180,10 @@
 
             <!-- Image -->
             <app-image-upload label="Class Card Image" description="Drag & drop class image here or click to browse"
-              [imagePreview]="card.image" (imageChange)="
-                          onCardImageChange(
-                            card.id,
-                            $event
-                          )
-                        " />
+              [imagePreview]="card.image"
+              [mediaId]="card.mediaId"
+              (imageChange)="onCardImageChange(card.id, $event)"
+              (mediaIdChange)="onCardMediaIdChange(card.id, $event)" />
 
             <!-- Heading + Sub Heading -->
             <div class="grid gap-5 md:grid-cols-2">

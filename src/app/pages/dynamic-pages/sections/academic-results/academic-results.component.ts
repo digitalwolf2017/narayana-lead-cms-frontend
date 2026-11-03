@@ -10,6 +10,7 @@ import { ImageUploadComponent } from '../../shared/image-upload/image-upload.com
 export interface AcademicResult {
   id: number;
   image: string;
+  mediaId?: number | null;
   studentName: string;
   marks: string;
   boardName: string;
@@ -152,6 +153,13 @@ export class AcademicResultsComponent {
 
     result.image = image;
 
+    this.emitChange();
+  }
+
+  onResultMediaIdChange(resultId: number, mediaId: number | null): void {
+    const result = this.academicResults.results.find((item) => item.id === resultId);
+    if (!result) return;
+    result.mediaId = mediaId;
     this.emitChange();
   }
 

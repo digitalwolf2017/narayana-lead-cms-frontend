@@ -11,10 +11,14 @@ export interface LimitedSeatsLogo {
   id: number;
   name: string;
   image: string;
+  mediaId?: number | null;
 }
 
 export interface LimitedSeatsConfig {
   image: string;
+  mediaId?: number | null;
+  feature_media_id?: number | null;
+  background_media_id?: number | null;
   heading: string;
   subHeading: string;
   buttonText: string;
@@ -154,6 +158,20 @@ export class LimitedSeatsComponent {
     this.emitChange();
   }
 
+  onMediaIdChange(mediaId: number | null): void {
+    this.limitedSeats.mediaId = mediaId;
+    this.limitedSeats.feature_media_id = mediaId;
+    this.limitedSeats.background_media_id = mediaId;
+    this.emitChange();
+  }
+
+  onLogoMediaIdChange(logoId: number, mediaId: number | null): void {
+    const logo = this.limitedSeats.logos.find((item) => item.id === logoId);
+    if (!logo) return;
+    logo.mediaId = mediaId;
+    this.emitChange();
+  }
+
   onLogoImageChange(
     logoId: number,
     image: string
@@ -175,6 +193,9 @@ export class LimitedSeatsComponent {
   emitChange(): void {
     this.limitedSeatsChange.emit({
       image: this.limitedSeats.image,
+      mediaId: this.limitedSeats.mediaId,
+      feature_media_id: this.limitedSeats.feature_media_id,
+      background_media_id: this.limitedSeats.background_media_id,
 
       heading: this.limitedSeats.heading,
 

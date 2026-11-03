@@ -20,6 +20,9 @@ export interface BannerConfig {
   buttonText: string;
   buttonUrl: string;
   backgroundImage: string;
+  mediaId?: number | null;
+  desktop_background_media_id?: number | null;
+  mobile_background_media_id?: number | null;
   desktopActive: boolean;
   mobileActive: boolean;
 }
@@ -179,6 +182,12 @@ export class BannerSectionComponent {
     this.emitChange();
   }
 
+  onBackgroundMediaIdChange(mediaId: number | null): void {
+    this.banner.mediaId = mediaId;
+    this.banner.desktop_background_media_id = mediaId;
+    this.emitChange();
+  }
+
   emitChange(): void {
     this.bannerChange.emit({
       subHeading:
@@ -202,6 +211,15 @@ export class BannerSectionComponent {
 
       backgroundImage:
         this.banner.backgroundImage,
+
+      mediaId:
+        this.banner.mediaId,
+
+      desktop_background_media_id:
+        this.banner.desktop_background_media_id,
+
+      mobile_background_media_id:
+        this.banner.mobile_background_media_id,
 
       desktopActive:
         this.banner.desktopActive,

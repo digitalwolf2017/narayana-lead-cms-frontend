@@ -383,7 +383,10 @@
       <div class="border-t border-slate-200 bg-white p-5">
 
         <app-image-upload label="Banner Background" description="Drag & drop banner image here or click to browse"
-          [imagePreview]="banner.backgroundImage" (imageChange)="onBackgroundImageChange($event)" />
+          [imagePreview]="banner.backgroundImage"
+          [mediaId]="banner.desktop_background_media_id || banner.mediaId"
+          (imageChange)="onBackgroundImageChange($event)"
+          (mediaIdChange)="onBackgroundMediaIdChange($event)" />
 
       </div>
 

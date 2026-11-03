@@ -178,6 +178,10 @@ export function populateSectionsFromBackend(
           if (rawBg) {
             state.banner.backgroundImage = normalizeImageUrl(rawBg);
           }
+          if (desktopMediaId) {
+            state.banner.mediaId = Number(desktopMediaId);
+            (state.banner as any).desktop_background_media_id = Number(desktopMediaId);
+          }
         }
         break;
       }
@@ -224,8 +228,10 @@ export function populateSectionsFromBackend(
             state.course.courses = programs.map((p: Record<string, unknown>, idx: number) => {
               const fg = (p['feature_groups'] as Array<Record<string, unknown>>)?.[0];
               const points = (fg?.['points'] as Array<Record<string, unknown>>) || [];
-              const courseMediaId = p['media_id'] ?? p['image_media_id'];
-              const courseImg = resolveMediaUrl(courseMediaId, mediaMap, String(p['image'] ?? ''));
+              const courseMediaId1 = p['desktop_primary_media_id'] ?? p['media_id'] ?? p['image_media_id'];
+              const courseMediaId2 = p['desktop_secondary_media_id'];
+              const courseImg = resolveMediaUrl(courseMediaId1, mediaMap, String(p['image'] ?? ''));
+              const courseImg2 = resolveMediaUrl(courseMediaId2, mediaMap);
               return {
                 id: idx + 1,
                 heading: String(p['name'] || ''),
@@ -234,7 +240,10 @@ export function populateSectionsFromBackend(
                 subHeading3: '',
                 subHeading4: '',
                 image1: courseImg,
-                image2: '',
+                image2: courseImg2,
+                mediaId: courseMediaId1 ? Number(courseMediaId1) : 1,
+                mediaId1: courseMediaId1 ? Number(courseMediaId1) : 1,
+                mediaId2: courseMediaId2 ? Number(courseMediaId2) : undefined,
                 listItems1: points.map((pt, ptIdx) => ({
                   id: ptIdx + 1,
                   text: String(pt['text'] || ''),
@@ -270,6 +279,7 @@ export function populateSectionsFromBackend(
               return {
                 id: idx + 1,
                 image: cardImg,
+                mediaId: cardMediaId ? Number(cardMediaId) : 1,
                 heading: String(item['title'] || ''),
                 paragraph: String(item['description'] || ''),
               };
@@ -294,6 +304,7 @@ export function populateSectionsFromBackend(
               return {
                 id: idx + 1,
                 image: studentImg,
+                mediaId: studentMediaId ? Number(studentMediaId) : 1,
                 studentName: String(r['student_name'] || ''),
                 marks: String(r['score'] || ''),
                 boardName: String(r['exam'] || 'CBSE'),
@@ -309,6 +320,20 @@ export function populateSectionsFromBackend(
       case 'IMAGE_SECTION': {
         const sec = state.sections.find((x) => x.key === 'image-section');
         if (sec) sec.active = isEnabled;
+        const c = s.content as Record<string, unknown>;
+        if (c) {
+          const desktopMediaId = c['desktop_media_id'] ?? c['media_id'] ?? c['mediaId'];
+          const mobileMediaId = (c['mobile_images'] as Array<Record<string, unknown>>)?.[0]?.['media_id'] ?? c['mobile_media_id'];
+          if (desktopMediaId) {
+            state.imageSection.desktop_media_id = Number(desktopMediaId);
+            state.imageSection.mediaId = Number(desktopMediaId);
+            state.imageSection.desktopImage = resolveMediaUrl(desktopMediaId, mediaMap, state.imageSection.desktopImage);
+          }
+          if (mobileMediaId) {
+            state.imageSection.mobile_media_id = Number(mobileMediaId);
+            state.imageSection.mobileImage = resolveMediaUrl(mobileMediaId, mediaMap, state.imageSection.mobileImage);
+          }
+        }
         break;
       }
 
@@ -320,7 +345,7 @@ export function populateSectionsFromBackend(
           const testimonials = c['testimonials'];
           if (Array.isArray(testimonials) && testimonials.length > 0) {
             state.parentsSay.reviews = testimonials.map((t: Record<string, unknown>, idx: number) => {
-              const parentMediaId = t['parent_photo_media_id'] ?? t['media_id'] ?? t['photo_media_id'];
+              const parentMediaId = t['parent_photo_media_id'] ?? t['media_id'] ?? t['avatar_media_id'] ?? t['photo_media_id'];
               const parentImg = resolveMediaUrl(parentMediaId, mediaMap, String(t['image'] ?? ''));
               return {
                 id: idx + 1,
@@ -329,6 +354,7 @@ export function populateSectionsFromBackend(
                 review: String(t['quote'] || ''),
                 rating: Number(t['rating'] || 5),
                 image: parentImg,
+                mediaId: parentMediaId ? Number(parentMediaId) : 1,
               };
             });
           }
@@ -351,6 +377,7 @@ export function populateSectionsFromBackend(
               return {
                 id: idx + 1,
                 image: facImg,
+                mediaId: facMediaId ? Number(facMediaId) : 1,
                 heading: String(f['title'] || ''),
                 paragraph: String(f['description'] || ''),
               };
@@ -385,6 +412,13 @@ export function populateSectionsFromBackend(
         if (c) {
           if (c['availability_text']) state.limitedSeatsConfig.subHeading = String(c['availability_text']);
           if (c['urgency_text']) state.limitedSeatsConfig.heading = String(c['urgency_text']);
+          const bgMediaId = c['background_media_id'] ?? c['media_id'];
+          const featMediaId = c['feature_media_id'];
+          const mediaId = featMediaId ?? bgMediaId;
+          if (mediaId) {
+            state.limitedSeatsConfig.mediaId = Number(mediaId);
+            state.limitedSeatsConfig.image = resolveMediaUrl(mediaId, mediaMap, state.limitedSeatsConfig.image);
+          }
         }
         break;
       }

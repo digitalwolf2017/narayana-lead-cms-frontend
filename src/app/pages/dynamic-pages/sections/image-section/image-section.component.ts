@@ -9,6 +9,9 @@ import { ImageUploadComponent } from '../../shared/image-upload/image-upload.com
 export interface ImageSectionConfig {
   desktopImage: string;
   mobileImage: string;
+  desktop_media_id?: number | null;
+  mobile_media_id?: number | null;
+  mediaId?: number | null;
   isActive: boolean;
   desktopActive: boolean;
   mobileActive: boolean;
@@ -73,9 +76,19 @@ export class ImageSectionComponent {
     this.emitChange();
   }
 
+  onDesktopMediaIdChange(mediaId: number | null): void {
+    this.imageSection.desktop_media_id = mediaId;
+    this.emitChange();
+  }
+
   onMobileImageChange(image: string): void {
     this.imageSection.mobileImage = image;
 
+    this.emitChange();
+  }
+
+  onMobileMediaIdChange(mediaId: number | null): void {
+    this.imageSection.mobile_media_id = mediaId;
     this.emitChange();
   }
 
@@ -86,6 +99,12 @@ export class ImageSectionComponent {
 
       mobileImage:
         this.imageSection.mobileImage,
+
+      desktop_media_id:
+        this.imageSection.desktop_media_id,
+
+      mobile_media_id:
+        this.imageSection.mobile_media_id,
 
       isActive:
         this.imageSection.isActive,

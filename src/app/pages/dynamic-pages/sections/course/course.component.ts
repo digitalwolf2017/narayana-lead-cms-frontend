@@ -17,6 +17,9 @@ export interface CourseItem {
 
   image1: string;
   image2: string;
+  mediaId?: number | null;
+  mediaId1?: number | null;
+  mediaId2?: number | null;
 
   heading: string;
 
@@ -338,6 +341,21 @@ export class CourseComponent {
         );
     }
 
+    this.emitChange();
+  }
+
+  onCourseMediaId1Change(courseId: number, mediaId: number | null): void {
+    const course = this.course.courses.find((item) => item.id === courseId);
+    if (!course) return;
+    course.mediaId = mediaId;
+    course.mediaId1 = mediaId;
+    this.emitChange();
+  }
+
+  onCourseMediaId2Change(courseId: number, mediaId: number | null): void {
+    const course = this.course.courses.find((item) => item.id === courseId);
+    if (!course) return;
+    course.mediaId2 = mediaId;
     this.emitChange();
   }
 

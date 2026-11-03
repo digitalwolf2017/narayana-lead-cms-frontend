@@ -10,6 +10,7 @@ import { ImageUploadComponent } from '../../shared/image-upload/image-upload.com
 export interface ParentReview {
   id: number;
   image: string;
+  mediaId?: number | null;
   name: string;
   location: string;
   review: string;
@@ -147,6 +148,13 @@ export class ParentsSayComponent {
 
     review.image = image;
 
+    this.emitChange();
+  }
+
+  onReviewMediaIdChange(reviewId: number, mediaId: number | null): void {
+    const review = this.parentsSay.reviews.find((item) => item.id === reviewId);
+    if (!review) return;
+    review.mediaId = mediaId;
     this.emitChange();
   }
 

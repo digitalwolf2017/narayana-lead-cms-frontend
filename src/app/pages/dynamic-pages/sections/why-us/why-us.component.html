@@ -179,12 +179,9 @@
 
             <!-- Image -->
             <app-image-upload label="Why Choose Image" description="Drag & drop image here or click to browse"
-              [imagePreview]="box.image" (imageChange)="
-                          onBoxImageChange(
-                            box.id,
-                            $event
-                          )
-                        " />
+              [imagePreview]="box.image" [mediaId]="box.mediaId"
+              (imageChange)="onBoxImageChange(box.id, $event)"
+              (mediaIdChange)="onBoxMediaIdChange(box.id, $event)" />
 
             <!-- Heading -->
             <div>

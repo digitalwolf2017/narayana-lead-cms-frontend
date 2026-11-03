@@ -190,12 +190,10 @@
 
             <!-- Student Image -->
             <app-image-upload label="Student Image" description="Drag & drop student image here or click to browse"
-              [imagePreview]="result.image" (imageChange)="
-                          onResultImageChange(
-                            result.id,
-                            $event
-                          )
-                        " />
+              [imagePreview]="result.image"
+              [mediaId]="result.mediaId"
+              (imageChange)="onResultImageChange(result.id, $event)"
+              (mediaIdChange)="onResultMediaIdChange(result.id, $event)" />
 
             <!-- Student Name -->
             <div>

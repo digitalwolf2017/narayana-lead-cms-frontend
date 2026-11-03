@@ -15,6 +15,7 @@ interface ClassListItem {
 interface ClassCard {
   id: number;
   image: string;
+  mediaId?: number | null;
   heading: string;
   subHeading: string;
   h3Heading: string;
@@ -236,6 +237,13 @@ export class ClassesComponent {
 
     card.image = image;
 
+    this.emitChange();
+  }
+
+  onCardMediaIdChange(cardId: number, mediaId: number | null): void {
+    const card = this.classes.cards.find((item) => item.id === cardId);
+    if (!card) return;
+    card.mediaId = mediaId;
     this.emitChange();
   }
 

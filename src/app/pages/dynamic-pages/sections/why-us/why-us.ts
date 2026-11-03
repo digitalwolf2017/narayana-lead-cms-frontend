@@ -10,6 +10,7 @@ import { ImageUploadComponent } from '../../shared/image-upload/image-upload.com
 interface WhyChooseBox {
   id: number;
   image: string;
+  mediaId?: number | null;
   heading: string;
   paragraph: string;
 }
@@ -144,6 +145,15 @@ export class WhyUs {
 
     box.image = image;
 
+    this.emitChange();
+  }
+
+  onBoxMediaIdChange(boxId: number, mediaId: number | null): void {
+    const box = this.whyUs.boxes.find((item) => item.id === boxId);
+    if (!box) {
+      return;
+    }
+    box.mediaId = mediaId;
     this.emitChange();
   }
 

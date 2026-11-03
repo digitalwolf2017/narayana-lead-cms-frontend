@@ -164,25 +164,19 @@
               <!-- Image 1 -->
               <div>
                 <app-image-upload label="Course Image 1" description="Drag & drop course image here or click to browse"
-                  [imagePreview]="courseItem.image1" (imageChange)="
-                              onCourseImageChange(
-                                courseItem.id,
-                                1,
-                                $event
-                              )
-                            " />
+                  [imagePreview]="courseItem.image1"
+                  [mediaId]="courseItem.mediaId1 || courseItem.mediaId"
+                  (imageChange)="onCourseImageChange(courseItem.id, 1, $event)"
+                  (mediaIdChange)="onCourseMediaId1Change(courseItem.id, $event)" />
               </div>
 
               <!-- Image 2 -->
               <div>
                 <app-image-upload label="Course Image 2" description="Drag & drop course image here or click to browse"
-                  [imagePreview]="courseItem.image2" (imageChange)="
-                              onCourseImageChange(
-                                courseItem.id,
-                                2,
-                                $event
-                              )
-                            " />
+                  [imagePreview]="courseItem.image2"
+                  [mediaId]="courseItem.mediaId2"
+                  (imageChange)="onCourseImageChange(courseItem.id, 2, $event)"
+                  (mediaIdChange)="onCourseMediaId2Change(courseItem.id, $event)" />
               </div>
 
             </div>

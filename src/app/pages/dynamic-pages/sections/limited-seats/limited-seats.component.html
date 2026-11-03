@@ -104,7 +104,8 @@
 
         <!-- Image -->
         <app-image-upload label="Limited Seats Image" description="Drag & drop image here or click to browse"
-          [imagePreview]="limitedSeats.image" (imageChange)="onImageChange($event)" />
+          [imagePreview]="limitedSeats.image" (imageChange)="onImageChange($event)"
+          [mediaId]="limitedSeats.mediaId" (mediaIdChange)="onMediaIdChange($event)" />
 
         <!-- Heading -->
         <div>
@@ -260,7 +261,8 @@
 
             <!-- Logo Image -->
             <app-image-upload label="Logo Image" description="Drag & drop logo here or click to browse"
-              [imagePreview]="logo.image" (imageChange)="onLogoImageChange(logo.id, $event)" />
+              [imagePreview]="logo.image" (imageChange)="onLogoImageChange(logo.id, $event)"
+              [mediaId]="logo.mediaId" (mediaIdChange)="onLogoMediaIdChange(logo.id, $event)" />
 
           </div>
 

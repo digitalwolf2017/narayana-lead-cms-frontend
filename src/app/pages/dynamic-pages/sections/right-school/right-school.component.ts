@@ -10,6 +10,7 @@ import { ImageUploadComponent } from '../../shared/image-upload/image-upload.com
 export interface RightSchoolCard {
   id: number;
   image: string;
+  mediaId?: number | null;
   heading: string;
   paragraph: string;
 }
@@ -143,6 +144,13 @@ export class RightSchoolComponent {
 
     card.image = image;
 
+    this.emitChange();
+  }
+
+  onCardMediaIdChange(cardId: number, mediaId: number | null): void {
+    const card = this.rightSchool.cards.find((item) => item.id === cardId);
+    if (!card) return;
+    card.mediaId = mediaId;
     this.emitChange();
   }
 

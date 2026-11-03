@@ -10,6 +10,7 @@ import { ImageUploadComponent } from '../../shared/image-upload/image-upload.com
 export interface FacilityItem {
   id: number;
   image: string;
+  mediaId?: number | null;
   heading: string;
   paragraph: string;
 }
@@ -144,6 +145,13 @@ export class FacilitiesComponent {
 
     facility.image = image;
 
+    this.emitChange();
+  }
+
+  onFacilityMediaIdChange(facilityId: number, mediaId: number | null): void {
+    const facility = this.facilities.facilities.find((item) => item.id === facilityId);
+    if (!facility) return;
+    facility.mediaId = mediaId;
     this.emitChange();
   }
 

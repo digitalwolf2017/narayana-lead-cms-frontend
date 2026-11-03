@@ -157,12 +157,10 @@
 
             <!-- Parent Image -->
             <app-image-upload label="Parent Image" description="Drag & drop parent image here or click to browse"
-              [imagePreview]="review.image" (imageChange)="
-                          onReviewImageChange(
-                            review.id,
-                            $event
-                          )
-                        " />
+              [imagePreview]="review.image"
+              [mediaId]="review.mediaId"
+              (imageChange)="onReviewImageChange(review.id, $event)"
+              (mediaIdChange)="onReviewMediaIdChange(review.id, $event)" />
 
             <!-- Name + Location -->
             <div class="grid gap-5 md:grid-cols-2">
