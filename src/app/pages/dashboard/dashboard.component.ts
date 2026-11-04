@@ -28,6 +28,7 @@ import {
   extractLeadCourse,
   formatLocalDateToYMD,
 } from './utils/ads-dashboard-calculator.util';
+import { generateAdsDashboardMockLeads } from './utils/ads-dashboard-mock.util';
 
 @Component({
   selector: 'app-dashboard',
@@ -51,7 +52,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private readonly MODULE_STORAGE_KEY = 'ads_dashboard_selected_module';
   private fetchSub?: Subscription;
 
-  // Modules State
+  // Modules & Data State
+  isDemoMode = true; // Default to rich demo data as requested by user
   modules: LeadModule[] = [];
   isLoadingModules = false;
   isLoadingLeads = false;
@@ -95,6 +97,22 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   loadModules(): void {
+    if (this.isDemoMode) {
+      this.modules = [
+        { key: 'wbnarayanaschools.in', label: 'wbnarayanaschools.in (All Pages)', match: 'exact', value: 'wbnarayanaschools.in' },
+        { key: 'admissions.narayanaschools.in', label: 'admissions.narayanaschools.in (Admissions Portal)', match: 'exact', value: 'admissions.narayanaschools.in' },
+        { key: 'kolkata.narayanaschools.in', label: 'kolkata.narayanaschools.in (Kolkata Campuses)', match: 'exact', value: 'kolkata.narayanaschools.in' },
+      ];
+      const savedModuleKey = localStorage.getItem(this.MODULE_STORAGE_KEY);
+      if (savedModuleKey && this.modules.some((m) => m.key === savedModuleKey)) {
+        this.filterState.selectedModuleKey = savedModuleKey;
+      } else {
+        this.filterState.selectedModuleKey = this.modules[0].key;
+      }
+      this.loadDemoLeads();
+      return;
+    }
+
     this.isLoadingModules = true;
     this.loadError = '';
     this.cdr.markForCheck();
@@ -105,7 +123,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
         if (res.success && Array.isArray(res.data) && res.data.length > 0) {
           this.modules = res.data;
 
-          // Check if previously selected module exists in localStorage
           const savedModuleKey = localStorage.getItem(this.MODULE_STORAGE_KEY);
           if (savedModuleKey && this.modules.some((m) => m.key === savedModuleKey)) {
             this.filterState.selectedModuleKey = savedModuleKey;
@@ -128,13 +145,45 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
   }
 
+  toggleDemoMode(): void {
+    this.isDemoMode = !this.isDemoMode;
+    if (this.isDemoMode) {
+      if (this.modules.length === 0) {
+        this.loadModules();
+      } else {
+        this.loadDemoLeads();
+      }
+      this.toast.info('Switched to Demo Analytics Mode (Realistic Dummy Data).');
+    } else {
+      this.fetchLeadsForModule();
+      this.toast.info('Switched to Live API Data Feed.');
+    }
+    this.cdr.markForCheck();
+  }
+
+  loadDemoLeads(): void {
+    this.isLoadingLeads = false;
+    this.loadError = '';
+    this.rawLeads = generateAdsDashboardMockLeads();
+    this.recalculate();
+  }
+
   onModuleChange(): void {
     if (!this.filterState.selectedModuleKey) return;
     localStorage.setItem(this.MODULE_STORAGE_KEY, this.filterState.selectedModuleKey);
-    this.fetchLeadsForModule();
+    if (this.isDemoMode) {
+      this.loadDemoLeads();
+    } else {
+      this.fetchLeadsForModule();
+    }
   }
 
   fetchLeadsForModule(): void {
+    if (this.isDemoMode) {
+      this.loadDemoLeads();
+      return;
+    }
+
     if (!this.filterState.selectedModuleKey) return;
 
     this.isLoadingLeads = true;
@@ -161,7 +210,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           this.isLoadingLeads = false;
-          this.loadError = 'Could not load leads for the selected module.';
+          this.loadError = 'Could not load leads for the selected module from API.';
           console.error('Error fetching leads:', err);
           this.recalculate();
         },

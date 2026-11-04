@@ -28,10 +28,7 @@ import {
   LeadModule,
   LeadService,
 } from '../../services/lead.service';
-import {
-  ColumnConfig,
-  CustomAnalysisFilterParams,
-} from './models/lead-analysis.model';
+import { ColumnConfig } from './models/lead-analysis.model';
 import {
   computeNameCounts,
   computePhoneCounts,
@@ -39,8 +36,6 @@ import {
   normalizeName,
   normalizePhone,
 } from './utils/lead-filters.util';
-import { LeadAnalyticsBarComponent } from './components/lead-analytics-bar/lead-analytics-bar.component';
-import { CustomAnalysisModalComponent } from './components/custom-analysis-modal/custom-analysis-modal.component';
 
 export type { ColumnConfig };
 
@@ -54,8 +49,6 @@ export type { ColumnConfig };
     TopbarComponent,
     SidebarComponent,
     DateRangePickerComponent,
-    LeadAnalyticsBarComponent,
-    CustomAnalysisModalComponent,
   ],
   templateUrl: './leads.component.html',
 })
@@ -110,10 +103,6 @@ export class LeadsComponent implements OnInit, OnDestroy {
   sortKey: string | null = null;
   sortOrder: 'asc' | 'desc' | null = null;
   isFilterMenuOpen = false;
-
-  // Analytics & Custom Analysis popup state
-  isAnalyticsBarOpen = true;
-  isCustomAnalysisOpen = false;
 
   readonly defaultColumns: ColumnConfig[] = [
     { key: 'id', label: 'ID', visible: true, optional: true },
@@ -804,34 +793,6 @@ export class LeadsComponent implements OnInit, OnDestroy {
     this.nameFilterMode = 'all';
     this.sortKey = null;
     this.sortOrder = null;
-    this.cdr.markForCheck();
-  }
-
-  toggleAnalyticsBar(): void {
-    this.isAnalyticsBarOpen = !this.isAnalyticsBarOpen;
-    this.cdr.markForCheck();
-  }
-
-  openCustomAnalysis(): void {
-    this.isCustomAnalysisOpen = true;
-    this.cdr.markForCheck();
-  }
-
-  closeCustomAnalysis(): void {
-    this.isCustomAnalysisOpen = false;
-    this.cdr.markForCheck();
-  }
-
-  onApplyCustomAnalysisFilters(params: CustomAnalysisFilterParams): void {
-    if (params.dateFrom) this.dateFrom = params.dateFrom;
-    if (params.dateTo) this.dateTo = params.dateTo;
-    this.excludeTestLeads = params.excludeTest;
-    this.phoneFilterMode = params.phoneMode;
-    if (params.nameMode) this.nameFilterMode = params.nameMode;
-    this.currentPage = 1;
-    this.clearPageCache();
-    this.fetchLeads();
-    this.toastService.success('Applied custom analysis filters to leads table.');
     this.cdr.markForCheck();
   }
 

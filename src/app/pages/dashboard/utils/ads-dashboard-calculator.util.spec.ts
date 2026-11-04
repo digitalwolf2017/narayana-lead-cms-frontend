@@ -111,4 +111,11 @@ describe('AdsDashboardCalculator', () => {
     expect(res.availableCourses).toContain('MBA');
     expect(res.availableCourses).toContain('Class 10');
   });
+
+  it('should compute hourly, campaign, and branch breakdowns', () => {
+    const res = calculateAdsDashboard(mockLeads, defaultFilter);
+    expect(res.hourlyDistribution.length).toBe(24);
+    expect(Array.isArray(res.campaignBreakdown)).toBe(true);
+    expect(Array.isArray(res.branchBreakdown)).toBe(true);
+  });
 });

@@ -60,15 +60,6 @@
       </div>
       } @else {
 
-      <!-- MODULAR LEAD ANALYTICS BAR COMPONENT -->
-      <app-lead-analytics-bar
-        [leads]="displayedLeads"
-        [dateFrom]="dateFrom"
-        [dateTo]="dateTo"
-        [isOpen]="isAnalyticsBarOpen"
-        (openCustomAnalysis)="openCustomAnalysis()"
-        (toggleOpen)="toggleAnalyticsBar()" />
-
       <!-- LEADS TABLE & FILTERS CARD -->
       <section class="relative z-10 rounded-lg border border-slate-200 bg-white shadow-xs">
         <div class="border-b border-slate-100 p-4 relative z-20">
@@ -186,7 +177,7 @@
               }
             </div>
 
-            <!-- ACTIONS (ROWS, TOGGLE ANALYTICS, COLUMNS, EXPORT) -->
+            <!-- ACTIONS (ROWS, COLUMNS, EXPORT) -->
             <div class="flex flex-wrap items-center gap-2">
               <div class="flex items-center gap-1.5">
                 <span class="text-[11px] font-medium text-slate-400">Rows:</span>
@@ -198,22 +189,6 @@
                   <option [ngValue]="100">100</option>
                 </select>
               </div>
-
-              <!-- ANALYTICS BAR TOGGLE -->
-              <button type="button" (click)="toggleAnalyticsBar()"
-                [class.bg-indigo-50]="isAnalyticsBarOpen"
-                [class.border-indigo-200]="isAnalyticsBarOpen"
-                [class.text-indigo-700]="isAnalyticsBarOpen"
-                [class.bg-white]="!isAnalyticsBarOpen"
-                [class.border-slate-200]="!isAnalyticsBarOpen"
-                [class.text-slate-700]="!isAnalyticsBarOpen"
-                class="inline-flex h-8.5 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-semibold shadow-2xs transition hover:bg-slate-50">
-                <svg class="h-3.5 w-3.5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                <span>Analytics</span>
-              </button>
 
               <!-- COLUMNS DROPDOWN -->
               <div id="columns-dropdown-wrapper" class="relative">
@@ -606,18 +581,6 @@
         }
       </section>
       }
-
-      <!-- MODULAR CUSTOM ANALYSIS & FILTER MODAL POPUP COMPONENT -->
-      <app-custom-analysis-modal
-        [isOpen]="isCustomAnalysisOpen"
-        [leads]="leads"
-        [initialDateFrom]="dateFrom"
-        [initialDateTo]="dateTo"
-        [initialExcludeTest]="excludeTestLeads"
-        [initialPhoneMode]="phoneFilterMode"
-        [initialNameMode]="nameFilterMode"
-        (close)="closeCustomAnalysis()"
-        (applyFilters)="onApplyCustomAnalysisFilters($event)" />
 
     </main>
   </div>

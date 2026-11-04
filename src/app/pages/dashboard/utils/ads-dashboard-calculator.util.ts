@@ -8,8 +8,11 @@ import {
   AdsDashboardCalculationResult,
   AdsDashboardFilterState,
   AdsDashboardMetrics,
+  BranchPerformanceItem,
+  CampaignPerformanceItem,
   CourseBreakdownItem,
   DailyTrendItem,
+  HourlyInflowItem,
   SourceBreakdownItem,
   TodayPulseMetrics,
 } from '../models/ads-dashboard.model';
@@ -312,6 +315,109 @@ export function calculateAdsDashboard(
     };
   });
 
+  // 11. Hourly Distribution (Dayparting Inflow Heatmap)
+  const hourMap = new Map<number, { count: number; verified: number }>();
+  for (let h = 0; h < 24; h++) {
+    hourMap.set(h, { count: 0, verified: 0 });
+  }
+
+  for (const l of filteredLeads) {
+    if (!l.entrydate) continue;
+    const timePart = l.entrydate.split(' ')[1];
+    if (timePart) {
+      const h = parseInt(timePart.split(':')[0], 10);
+      if (!isNaN(h) && h >= 0 && h < 24) {
+        const item = hourMap.get(h)!;
+        item.count++;
+        if (isOtpVerified(l)) item.verified++;
+      }
+    }
+  }
+
+  let maxHourCount = 0;
+  for (const v of hourMap.values()) {
+    if (v.count > maxHourCount) maxHourCount = v.count;
+  }
+
+  const hourlyDistribution: HourlyInflowItem[] = Array.from(hourMap.entries()).map(([hour, val]) => {
+    const label = `${String(hour).padStart(2, '0')}:00`;
+    const heightPercent = maxHourCount > 0 ? Math.max(8, Math.round((val.count / maxHourCount) * 100)) : 8;
+    const verifiedRate = val.count > 0 ? Number(((val.verified / val.count) * 100).toFixed(1)) : 0;
+    return {
+      hour,
+      label,
+      count: val.count,
+      verifiedCount: val.verified,
+      verifiedRate,
+      heightPercent,
+    };
+  });
+
+  // 12. Campaign Attribution Matrix (UTM Campaign & Source)
+  const campaignMap = new Map<string, { source: string; total: number; verified: number; duplicate: number }>();
+  for (const l of filteredLeads) {
+    const campaign = (l.utm_campaign || '').trim() || 'General Inflow / Direct';
+    const source = (l.utm_source || '').trim() || 'Direct';
+    const key = `${source}___${campaign}`;
+
+    const existing = campaignMap.get(key) || { source, total: 0, verified: 0, duplicate: 0 };
+    existing.total++;
+    if (isOtpVerified(l)) existing.verified++;
+    const p = normalizePhone(l.phone);
+    if (p && (phoneFreq.get(p) || 0) > 1) {
+      existing.duplicate++;
+    }
+    campaignMap.set(key, existing);
+  }
+
+  const campaignBreakdown: CampaignPerformanceItem[] = Array.from(campaignMap.entries())
+    .map(([key, val]) => {
+      const campaign = key.split('___')[1] || key;
+      const verifiedRate = val.total > 0 ? Number(((val.verified / val.total) * 100).toFixed(1)) : 0;
+      const duplicateRate = val.total > 0 ? Number(((val.duplicate / val.total) * 100).toFixed(1)) : 0;
+      const sharePercent = totalLeads > 0 ? Number(((val.total / totalLeads) * 100).toFixed(1)) : 0;
+      return {
+        campaign,
+        source: val.source,
+        totalLeads: val.total,
+        verifiedCount: val.verified,
+        verifiedRate,
+        duplicateCount: val.duplicate,
+        duplicateRate,
+        sharePercent,
+      };
+    })
+    .sort((a, b) => b.totalLeads - a.totalLeads);
+
+  // 13. Campus & Branch Performance Matrix
+  const branchMap = new Map<string, { city: string; total: number; verified: number }>();
+  for (const l of filteredLeads) {
+    const branch = (l.branch || '').trim() || 'Central Admissions';
+    const city = (l.city || '').trim() || 'Kolkata';
+    const key = `${city}___${branch}`;
+
+    const existing = branchMap.get(key) || { city, total: 0, verified: 0 };
+    existing.total++;
+    if (isOtpVerified(l)) existing.verified++;
+    branchMap.set(key, existing);
+  }
+
+  const branchBreakdown: BranchPerformanceItem[] = Array.from(branchMap.entries())
+    .map(([key, val]) => {
+      const branch = key.split('___')[1] || key;
+      const verifiedRate = val.total > 0 ? Number(((val.verified / val.total) * 100).toFixed(1)) : 0;
+      const sharePercent = totalLeads > 0 ? Number(((val.total / totalLeads) * 100).toFixed(1)) : 0;
+      return {
+        branch,
+        city: val.city,
+        totalLeads: val.total,
+        verifiedCount: val.verified,
+        verifiedRate,
+        sharePercent,
+      };
+    })
+    .sort((a, b) => b.totalLeads - a.totalLeads);
+
   return {
     metrics,
     todayPulse,
@@ -319,6 +425,9 @@ export function calculateAdsDashboard(
     courseBreakdown,
     sourceBreakdown,
     dailyTrend,
+    hourlyDistribution,
+    campaignBreakdown,
+    branchBreakdown,
     availableCourses,
   };
 }

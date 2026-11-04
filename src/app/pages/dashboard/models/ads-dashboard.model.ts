@@ -91,6 +91,35 @@ export interface DailyTrendItem {
   heightPercent: number;
 }
 
+export interface HourlyInflowItem {
+  hour: number;
+  label: string;
+  count: number;
+  verifiedCount: number;
+  verifiedRate: number;
+  heightPercent: number;
+}
+
+export interface CampaignPerformanceItem {
+  campaign: string;
+  source: string;
+  totalLeads: number;
+  verifiedCount: number;
+  verifiedRate: number;
+  duplicateCount: number;
+  duplicateRate: number;
+  sharePercent: number;
+}
+
+export interface BranchPerformanceItem {
+  branch: string;
+  city: string;
+  totalLeads: number;
+  verifiedCount: number;
+  verifiedRate: number;
+  sharePercent: number;
+}
+
 export interface AdsDashboardCalculationResult {
   metrics: AdsDashboardMetrics;
   todayPulse: TodayPulseMetrics;
@@ -98,6 +127,9 @@ export interface AdsDashboardCalculationResult {
   courseBreakdown: CourseBreakdownItem[];
   sourceBreakdown: SourceBreakdownItem[];
   dailyTrend: DailyTrendItem[];
+  hourlyDistribution: HourlyInflowItem[];
+  campaignBreakdown: CampaignPerformanceItem[];
+  branchBreakdown: BranchPerformanceItem[];
   availableCourses: string[];
 }
 
