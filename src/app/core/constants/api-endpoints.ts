@@ -42,6 +42,7 @@ export const API_ENDPOINTS = {
   LEADS: {
     BASE: '/leads',
     MODULES: '/leads/modules',
+    FILTER_OPTIONS: '/leads/filter-options',
     EXPORT: '/leads/export',
     BY_ID: (id: number | string) => `/leads/${id}`,
   },

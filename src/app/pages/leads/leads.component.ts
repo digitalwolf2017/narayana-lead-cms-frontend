@@ -23,21 +23,37 @@ import { SidebarComponent } from '../../components/sidebar/sidebar.component';
 import { TopbarComponent } from '../../components/topbar/topbar.component';
 import { DateRangePickerComponent } from '../../components/date-range-picker/date-range-picker.component';
 import {
+  LeadFilterOptions,
   LeadItem,
   LeadMeta,
   LeadModule,
+  LeadQueryParams,
   LeadService,
 } from '../../services/lead.service';
 import { ColumnConfig } from './models/lead-analysis.model';
-import {
-  computeNameCounts,
-  computePhoneCounts,
-  isTestLead,
-  normalizeName,
-  normalizePhone,
-} from './utils/lead-filters.util';
 
 export type { ColumnConfig };
+
+export interface BackendLeadFilters {
+  otp_validation: string;
+  city: string;
+  branch: string;
+  class: string;
+  board: string;
+  class_category: string;
+  reservation_type: string;
+  redirect_from: string;
+  utm_source: string;
+  utm_medium: string;
+  utm_campaign: string;
+  [key: string]: string;
+}
+
+export interface DynamicFilterOptionGroup {
+  key: string;
+  label: string;
+  options: string[];
+}
 
 @Component({
   selector: 'app-leads',
@@ -95,14 +111,48 @@ export class LeadsComponent implements OnInit, OnDestroy {
   private readonly STORAGE_KEY = 'leads_column_prefs';
   private readonly WIDTHS_STORAGE_KEY = 'leads_column_widths';
 
-  // Frontend Quality & Deduplication Filters
-  excludeTestLeads = false;
-  testKeyword = 'test';
-  phoneFilterMode: 'all' | 'unique' | 'duplicates_only' = 'all';
-  nameFilterMode: 'all' | 'unique' | 'duplicates_only' = 'all';
-  sortKey: string | null = null;
-  sortOrder: 'asc' | 'desc' | null = null;
-  isFilterMenuOpen = false;
+  // Backend Filter State & Options
+  filterOptions: LeadFilterOptions | null = null;
+  isLoadingFilterOptions = false;
+  showMoreFilters = false;
+
+  backendFilters: BackendLeadFilters = {
+    otp_validation: '',
+    city: '',
+    branch: '',
+    class: '',
+    board: '',
+    class_category: '',
+    reservation_type: '',
+    redirect_from: '',
+    utm_source: '',
+    utm_medium: '',
+    utm_campaign: '',
+  };
+
+  // Safe sorting columns supported by backend:
+  // ['id', 'entrydate', 'name', 'phone', 'city', 'branch', 'class', 'otp_validation', 'utm_source']
+  readonly backendSortableColumns = new Set([
+    'id',
+    'entrydate',
+    'name',
+    'phone',
+    'city',
+    'branch',
+    'class',
+    'otp_validation',
+    'utm_source',
+  ]);
+
+  // Primary filters shown directly in the top toolbar
+  readonly primaryFilterKeys = new Set(['otp_validation', 'city', 'branch', 'class']);
+
+  sortKey: string | null = 'id';
+  sortOrder: 'asc' | 'desc' | null = 'desc';
+
+  // Lead Details Drawer / Modal state
+  selectedLeadForDetail: LeadItem | null = null;
+  isLoadingLeadDetail = false;
 
   readonly defaultColumns: ColumnConfig[] = [
     { key: 'id', label: 'ID', visible: true, optional: true },
@@ -489,12 +539,14 @@ export class LeadsComponent implements OnInit, OnDestroy {
               this.selectedModuleKey = requestedModule;
               this.activeModuleLabel = this.modules.find((m) => m.key === requestedModule)?.label ?? '';
               this.currentPage = 1;
+              this.loadFilterOptions();
               this.fetchLeads();
             } else {
               this.selectedModuleKey = '';
               this.activeModuleLabel = '';
               this.leads = [];
               this.meta = { page: 1, per_page: this.perPage, total: 0, filtered: 0, total_pages: 1 };
+              this.filterOptions = null;
             }
           });
         }
@@ -515,6 +567,7 @@ export class LeadsComponent implements OnInit, OnDestroy {
       this.leads = [];
       this.meta = { page: 1, per_page: this.perPage, total: 0, filtered: 0, total_pages: 1 };
       this.cachedDisplayedPages = [];
+      this.filterOptions = null;
       this.clearPageCache();
       this.router.navigate([], {
         relativeTo: this.route,
@@ -529,6 +582,7 @@ export class LeadsComponent implements OnInit, OnDestroy {
     this.searchTerm = '';
     this.dateFrom = '';
     this.dateTo = '';
+    this.resetBackendFilters();
     this.clearPageCache();
 
     this.router.navigate([], {
@@ -537,7 +591,36 @@ export class LeadsComponent implements OnInit, OnDestroy {
       queryParamsHandling: 'merge',
     });
 
+    this.loadFilterOptions();
     this.fetchLeads();
+  }
+
+  loadFilterOptions(): void {
+    if (!this.selectedModuleKey) return;
+    this.isLoadingFilterOptions = true;
+    this.leadService.getFilterOptions(this.selectedModuleKey).subscribe({
+      next: (res) => {
+        this.isLoadingFilterOptions = false;
+        if (res.success && res.data) {
+          this.filterOptions = res.data;
+          // Ensure all returned filter keys exist in backendFilters for two-way binding
+          for (const key of Object.keys(res.data)) {
+            if (!(key in this.backendFilters)) {
+              this.backendFilters[key] = '';
+            }
+          }
+        } else {
+          this.filterOptions = null;
+        }
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.isLoadingFilterOptions = false;
+        this.filterOptions = null;
+        console.warn('Could not load filter options:', err);
+        this.cdr.markForCheck();
+      },
+    });
   }
 
   fetchLeads(): void {
@@ -569,11 +652,28 @@ export class LeadsComponent implements OnInit, OnDestroy {
     if (this.searchTerm.trim()) params['search'] = this.searchTerm.trim();
     if (this.dateFrom) params['date_from'] = this.dateFrom;
     if (this.dateTo) params['date_to'] = this.dateTo;
+
+    if (this.sortKey && this.backendSortableColumns.has(this.sortKey)) {
+      params['sort_by'] = this.sortKey;
+      if (this.sortOrder) params['sort_order'] = this.sortOrder;
+    }
+
+    // Dynamically attach all active filters present in backendFilters
+    for (const [key, value] of Object.entries(this.backendFilters)) {
+      if (typeof value === 'string' && value.trim()) {
+        params[key] = value.trim();
+      }
+    }
+
     return params;
   }
 
   private buildCacheKey(): string {
-    return `${this.selectedModuleKey}|${this.currentPage}|${this.perPage}|${this.searchTerm}|${this.dateFrom}|${this.dateTo}`;
+    const p = this.buildParams();
+    return Object.keys(p)
+      .sort()
+      .map((k) => `${k}=${p[k]}`)
+      .join('&');
   }
 
   private clearPageCache(): void {
@@ -598,213 +698,151 @@ export class LeadsComponent implements OnInit, OnDestroy {
     this.fetchLeads();
   }
 
-  isLeadTest(lead: LeadItem): boolean {
-    return isTestLead(lead, this.testKeyword);
+  onBackendFilterChange(): void {
+    this.currentPage = 1;
+    this.clearPageCache();
+    this.fetchLeads();
   }
 
-  get phoneCounts(): Map<string, number> {
-    return computePhoneCounts(this.leads);
-  }
-
-  getPhoneDuplicateCount(lead: LeadItem): number {
-    const p = normalizePhone(lead.phone);
-    if (!p) return 0;
-    return this.phoneCounts.get(p) || 0;
-  }
-
-  get nameCounts(): Map<string, number> {
-    return computeNameCounts(this.leads);
-  }
-
-  getNameDuplicateCount(lead: LeadItem): number {
-    const n = normalizeName(lead.name);
-    if (!n) return 0;
-    return this.nameCounts.get(n) || 0;
-  }
-
-  get displayedLeads(): LeadItem[] {
-    let result = this.leads;
-
-    if (this.excludeTestLeads) {
-      result = result.filter((lead) => !isTestLead(lead, this.testKeyword));
-    }
-
-    if (this.phoneFilterMode === 'unique') {
-      const seenPhones = new Set<string>();
-      result = result.filter((lead) => {
-        const p = normalizePhone(lead.phone);
-        if (!p) return true;
-        if (seenPhones.has(p)) return false;
-        seenPhones.add(p);
-        return true;
-      });
-    } else if (this.phoneFilterMode === 'duplicates_only') {
-      const counts = this.phoneCounts;
-      result = result.filter((lead) => {
-        const p = normalizePhone(lead.phone);
-        return p ? (counts.get(p) || 0) > 1 : false;
-      });
-    }
-
-    if (this.nameFilterMode === 'unique') {
-      const seenNames = new Set<string>();
-      result = result.filter((lead) => {
-        const n = normalizeName(lead.name);
-        if (!n) return true;
-        if (seenNames.has(n)) return false;
-        seenNames.add(n);
-        return true;
-      });
-    } else if (this.nameFilterMode === 'duplicates_only') {
-      const counts = this.nameCounts;
-      result = result.filter((lead) => {
-        const n = normalizeName(lead.name);
-        return n ? (counts.get(n) || 0) > 1 : false;
-      });
-    }
-
-    if (this.sortKey && this.sortOrder) {
-      const key = this.sortKey;
-      const orderMultiplier = this.sortOrder === 'asc' ? 1 : -1;
-
-      result = [...result].sort((a, b) => {
-        if (key === 'entrydate') {
-          const timeA = a.entrydate ? new Date(a.entrydate.replace(' ', 'T')).getTime() || 0 : 0;
-          const timeB = b.entrydate ? new Date(b.entrydate.replace(' ', 'T')).getTime() || 0 : 0;
-          return (timeA - timeB) * orderMultiplier;
-        }
-
-        if (key === 'id') {
-          const idA = Number(a.id) || 0;
-          const idB = Number(b.id) || 0;
-          return (idA - idB) * orderMultiplier;
-        }
-
-        const valA = (this.getCellValue(a, key) || (a as unknown as Record<string, unknown>)[key] || '')
-          .toString()
-          .trim()
-          .toLowerCase();
-        const valB = (this.getCellValue(b, key) || (b as unknown as Record<string, unknown>)[key] || '')
-          .toString()
-          .trim()
-          .toLowerCase();
-        return valA.localeCompare(valB, undefined, { numeric: true, sensitivity: 'base' }) * orderMultiplier;
-      });
-    }
-
-    return result;
-  }
-
-  get testLeadsCount(): number {
-    return this.leads.filter((l) => isTestLead(l, this.testKeyword)).length;
-  }
-
-  get duplicatePhoneCount(): number {
-    const counts = this.phoneCounts;
-    let dupCount = 0;
-    for (const count of counts.values()) {
-      if (count > 1) {
-        dupCount += count;
+  resetBackendFilters(): void {
+    const resetObj: BackendLeadFilters = {
+      otp_validation: '',
+      city: '',
+      branch: '',
+      class: '',
+      board: '',
+      class_category: '',
+      reservation_type: '',
+      redirect_from: '',
+      utm_source: '',
+      utm_medium: '',
+      utm_campaign: '',
+    };
+    if (this.filterOptions) {
+      for (const key of Object.keys(this.filterOptions)) {
+        resetObj[key] = '';
       }
     }
-    return dupCount;
+    this.backendFilters = resetObj;
   }
 
-  get duplicateNameCount(): number {
-    const counts = this.nameCounts;
-    let dupCount = 0;
-    for (const count of counts.values()) {
-      if (count > 1) {
-        dupCount += count;
+  resetAdvancedFilters(): void {
+    for (const key of Object.keys(this.backendFilters)) {
+      if (!this.primaryFilterKeys.has(key)) {
+        this.backendFilters[key] = '';
       }
     }
-    return dupCount;
-  }
-
-  get hasActiveFrontendFilters(): boolean {
-    return (
-      this.excludeTestLeads ||
-      this.phoneFilterMode !== 'all' ||
-      this.nameFilterMode !== 'all' ||
-      this.sortKey !== null
-    );
-  }
-
-  toggleExcludeTestLeads(): void {
-    this.excludeTestLeads = !this.excludeTestLeads;
-    this.cdr.markForCheck();
-  }
-
-  setPhoneFilterMode(mode: 'all' | 'unique' | 'duplicates_only'): void {
-    this.phoneFilterMode = mode;
-    this.cdr.markForCheck();
-  }
-
-  setNameFilterMode(mode: 'all' | 'unique' | 'duplicates_only'): void {
-    this.nameFilterMode = mode;
-    this.cdr.markForCheck();
-  }
-
-  get currentSortOption(): string {
-    if (!this.sortKey || !this.sortOrder) return '';
-    return `${this.sortKey}_${this.sortOrder}`;
-  }
-
-  setSortOption(option: string): void {
-    if (!option) {
-      this.sortKey = null;
-      this.sortOrder = null;
-    } else {
-      const [key, order] = option.split('_');
-      this.sortKey = key;
-      this.sortOrder = (order as 'asc' | 'desc') || 'asc';
-    }
-    this.cdr.markForCheck();
-  }
-
-  toggleSort(key: string): void {
-    if (this.sortKey !== key) {
-      this.sortKey = key;
-      this.sortOrder = key === 'entrydate' ? 'desc' : 'asc';
-    } else if (this.sortOrder === 'asc') {
-      this.sortOrder = 'desc';
-    } else if (this.sortOrder === 'desc') {
-      this.sortKey = null;
-      this.sortOrder = null;
-    } else {
-      this.sortOrder = 'asc';
-    }
-    this.cdr.markForCheck();
-  }
-
-  getSortLabel(): string {
-    if (!this.sortKey || !this.sortOrder) return '';
-    const col = this.columns.find((c) => c.key === this.sortKey);
-    const label = col ? col.label : this.sortKey;
-    if (this.sortKey === 'entrydate') {
-      return this.sortOrder === 'desc' ? `${label} (Newest first)` : `${label} (Oldest first)`;
-    }
-    return this.sortOrder === 'asc' ? `${label} (A → Z)` : `${label} (Z → A)`;
-  }
-
-  clearFrontendFilters(): void {
-    this.excludeTestLeads = false;
-    this.phoneFilterMode = 'all';
-    this.nameFilterMode = 'all';
-    this.sortKey = null;
-    this.sortOrder = null;
-    this.cdr.markForCheck();
   }
 
   resetFilters(): void {
     this.searchTerm = '';
     this.dateFrom = '';
     this.dateTo = '';
-    this.excludeTestLeads = false;
-    this.phoneFilterMode = 'all';
-    this.nameFilterMode = 'all';
-    this.sortKey = null;
-    this.sortOrder = null;
+    this.sortKey = 'id';
+    this.sortOrder = 'desc';
+    this.resetBackendFilters();
+    this.currentPage = 1;
+    this.clearPageCache();
+    this.fetchLeads();
+  }
+
+  get hasActiveFilters(): boolean {
+    return Boolean(
+      this.searchTerm.trim() ||
+      this.dateFrom ||
+      this.dateTo ||
+      this.activeBackendFilterCount > 0 ||
+      this.sortKey !== 'id' ||
+      this.sortOrder !== 'desc'
+    );
+  }
+
+  get activeBackendFilterCount(): number {
+    return Object.values(this.backendFilters).filter(
+      (v) => typeof v === 'string' && v.trim().length > 0
+    ).length;
+  }
+
+  get activeAdvancedFilterCount(): number {
+    return Object.entries(this.backendFilters).filter(
+      ([k, v]) => !this.primaryFilterKeys.has(k) && typeof v === 'string' && v.trim().length > 0
+    ).length;
+  }
+
+  formatFilterLabel(key: string): string {
+    const knownLabels: Record<string, string> = {
+      utm_source: 'UTM Source',
+      utm_medium: 'UTM Medium',
+      utm_campaign: 'UTM Campaign',
+      utm_content: 'UTM Content',
+      utm_term: 'UTM Term',
+      redirect_from: 'Redirect From',
+      class_category: 'Class Category',
+      reservation_type: 'Reservation Type',
+      otp_validation: 'OTP Status',
+      page_section: 'Page Section',
+    };
+
+    if (knownLabels[key]) {
+      return knownLabels[key];
+    }
+
+    return key
+      .split('_')
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join(' ');
+  }
+
+  get advancedFilterGroups(): DynamicFilterOptionGroup[] {
+    if (!this.filterOptions) return [];
+
+    const groups: DynamicFilterOptionGroup[] = [];
+    for (const [key, rawOptions] of Object.entries(this.filterOptions)) {
+      if (this.primaryFilterKeys.has(key)) continue;
+      if (!Array.isArray(rawOptions) || rawOptions.length === 0) continue;
+
+      const cleanOptions = rawOptions
+        .filter((opt): opt is string => opt !== null && opt !== undefined && String(opt).trim().length > 0)
+        .map((opt) => String(opt).trim());
+
+      if (cleanOptions.length > 0) {
+        groups.push({
+          key,
+          label: this.formatFilterLabel(key),
+          options: cleanOptions,
+        });
+      }
+    }
+    return groups;
+  }
+
+  toggleMoreFilters(): void {
+    this.showMoreFilters = !this.showMoreFilters;
+    this.cdr.markForCheck();
+  }
+
+  get displayedLeads(): LeadItem[] {
+    return this.leads;
+  }
+
+  isSortable(key: string): boolean {
+    return this.backendSortableColumns.has(key);
+  }
+
+  toggleSort(key: string): void {
+    if (!this.backendSortableColumns.has(key)) return;
+
+    if (this.sortKey !== key) {
+      this.sortKey = key;
+      this.sortOrder = key === 'entrydate' ? 'desc' : 'asc';
+    } else if (this.sortOrder === 'asc') {
+      this.sortOrder = 'desc';
+    } else if (this.sortOrder === 'desc') {
+      this.sortOrder = 'asc';
+    } else {
+      this.sortOrder = 'desc';
+    }
+
     this.currentPage = 1;
     this.clearPageCache();
     this.fetchLeads();
@@ -834,18 +872,51 @@ export class LeadsComponent implements OnInit, OnDestroy {
     return val !== null && val !== undefined && val !== '' ? String(val) : '—';
   }
 
+  getSerialNumber(index: number): number {
+    const page = this.meta.page || this.currentPage || 1;
+    const perPage = this.meta.per_page || this.perPage || 25;
+    return ((page - 1) * perPage) + index + 1;
+  }
+
+  openLeadDetail(lead: LeadItem): void {
+    this.selectedLeadForDetail = lead;
+    if (lead.id && this.selectedModuleKey) {
+      this.isLoadingLeadDetail = true;
+      this.leadService.getLeadById(lead.id, this.selectedModuleKey).subscribe({
+        next: (res) => {
+          this.isLoadingLeadDetail = false;
+          if (res.success && res.data) {
+            this.selectedLeadForDetail = res.data;
+          }
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          this.isLoadingLeadDetail = false;
+          console.warn('Could not fetch full lead details:', err);
+          this.cdr.markForCheck();
+        },
+      });
+    }
+    this.cdr.markForCheck();
+  }
+
+  closeLeadDetail(): void {
+    this.selectedLeadForDetail = null;
+    this.isLoadingLeadDetail = false;
+    this.cdr.markForCheck();
+  }
+
   exportCsv(): void {
     if (!this.selectedModuleKey || this.isExporting) return;
 
     this.isExporting = true;
     this.cdr.markForCheck();
 
-    const params: Record<string, unknown> = { module: this.selectedModuleKey };
-    if (this.searchTerm.trim()) params['search'] = this.searchTerm.trim();
-    if (this.dateFrom) params['date_from'] = this.dateFrom;
-    if (this.dateTo) params['date_to'] = this.dateTo;
+    const fullParams = this.buildParams();
+    delete fullParams['page'];
+    delete fullParams['per_page'];
 
-    this.leadService.exportLeads(params as any).subscribe({
+    this.leadService.exportLeads(fullParams as LeadQueryParams).subscribe({
       next: (blob) => {
         this.isExporting = false;
         const url = window.URL.createObjectURL(blob);

@@ -44,6 +44,30 @@ export interface LeadMeta {
   request_id?: string;
 }
 
+export interface LeadFilterOptions {
+  redirect_from?: string[];
+  class_category?: string[];
+  city?: string[];
+  branch?: string[];
+  board?: string[];
+  reservation_type?: string[];
+  class?: string[];
+  utm_source?: string[];
+  utm_medium?: string[];
+  utm_campaign?: string[];
+  otp_validation?: string[];
+  [key: string]: string[] | undefined;
+}
+
+export interface LeadFilterOptionsResponse {
+  success: boolean;
+  message?: string;
+  data: LeadFilterOptions;
+  meta?: {
+    request_id?: string;
+  };
+}
+
 export interface LeadQueryParams {
   module: string;
   page?: number;
@@ -51,6 +75,19 @@ export interface LeadQueryParams {
   search?: string;
   date_from?: string;
   date_to?: string;
+  redirect_from?: string;
+  class_category?: string;
+  otp_validation?: 'VALID' | 'INVALID' | string;
+  city?: string;
+  branch?: string;
+  board?: string;
+  reservation_type?: string;
+  class?: string;
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  sort_by?: 'id' | 'entrydate' | 'name' | 'phone' | 'city' | 'branch' | 'class' | 'otp_validation' | 'utm_source' | string;
+  sort_order?: 'asc' | 'desc';
   [key: string]: unknown;
 }
 
@@ -91,6 +128,14 @@ export class LeadService {
    */
   getModules(): Observable<LeadModulesResponse> {
     return this.api.get<LeadModulesResponse>(API_ENDPOINTS.LEADS.MODULES);
+  }
+
+  /**
+   * Fetch distinct filter options for a module
+   * GET /api/v1/backend/leads/filter-options?module={moduleKey}
+   */
+  getFilterOptions(module: string): Observable<LeadFilterOptionsResponse> {
+    return this.api.get<LeadFilterOptionsResponse>(API_ENDPOINTS.LEADS.FILTER_OPTIONS, { module });
   }
 
   /**

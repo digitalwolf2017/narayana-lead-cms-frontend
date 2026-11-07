@@ -2,11 +2,14 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { LeadsComponent } from './leads.component';
-import { LeadItem } from '../../services/lead.service';
+import { LeadItem, LeadService } from '../../services/lead.service';
+import { of } from 'rxjs';
+import { vi } from 'vitest';
 
 describe('LeadsComponent', () => {
   let component: LeadsComponent;
   let fixture: ComponentFixture<LeadsComponent>;
+  let leadService: LeadService;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -16,6 +19,7 @@ describe('LeadsComponent', () => {
 
     fixture = TestBed.createComponent(LeadsComponent);
     component = fixture.componentInstance;
+    leadService = TestBed.inject(LeadService);
     await fixture.whenStable();
   });
 
@@ -23,92 +27,205 @@ describe('LeadsComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  describe('Name Duplicate Filter', () => {
-    const mockLeads: LeadItem[] = [
-      {
-        id: 1,
-        name: 'Rahul Sharma',
+  describe('Backend Filter State & Dynamic Options', () => {
+    it('should initialize with empty backendFilters', () => {
+      expect(component.backendFilters.otp_validation).toBe('');
+      expect(component.backendFilters.city).toBe('');
+      expect(component.backendFilters.branch).toBe('');
+      expect(component.backendFilters.class).toBe('');
+      expect(component.backendFilters.board).toBe('');
+      expect(component.backendFilters.utm_source).toBe('');
+      expect(component.activeBackendFilterCount).toBe(0);
+      expect(component.hasActiveFilters).toBe(false);
+    });
+
+    it('should correctly count active backend filters and reflect in hasActiveFilters', () => {
+      component.backendFilters.city = 'Kolkata';
+      component.backendFilters.otp_validation = 'VALID';
+      expect(component.activeBackendFilterCount).toBe(2);
+      expect(component.hasActiveFilters).toBe(true);
+    });
+
+    it('should reset backend filters on resetBackendFilters', () => {
+      component.backendFilters.city = 'Kolkata';
+      component.backendFilters.branch = 'Salt Lake';
+      component.backendFilters.utm_campaign = 'admission_2026';
+      expect(component.activeBackendFilterCount).toBe(3);
+
+      component.resetBackendFilters();
+      expect(component.activeBackendFilterCount).toBe(0);
+      expect(component.backendFilters.city).toBe('');
+      expect(component.backendFilters.branch).toBe('');
+      expect(component.backendFilters.utm_campaign).toBe('');
+    });
+
+    it('should dynamically generate advancedFilterGroups for any additive backend filter keys', () => {
+      component.filterOptions = {
+        city: ['Kolkata', 'Howrah'], // primary - should be excluded from advanced groups
+        board: ['CBSE', 'ICSE'],
+        stream: ['Science', 'Commerce'], // newly added by backend
+        academic_session: ['2026-27'], // newly added by backend
+        empty_list: [], // should be excluded
+      };
+
+      const groups = component.advancedFilterGroups;
+      const keys = groups.map((g) => g.key);
+
+      expect(keys).toContain('board');
+      expect(keys).toContain('stream');
+      expect(keys).toContain('academic_session');
+      expect(keys).not.toContain('city');
+      expect(keys).not.toContain('empty_list');
+
+      // Check formatted labels
+      const streamGroup = groups.find((g) => g.key === 'stream');
+      expect(streamGroup?.label).toBe('Stream');
+      expect(streamGroup?.options).toEqual(['Science', 'Commerce']);
+
+      const sessionGroup = groups.find((g) => g.key === 'academic_session');
+      expect(sessionGroup?.label).toBe('Academic Session');
+    });
+
+    it('should dynamically initialize and include new backend filters in buildParams', () => {
+      component.selectedModuleKey = 'wbnarayanaschools';
+      vi.spyOn(leadService, 'getFilterOptions').mockReturnValue(
+        of({
+          success: true,
+          data: {
+            board: ['CBSE'],
+            stream: ['Science'],
+          },
+        })
+      );
+
+      component.loadFilterOptions();
+      expect('stream' in component.backendFilters).toBe(true);
+
+      // Set value for new filter
+      component.backendFilters['stream'] = 'Science';
+      expect(component.activeAdvancedFilterCount).toBe(1);
+
+      const params = (component as any).buildParams();
+      expect(params['stream']).toBe('Science');
+
+      // Reset advanced filters
+      component.resetAdvancedFilters();
+      expect(component.backendFilters['stream']).toBe('');
+      expect(component.activeAdvancedFilterCount).toBe(0);
+    });
+
+    it('should toggle more filters panel', () => {
+      expect(component.showMoreFilters).toBe(false);
+      component.toggleMoreFilters();
+      expect(component.showMoreFilters).toBe(true);
+      component.toggleMoreFilters();
+      expect(component.showMoreFilters).toBe(false);
+    });
+
+    it('should reset all search, date and backend filters on resetFilters', () => {
+      component.searchTerm = 'John';
+      component.dateFrom = '2026-03-01';
+      component.dateTo = '2026-03-05';
+      component.backendFilters.city = 'Kolkata';
+      component.sortKey = 'name';
+      component.sortOrder = 'asc';
+      expect(component.hasActiveFilters).toBe(true);
+
+      component.resetFilters();
+      expect(component.searchTerm).toBe('');
+      expect(component.dateFrom).toBe('');
+      expect(component.dateTo).toBe('');
+      expect(component.sortKey).toBe('id');
+      expect(component.sortOrder).toBe('desc');
+      expect(component.activeBackendFilterCount).toBe(0);
+      expect(component.hasActiveFilters).toBe(false);
+    });
+  });
+
+  describe('Backend Sorting & Safety', () => {
+    it('should recognize backend-supported sortable columns', () => {
+      expect(component.isSortable('id')).toBe(true);
+      expect(component.isSortable('entrydate')).toBe(true);
+      expect(component.isSortable('name')).toBe(true);
+      expect(component.isSortable('phone')).toBe(true);
+      expect(component.isSortable('city')).toBe(true);
+      expect(component.isSortable('branch')).toBe(true);
+      expect(component.isSortable('class')).toBe(true);
+      expect(component.isSortable('otp_validation')).toBe(true);
+      expect(component.isSortable('utm_source')).toBe(true);
+
+      // Non-supported columns
+      expect(component.isSortable('parent_email')).toBe(false);
+      expect(component.isSortable('utm_content')).toBe(false);
+      expect(component.isSortable('page_section')).toBe(false);
+    });
+
+    it('should cycle sort order on supported column and ignore non-supported column', () => {
+      component.selectedModuleKey = 'wbnarayanaschools.in';
+      component.sortKey = 'id';
+      component.sortOrder = 'desc';
+
+      // Toggle name: from initial to asc
+      component.toggleSort('name');
+      expect(component.sortKey).toBe('name');
+      expect(component.sortOrder).toBe('asc');
+
+      // Toggle name again: asc to desc
+      component.toggleSort('name');
+      expect(component.sortKey).toBe('name');
+      expect(component.sortOrder).toBe('desc');
+
+      // Toggle non-supported column: should not change sortKey
+      component.toggleSort('parent_email');
+      expect(component.sortKey).toBe('name');
+      expect(component.sortOrder).toBe('desc');
+    });
+  });
+
+  describe('Serial Number and Detail Drawer', () => {
+    it('should calculate sequential serial number based on pagination meta', () => {
+      component.meta = {
+        page: 3,
+        per_page: 25,
+        total: 100,
+        filtered: 100,
+        total_pages: 4,
+      };
+
+      // 1st row on page 3 -> ((3-1)*25) + 0 + 1 = 51
+      expect(component.getSerialNumber(0)).toBe(51);
+      // 5th row on page 3 -> ((3-1)*25) + 4 + 1 = 55
+      expect(component.getSerialNumber(4)).toBe(55);
+    });
+
+    it('should open and close lead details drawer', () => {
+      const mockLead: LeadItem = {
+        id: 42,
+        name: 'Suresh Kumar',
         phone: '9876543210',
         entrydate: '2026-03-01 10:00:00',
-        parent_email: 'rahul1@example.com',
+        parent_email: 'suresh@example.com',
         otp_validation: 'VALID',
-      },
-      {
-        id: 2,
-        name: 'rahul  sharma',
-        phone: '9876543211',
-        entrydate: '2026-03-01 11:00:00',
-        parent_email: 'rahul2@example.com',
-        otp_validation: 'VALID',
-      },
-      {
-        id: 3,
-        name: 'Priya Patel',
-        phone: '9876543212',
-        entrydate: '2026-03-01 12:00:00',
-        parent_email: 'priya@example.com',
-        otp_validation: 'VALID',
-      },
-      {
-        id: 4,
-        name: 'Anita Verma',
-        phone: '9876543213',
-        entrydate: '2026-03-01 13:00:00',
-        parent_email: 'anita@example.com',
-        otp_validation: 'VALID',
-      },
-    ];
+        city: 'Kolkata',
+      };
 
-    beforeEach(() => {
-      component.leads = [...mockLeads];
-    });
+      component.selectedModuleKey = 'wbnarayanaschools.in';
+      vi.spyOn(leadService, 'getLeadById').mockReturnValue(
+        of({
+          success: true,
+          message: 'Lead fetched',
+          data: { ...mockLead, board: 'CBSE' },
+        })
+      );
 
-    it('should default nameFilterMode to "all"', () => {
-      expect(component.nameFilterMode).toBe('all');
-      expect(component.displayedLeads.length).toBe(4);
-    });
+      component.openLeadDetail(mockLead);
+      expect(component.selectedLeadForDetail).toBeTruthy();
+      expect(component.selectedLeadForDetail?.id).toBe(42);
+      expect(component.selectedLeadForDetail?.board).toBe('CBSE');
 
-    it('should calculate duplicateNameCount correctly', () => {
-      // Rahul Sharma appears twice (case and extra spaces normalized)
-      expect(component.duplicateNameCount).toBe(2);
-      expect(component.getNameDuplicateCount(mockLeads[0])).toBe(2);
-      expect(component.getNameDuplicateCount(mockLeads[1])).toBe(2);
-      expect(component.getNameDuplicateCount(mockLeads[2])).toBe(1);
-    });
-
-    it('should filter displayed leads to unique names when mode is "unique"', () => {
-      component.setNameFilterMode('unique');
-      expect(component.nameFilterMode).toBe('unique');
-      expect(component.displayedLeads.length).toBe(3);
-      const names = component.displayedLeads.map((l) => l.name);
-      expect(names).toEqual(['Rahul Sharma', 'Priya Patel', 'Anita Verma']);
-    });
-
-    it('should filter displayed leads to only duplicate names when mode is "duplicates_only"', () => {
-      component.setNameFilterMode('duplicates_only');
-      expect(component.nameFilterMode).toBe('duplicates_only');
-      expect(component.displayedLeads.length).toBe(2);
-      expect(component.displayedLeads.map((l) => l.id)).toEqual([1, 2]);
-    });
-
-    it('should consider nameFilterMode in hasActiveFrontendFilters', () => {
-      expect(component.hasActiveFrontendFilters).toBe(false);
-      component.setNameFilterMode('unique');
-      expect(component.hasActiveFrontendFilters).toBe(true);
-      component.setNameFilterMode('all');
-      expect(component.hasActiveFrontendFilters).toBe(false);
-    });
-
-    it('should reset nameFilterMode in clearFrontendFilters', () => {
-      component.setNameFilterMode('duplicates_only');
-      component.clearFrontendFilters();
-      expect(component.nameFilterMode).toBe('all');
-    });
-
-    it('should reset nameFilterMode in resetFilters', () => {
-      component.setNameFilterMode('unique');
-      component.resetFilters();
-      expect(component.nameFilterMode).toBe('all');
+      component.closeLeadDetail();
+      expect(component.selectedLeadForDetail).toBeNull();
+      expect(component.isLoadingLeadDetail).toBe(false);
     });
   });
 
@@ -119,7 +236,6 @@ describe('LeadsComponent', () => {
     });
 
     it('should move column down and update order', () => {
-      // Default: ['id', 'entrydate', 'name', ...]
       expect(component.columns[0].key).toBe('id');
       expect(component.columns[1].key).toBe('entrydate');
 
@@ -151,10 +267,9 @@ describe('LeadsComponent', () => {
     });
 
     it('should save column order and visibility to localStorage and restore on init', () => {
-      // Custom order: move 'name' to the first position
-      component.moveColumn(2, 'up'); // name is now at 1
-      component.moveColumn(1, 'up'); // name is now at 0
-      component.toggleColumn('phone'); // phone is now toggled
+      component.moveColumn(2, 'up');
+      component.moveColumn(1, 'up');
+      component.toggleColumn('phone');
 
       const saved = localStorage.getItem('leads_column_prefs');
       expect(saved).toBeTruthy();
@@ -162,7 +277,6 @@ describe('LeadsComponent', () => {
       expect(parsed.order[0]).toBe('name');
       expect(parsed.visibility['name']).toBe(true);
 
-      // Create new component instance to simulate page reload
       const newFixture = TestBed.createComponent(LeadsComponent);
       const newComp = newFixture.componentInstance;
       newComp.ngOnInit();
@@ -190,109 +304,6 @@ describe('LeadsComponent', () => {
 
       component.toggleAllColumns(true);
       expect(component.visibleColumnCount).toBe(component.columns.length);
-    });
-  });
-
-  describe('Date & Name Sorting', () => {
-    const sortTestLeads: LeadItem[] = [
-      {
-        id: 1,
-        name: 'Zoya Khan',
-        entrydate: '2026-03-01 10:00:00',
-        phone: '9876543210',
-        parent_email: 'zoya@example.com',
-        otp_validation: 'VALID',
-      },
-      {
-        id: 2,
-        name: 'Aarav Patel',
-        entrydate: '2026-03-03 14:00:00',
-        phone: '9876543211',
-        parent_email: 'aarav@example.com',
-        otp_validation: 'VALID',
-      },
-      {
-        id: 3,
-        name: 'Manish Verma',
-        entrydate: '2026-03-02 12:00:00',
-        phone: '9876543212',
-        parent_email: 'manish@example.com',
-        otp_validation: 'VALID',
-      },
-    ];
-
-    beforeEach(() => {
-      component.leads = [...sortTestLeads];
-      component.sortKey = null;
-      component.sortOrder = null;
-    });
-
-    it('should sort by name ascending (A to Z)', () => {
-      component.setSortOption('name_asc');
-      expect(component.sortKey).toBe('name');
-      expect(component.sortOrder).toBe('asc');
-      expect(component.displayedLeads.map((l) => l.name)).toEqual([
-        'Aarav Patel',
-        'Manish Verma',
-        'Zoya Khan',
-      ]);
-    });
-
-    it('should sort by name descending (Z to A)', () => {
-      component.setSortOption('name_desc');
-      expect(component.sortKey).toBe('name');
-      expect(component.sortOrder).toBe('desc');
-      expect(component.displayedLeads.map((l) => l.name)).toEqual([
-        'Zoya Khan',
-        'Manish Verma',
-        'Aarav Patel',
-      ]);
-    });
-
-    it('should sort by date newest first (descending)', () => {
-      component.setSortOption('entrydate_desc');
-      expect(component.displayedLeads.map((l) => l.id)).toEqual([2, 3, 1]);
-    });
-
-    it('should sort by date oldest first (ascending)', () => {
-      component.setSortOption('entrydate_asc');
-      expect(component.displayedLeads.map((l) => l.id)).toEqual([1, 3, 2]);
-    });
-
-    it('should cycle sort states when clicking header via toggleSort', () => {
-      // First click on name -> asc
-      component.toggleSort('name');
-      expect(component.sortKey).toBe('name');
-      expect(component.sortOrder).toBe('asc');
-
-      // Second click on name -> desc
-      component.toggleSort('name');
-      expect(component.sortKey).toBe('name');
-      expect(component.sortOrder).toBe('desc');
-
-      // Third click on name -> clear
-      component.toggleSort('name');
-      expect(component.sortKey).toBeNull();
-      expect(component.sortOrder).toBeNull();
-
-      // Click on date -> defaults to desc (newest first)
-      component.toggleSort('entrydate');
-      expect(component.sortKey).toBe('entrydate');
-      expect(component.sortOrder).toBe('desc');
-    });
-
-    it('should reset sort on resetFilters and clearFrontendFilters', () => {
-      component.setSortOption('name_asc');
-      expect(component.hasActiveFrontendFilters).toBe(true);
-
-      component.clearFrontendFilters();
-      expect(component.sortKey).toBeNull();
-      expect(component.sortOrder).toBeNull();
-
-      component.setSortOption('entrydate_desc');
-      component.resetFilters();
-      expect(component.sortKey).toBeNull();
-      expect(component.sortOrder).toBeNull();
     });
   });
 });
