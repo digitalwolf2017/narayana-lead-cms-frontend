@@ -35,6 +35,9 @@ describe('LeadsComponent', () => {
       expect(component.backendFilters.class).toBe('');
       expect(component.backendFilters.board).toBe('');
       expect(component.backendFilters.utm_source).toBe('');
+      expect(component.excludeSearchTerm).toBe('');
+      expect(component.exactName).toBe('');
+      expect(component.exactPhone).toBe('');
       expect(component.activeBackendFilterCount).toBe(0);
       expect(component.hasActiveFilters).toBe(false);
     });
@@ -43,6 +46,25 @@ describe('LeadsComponent', () => {
       component.backendFilters.city = 'Kolkata';
       component.backendFilters.otp_validation = 'VALID';
       expect(component.activeBackendFilterCount).toBe(2);
+      expect(component.hasActiveFilters).toBe(true);
+    });
+
+    it('should include exclude_search, exact name, and exact phone in buildParams', () => {
+      component.selectedModuleKey = 'wbnarayanaschools';
+      component.searchTerm = 'Animesh';
+      component.excludeSearchTerm = 'test';
+      component.exactName = 'Test Parent';
+      component.exactPhone = '9876543210';
+      component.backendFilters['cities'] = 'Kolkata'; // mapped to 'city'
+      component.backendFilters['boards'] = 'CBSE'; // mapped to 'board'
+
+      const params = (component as any).buildParams();
+      expect(params['search']).toBe('Animesh');
+      expect(params['exclude_search']).toBe('test');
+      expect(params['name']).toBe('Test Parent');
+      expect(params['phone']).toBe('9876543210');
+      expect(params['city']).toBe('Kolkata');
+      expect(params['board']).toBe('CBSE');
       expect(component.hasActiveFilters).toBe(true);
     });
 
@@ -62,6 +84,7 @@ describe('LeadsComponent', () => {
     it('should dynamically generate advancedFilterGroups for any additive backend filter keys', () => {
       component.filterOptions = {
         city: ['Kolkata', 'Howrah'], // primary - should be excluded from advanced groups
+        cities: ['Kolkata', 'Howrah'], // primary - should also be excluded
         board: ['CBSE', 'ICSE'],
         stream: ['Science', 'Commerce'], // newly added by backend
         academic_session: ['2026-27'], // newly added by backend
@@ -75,6 +98,7 @@ describe('LeadsComponent', () => {
       expect(keys).toContain('stream');
       expect(keys).toContain('academic_session');
       expect(keys).not.toContain('city');
+      expect(keys).not.toContain('cities');
       expect(keys).not.toContain('empty_list');
 
       // Check formatted labels
@@ -122,8 +146,11 @@ describe('LeadsComponent', () => {
       expect(component.showMoreFilters).toBe(false);
     });
 
-    it('should reset all search, date and backend filters on resetFilters', () => {
+    it('should reset all search, exclude search, exact duplicate, date and backend filters on resetFilters', () => {
       component.searchTerm = 'John';
+      component.excludeSearchTerm = 'test';
+      component.exactName = 'John Doe';
+      component.exactPhone = '9876543210';
       component.dateFrom = '2026-03-01';
       component.dateTo = '2026-03-05';
       component.backendFilters.city = 'Kolkata';
@@ -133,6 +160,9 @@ describe('LeadsComponent', () => {
 
       component.resetFilters();
       expect(component.searchTerm).toBe('');
+      expect(component.excludeSearchTerm).toBe('');
+      expect(component.exactName).toBe('');
+      expect(component.exactPhone).toBe('');
       expect(component.dateFrom).toBe('');
       expect(component.dateTo).toBe('');
       expect(component.sortKey).toBe('id');
@@ -236,33 +266,33 @@ describe('LeadsComponent', () => {
     });
 
     it('should move column down and update order', () => {
-      expect(component.columns[0].key).toBe('id');
-      expect(component.columns[1].key).toBe('entrydate');
+      expect(component.columns[0].key).toBe('sno');
+      expect(component.columns[1].key).toBe('id');
 
       component.moveColumn(0, 'down');
 
-      expect(component.columns[0].key).toBe('entrydate');
-      expect(component.columns[1].key).toBe('id');
-      expect(component.visibleColumns[0].key).toBe('entrydate');
-      expect(component.visibleColumns[1].key).toBe('id');
+      expect(component.columns[0].key).toBe('id');
+      expect(component.columns[1].key).toBe('sno');
+      expect(component.visibleColumns[0].key).toBe('id');
+      expect(component.visibleColumns[1].key).toBe('sno');
     });
 
     it('should move column up and update order', () => {
       component.moveColumn(1, 'up');
 
-      expect(component.columns[0].key).toBe('entrydate');
-      expect(component.columns[1].key).toBe('id');
+      expect(component.columns[0].key).toBe('id');
+      expect(component.columns[1].key).toBe('sno');
     });
 
     it('should reorder columns on drop', () => {
-      component.draggedColIndex = 0; // 'id'
+      component.draggedColIndex = 0; // 'sno'
       const fakeEvent = { preventDefault: () => {} } as DragEvent;
 
-      component.onColumnDrop(fakeEvent, 2); // Move 'id' to index 2
+      component.onColumnDrop(fakeEvent, 2); // Move 'sno' to index 2
 
-      expect(component.columns[0].key).toBe('entrydate');
-      expect(component.columns[1].key).toBe('name');
-      expect(component.columns[2].key).toBe('id');
+      expect(component.columns[0].key).toBe('id');
+      expect(component.columns[1].key).toBe('entrydate');
+      expect(component.columns[2].key).toBe('sno');
       expect(component.draggedColIndex).toBeNull();
     });
 
@@ -274,14 +304,14 @@ describe('LeadsComponent', () => {
       const saved = localStorage.getItem('leads_column_prefs');
       expect(saved).toBeTruthy();
       const parsed = JSON.parse(saved!);
-      expect(parsed.order[0]).toBe('name');
-      expect(parsed.visibility['name']).toBe(true);
+      expect(parsed.order[0]).toBe('entrydate');
+      expect(parsed.visibility['phone']).toBe(false);
 
       const newFixture = TestBed.createComponent(LeadsComponent);
       const newComp = newFixture.componentInstance;
       newComp.ngOnInit();
 
-      expect(newComp.columns[0].key).toBe('name');
+      expect(newComp.columns[0].key).toBe('entrydate');
       expect(newComp.columns.find((c) => c.key === 'phone')?.visible).toBe(
         component.columns.find((c) => c.key === 'phone')?.visible
       );
@@ -289,12 +319,12 @@ describe('LeadsComponent', () => {
 
     it('should reset column order and visibility when resetColumnOrder is called', () => {
       component.moveColumn(0, 'down');
-      expect(component.columns[0].key).not.toBe('id');
+      expect(component.columns[0].key).not.toBe('sno');
 
       component.resetColumnOrder();
 
-      expect(component.columns[0].key).toBe('id');
-      expect(component.columns[1].key).toBe('entrydate');
+      expect(component.columns[0].key).toBe('sno');
+      expect(component.columns[1].key).toBe('id');
     });
 
     it('should toggle all columns visibility', () => {
@@ -304,6 +334,37 @@ describe('LeadsComponent', () => {
 
       component.toggleAllColumns(true);
       expect(component.visibleColumnCount).toBe(component.columns.length);
+    });
+  });
+
+  describe('Export CSV & Param Sanitization', () => {
+    it('should call exportLeads strictly omitting page and per_page', () => {
+      component.selectedModuleKey = 'wbnarayanaschools';
+      component.searchTerm = 'Priya';
+      component.excludeSearchTerm = 'dummy';
+      component.exactName = 'Priya Sharma';
+      component.exactPhone = '9876543210';
+      component.sortKey = 'entrydate';
+      component.sortOrder = 'desc';
+
+      let exportedParams: any = null;
+      vi.spyOn(leadService, 'exportLeads').mockImplementation((params) => {
+        exportedParams = params;
+        return of(new Blob(['id,name\n1,Priya'], { type: 'text/csv' }));
+      });
+
+      component.exportCsv();
+
+      expect(exportedParams).toBeTruthy();
+      expect(exportedParams.page).toBeUndefined();
+      expect(exportedParams.per_page).toBeUndefined();
+      expect(exportedParams.module).toBe('wbnarayanaschools');
+      expect(exportedParams.search).toBe('Priya');
+      expect(exportedParams.exclude_search).toBe('dummy');
+      expect(exportedParams.name).toBe('Priya Sharma');
+      expect(exportedParams.phone).toBe('9876543210');
+      expect(exportedParams.sort_by).toBe('entrydate');
+      expect(exportedParams.sort_order).toBe('desc');
     });
   });
 });

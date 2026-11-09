@@ -79,6 +79,10 @@ export class LeadsComponent implements OnInit, OnDestroy {
   private fetchSub?: Subscription;
   private searchSubject = new Subject<string>();
   private searchSub?: Subscription;
+  private excludeSearchSubject = new Subject<string>();
+  private excludeSearchSub?: Subscription;
+  private exactDuplicateSubject = new Subject<void>();
+  private exactDuplicateSub?: Subscription;
   private dateSubject = new Subject<void>();
   private dateSub?: Subscription;
   private readonly fetchTrigger$ = new Subject<Record<string, unknown>>();
@@ -100,6 +104,9 @@ export class LeadsComponent implements OnInit, OnDestroy {
 
   // Query & Filter state
   searchTerm = '';
+  excludeSearchTerm = '';
+  exactName = '';
+  exactPhone = '';
   dateFrom = '';
   dateTo = '';
   perPage = 25;
@@ -145,7 +152,54 @@ export class LeadsComponent implements OnInit, OnDestroy {
   ]);
 
   // Primary filters shown directly in the top toolbar
-  readonly primaryFilterKeys = new Set(['otp_validation', 'city', 'branch', 'class']);
+  readonly primaryFilterKeys = new Set([
+    'otp_validation',
+    'city',
+    'cities',
+    'branch',
+    'branches',
+    'class',
+    'classes',
+  ]);
+
+  // Param mapping between backend filter-options keys and API query params
+  readonly filterKeyToParamMap: Record<string, string> = {
+    cities: 'city',
+    city: 'city',
+    branches: 'branch',
+    branch: 'branch',
+    boards: 'board',
+    board: 'board',
+    classes: 'class',
+    class: 'class',
+    reservation_types: 'reservation_type',
+    reservation_type: 'reservation_type',
+    utm_sources: 'utm_source',
+    utm_source: 'utm_source',
+    utm_mediums: 'utm_medium',
+    utm_medium: 'utm_medium',
+    utm_campaigns: 'utm_campaign',
+    utm_campaign: 'utm_campaign',
+    otp_validation: 'otp_validation',
+    redirect_from: 'redirect_from',
+    class_category: 'class_category',
+  };
+
+  get cityOptions(): string[] {
+    return this.filterOptions?.['cities'] || this.filterOptions?.['city'] || [];
+  }
+
+  get branchOptions(): string[] {
+    return this.filterOptions?.['branches'] || this.filterOptions?.['branch'] || [];
+  }
+
+  get classOptions(): string[] {
+    return this.filterOptions?.['classes'] || this.filterOptions?.['class'] || [];
+  }
+
+  get boardOptions(): string[] {
+    return this.filterOptions?.['boards'] || this.filterOptions?.['board'] || [];
+  }
 
   sortKey: string | null = 'id';
   sortOrder: 'asc' | 'desc' | null = 'desc';
@@ -155,6 +209,7 @@ export class LeadsComponent implements OnInit, OnDestroy {
   isLoadingLeadDetail = false;
 
   readonly defaultColumns: ColumnConfig[] = [
+    { key: 'sno', label: '#', visible: true, optional: true },
     { key: 'id', label: 'ID', visible: true, optional: true },
     { key: 'entrydate', label: 'Entry Date', visible: true, optional: true },
     { key: 'name', label: 'Name', visible: true, optional: true },
@@ -183,6 +238,7 @@ export class LeadsComponent implements OnInit, OnDestroy {
   dragOverColIndex: number | null = null;
 
   readonly defaultColWidths: Record<string, number> = {
+    sno: 50,
     id: 65,
     entrydate: 140,
     name: 150,
@@ -273,6 +329,23 @@ export class LeadsComponent implements OnInit, OnDestroy {
         this.fetchLeads();
       });
 
+    this.excludeSearchSub = this.excludeSearchSubject
+      .pipe(debounceTime(350), distinctUntilChanged())
+      .subscribe((term) => {
+        this.excludeSearchTerm = term;
+        this.currentPage = 1;
+        this.clearPageCache();
+        this.fetchLeads();
+      });
+
+    this.exactDuplicateSub = this.exactDuplicateSubject
+      .pipe(debounceTime(350))
+      .subscribe(() => {
+        this.currentPage = 1;
+        this.clearPageCache();
+        this.fetchLeads();
+      });
+
     this.dateSub = this.dateSubject
       .pipe(debounceTime(400))
       .subscribe(() => {
@@ -287,10 +360,14 @@ export class LeadsComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.routeSub?.unsubscribe();
     this.searchSub?.unsubscribe();
+    this.excludeSearchSub?.unsubscribe();
+    this.exactDuplicateSub?.unsubscribe();
     this.fetchSub?.unsubscribe();
     this.dateSub?.unsubscribe();
     this.fetchTrigger$.complete();
     this.searchSubject.complete();
+    this.excludeSearchSubject.complete();
+    this.exactDuplicateSubject.complete();
     this.dateSubject.complete();
 
     document.removeEventListener('mousemove', this.onResizing);
@@ -338,6 +415,17 @@ export class LeadsComponent implements OnInit, OnDestroy {
         if (parsed && Array.isArray(parsed.order)) {
           const map = new Map(this.defaultColumns.map((c) => [c.key, { ...c }]));
           const reordered: ColumnConfig[] = [];
+          
+          // If 'sno' is not in saved order, make sure it is placed first
+          if (!parsed.order.includes('sno') && map.has('sno')) {
+            const snoCol = map.get('sno')!;
+            if (parsed.visibility && parsed.visibility['sno'] !== undefined) {
+              snoCol.visible = Boolean(parsed.visibility['sno']);
+            }
+            reordered.push(snoCol);
+            map.delete('sno');
+          }
+
           for (const key of parsed.order) {
             const col = map.get(key);
             if (col) {
@@ -580,6 +668,9 @@ export class LeadsComponent implements OnInit, OnDestroy {
     this.activeModuleLabel = this.modules.find((m) => m.key === this.selectedModuleKey)?.label ?? '';
     this.currentPage = 1;
     this.searchTerm = '';
+    this.excludeSearchTerm = '';
+    this.exactName = '';
+    this.exactPhone = '';
     this.dateFrom = '';
     this.dateTo = '';
     this.resetBackendFilters();
@@ -650,6 +741,9 @@ export class LeadsComponent implements OnInit, OnDestroy {
       per_page: this.perPage,
     };
     if (this.searchTerm.trim()) params['search'] = this.searchTerm.trim();
+    if (this.excludeSearchTerm.trim()) params['exclude_search'] = this.excludeSearchTerm.trim();
+    if (this.exactName.trim()) params['name'] = this.exactName.trim();
+    if (this.exactPhone.trim()) params['phone'] = this.exactPhone.trim();
     if (this.dateFrom) params['date_from'] = this.dateFrom;
     if (this.dateTo) params['date_to'] = this.dateTo;
 
@@ -658,10 +752,11 @@ export class LeadsComponent implements OnInit, OnDestroy {
       if (this.sortOrder) params['sort_order'] = this.sortOrder;
     }
 
-    // Dynamically attach all active filters present in backendFilters
+    // Dynamically attach all active filters present in backendFilters, mapping to proper query params
     for (const [key, value] of Object.entries(this.backendFilters)) {
       if (typeof value === 'string' && value.trim()) {
-        params[key] = value.trim();
+        const queryParamKey = this.filterKeyToParamMap[key] || key;
+        params[queryParamKey] = value.trim();
       }
     }
 
@@ -681,7 +776,17 @@ export class LeadsComponent implements OnInit, OnDestroy {
   }
 
   onSearchInput(value: string): void {
+    this.searchTerm = value;
     this.searchSubject.next(value);
+  }
+
+  onExcludeSearchInput(value: string): void {
+    this.excludeSearchTerm = value;
+    this.excludeSearchSubject.next(value);
+  }
+
+  onExactDuplicateFilterChange(): void {
+    this.exactDuplicateSubject.next();
   }
 
   onDateRangeChange(range: { startDate: string; endDate: string }): void {
@@ -732,10 +837,15 @@ export class LeadsComponent implements OnInit, OnDestroy {
         this.backendFilters[key] = '';
       }
     }
+    this.exactName = '';
+    this.exactPhone = '';
   }
 
   resetFilters(): void {
     this.searchTerm = '';
+    this.excludeSearchTerm = '';
+    this.exactName = '';
+    this.exactPhone = '';
     this.dateFrom = '';
     this.dateTo = '';
     this.sortKey = 'id';
@@ -749,6 +859,9 @@ export class LeadsComponent implements OnInit, OnDestroy {
   get hasActiveFilters(): boolean {
     return Boolean(
       this.searchTerm.trim() ||
+      this.excludeSearchTerm.trim() ||
+      this.exactName.trim() ||
+      this.exactPhone.trim() ||
       this.dateFrom ||
       this.dateTo ||
       this.activeBackendFilterCount > 0 ||
@@ -758,27 +871,44 @@ export class LeadsComponent implements OnInit, OnDestroy {
   }
 
   get activeBackendFilterCount(): number {
-    return Object.values(this.backendFilters).filter(
+    const filterCount = Object.values(this.backendFilters).filter(
       (v) => typeof v === 'string' && v.trim().length > 0
     ).length;
+    const exactCount = (this.exactName.trim() ? 1 : 0) + (this.exactPhone.trim() ? 1 : 0);
+    return filterCount + exactCount;
   }
 
   get activeAdvancedFilterCount(): number {
-    return Object.entries(this.backendFilters).filter(
+    const backendCount = Object.entries(this.backendFilters).filter(
       ([k, v]) => !this.primaryFilterKeys.has(k) && typeof v === 'string' && v.trim().length > 0
     ).length;
+    const exactNameCount = this.exactName.trim() ? 1 : 0;
+    const exactPhoneCount = this.exactPhone.trim() ? 1 : 0;
+    return backendCount + exactNameCount + exactPhoneCount;
   }
 
   formatFilterLabel(key: string): string {
     const knownLabels: Record<string, string> = {
+      cities: 'City',
+      city: 'City',
+      branches: 'Branch',
+      branch: 'Branch',
+      classes: 'Class',
+      class: 'Class',
+      boards: 'Board',
+      board: 'Board',
+      reservation_types: 'Reservation Type',
+      reservation_type: 'Reservation Type',
+      utm_sources: 'UTM Source',
       utm_source: 'UTM Source',
+      utm_mediums: 'UTM Medium',
       utm_medium: 'UTM Medium',
+      utm_campaigns: 'UTM Campaign',
       utm_campaign: 'UTM Campaign',
       utm_content: 'UTM Content',
       utm_term: 'UTM Term',
       redirect_from: 'Redirect From',
       class_category: 'Class Category',
-      reservation_type: 'Reservation Type',
       otp_validation: 'OTP Status',
       page_section: 'Page Section',
     };

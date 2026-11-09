@@ -18,6 +18,7 @@ export interface LeadItem {
   parent_email: string;
   phone: string;
   otp_validation: string;
+  duplicate_count?: number;
   utm_source?: string;
   utm_medium?: string;
   utm_campaign?: string;
@@ -47,13 +48,21 @@ export interface LeadMeta {
 export interface LeadFilterOptions {
   redirect_from?: string[];
   class_category?: string[];
+  cities?: string[];
   city?: string[];
+  branches?: string[];
   branch?: string[];
+  boards?: string[];
   board?: string[];
+  reservation_types?: string[];
   reservation_type?: string[];
+  classes?: string[];
   class?: string[];
+  utm_sources?: string[];
   utm_source?: string[];
+  utm_mediums?: string[];
   utm_medium?: string[];
+  utm_campaigns?: string[];
   utm_campaign?: string[];
   otp_validation?: string[];
   [key: string]: string[] | undefined;
@@ -73,6 +82,9 @@ export interface LeadQueryParams {
   page?: number;
   per_page?: number;
   search?: string;
+  exclude_search?: string;
+  name?: string;
+  phone?: string;
   date_from?: string;
   date_to?: string;
   redirect_from?: string;

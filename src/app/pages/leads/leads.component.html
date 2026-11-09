@@ -67,14 +67,25 @@
             <div class="flex flex-1 flex-wrap items-center gap-2.5">
               
               <!-- SEARCH INPUT -->
-              <div class="relative min-w-[200px] flex-1 sm:max-w-xs">
-                <input type="text" [ngModel]="searchTerm" (ngModelChange)="onSearchInput($event)"
-                  placeholder="Search leads (name, phone, email)..."
+              <div class="relative min-w-[190px] flex-1 sm:max-w-[210px]">
+                <input type="text" [(ngModel)]="searchTerm" (ngModelChange)="onSearchInput($event)"
+                  placeholder="Search leads (name, phone)..."
                   class="h-8.5 w-full rounded-lg border border-slate-200 bg-slate-50/50 pl-8 pr-3 text-xs font-medium text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-slate-900 focus:bg-white focus:ring-1 focus:ring-slate-900" />
                 <svg class="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24"
                   stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+
+              <!-- EXCLUDE SEARCH INPUT -->
+              <div class="relative min-w-[170px] flex-1 sm:max-w-[190px]">
+                <input type="text" [(ngModel)]="excludeSearchTerm" (ngModelChange)="onExcludeSearchInput($event)"
+                  placeholder="Exclude (name, phone)..."
+                  title="Exclude leads containing this name or phone"
+                  class="h-8.5 w-full rounded-lg border border-slate-200 bg-slate-50/50 pl-8 pr-3 text-xs font-medium text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-red-400 focus:bg-white focus:ring-1 focus:ring-red-400" />
+                <svg class="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
                 </svg>
               </div>
 
@@ -100,12 +111,12 @@
               </div>
 
               <!-- CITY FILTER -->
-              @if (filterOptions?.city && filterOptions!.city.length > 0) {
+              @if (cityOptions.length > 0) {
               <div class="relative inline-flex items-center">
                 <select [(ngModel)]="backendFilters.city" (ngModelChange)="onBackendFilterChange()"
                   class="h-8.5 max-w-[130px] appearance-none truncate rounded-lg border border-slate-200 bg-white pl-2.5 pr-7 text-xs font-semibold text-slate-700 shadow-2xs outline-none transition hover:bg-slate-50 focus:border-[#8c7ae6] focus:ring-1 focus:ring-[#8c7ae6]/20">
                   <option value="">City: All</option>
-                  @for (c of filterOptions!.city; track c) {
+                  @for (c of cityOptions; track c) {
                   <option [value]="c">{{ c }}</option>
                   }
                 </select>
@@ -116,12 +127,12 @@
               }
 
               <!-- BRANCH FILTER -->
-              @if (filterOptions?.branch && filterOptions!.branch.length > 0) {
+              @if (branchOptions.length > 0) {
               <div class="relative inline-flex items-center">
                 <select [(ngModel)]="backendFilters.branch" (ngModelChange)="onBackendFilterChange()"
                   class="h-8.5 max-w-[140px] appearance-none truncate rounded-lg border border-slate-200 bg-white pl-2.5 pr-7 text-xs font-semibold text-slate-700 shadow-2xs outline-none transition hover:bg-slate-50 focus:border-[#8c7ae6] focus:ring-1 focus:ring-[#8c7ae6]/20">
                   <option value="">Branch: All</option>
-                  @for (b of filterOptions!.branch; track b) {
+                  @for (b of branchOptions; track b) {
                   <option [value]="b">{{ b }}</option>
                   }
                 </select>
@@ -132,12 +143,12 @@
               }
 
               <!-- CLASS FILTER -->
-              @if (filterOptions?.class && filterOptions!.class.length > 0) {
+              @if (classOptions.length > 0) {
               <div class="relative inline-flex items-center">
                 <select [(ngModel)]="backendFilters.class" (ngModelChange)="onBackendFilterChange()"
                   class="h-8.5 max-w-[130px] appearance-none truncate rounded-lg border border-slate-200 bg-white pl-2.5 pr-7 text-xs font-semibold text-slate-700 shadow-2xs outline-none transition hover:bg-slate-50 focus:border-[#8c7ae6] focus:ring-1 focus:ring-[#8c7ae6]/20">
                   <option value="">Class: All</option>
-                  @for (cls of filterOptions!.class; track cls) {
+                  @for (cls of classOptions; track cls) {
                   <option [value]="cls">{{ cls }}</option>
                   }
                 </select>
@@ -344,11 +355,13 @@
           </div>
         </div>
 
-        <!-- ADVANCED FILTERS PANEL (DYNAMICALLY RENDERS ALL BACKEND FILTER OPTIONS) -->
+        <!-- ADVANCED FILTERS PANEL (DYNAMICALLY RENDERS ALL BACKEND FILTER OPTIONS & EXACT DUPLICATE SEARCH) -->
         @if (showMoreFilters) {
-        <div class="border-t border-slate-200/80 bg-slate-50/80 px-4 py-3">
+        <div class="border-t border-slate-200/80 bg-slate-50/80 px-4 py-3 space-y-3">
+          
+          <!-- ATTRIBUTE DROPDOWNS -->
           <div class="flex flex-wrap items-center gap-2.5">
-            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 mr-1">Advanced Filters:</span>
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 mr-1">Attribute Filters:</span>
 
             @for (grp of advancedFilterGroups; track grp.key) {
             <div class="relative inline-flex items-center">
@@ -367,16 +380,46 @@
             }
 
             @if (advancedFilterGroups.length === 0) {
-              <span class="text-xs text-slate-400 italic">No additional filter options available for this module.</span>
-            }
-
-            @if (activeAdvancedFilterCount > 0) {
-            <button type="button" (click)="resetAdvancedFilters(); onBackendFilterChange()"
-              class="text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 hover:underline ml-1">
-              Clear advanced
-            </button>
+              <span class="text-xs text-slate-400 italic">No additional attribute dropdowns available for this module.</span>
             }
           </div>
+
+          <!-- EXACT DUPLICATE SEARCH (NAME / PHONE) -->
+          <div class="flex flex-wrap items-center gap-2.5 pt-2 border-t border-slate-200/60">
+            <div class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+              <svg class="h-3.5 w-3.5 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M7 9a2 2 0 012-2h6a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2V9z"/>
+                <path d="M5 3a2 2 0 00-2 2v6a2 2 0 002 2V5h8a2 2 0 00-2-2H5z"/>
+              </svg>
+              <span>Exact Duplicate Match:</span>
+            </div>
+
+            <div class="relative min-w-[180px] max-w-[210px]">
+              <input type="text" [(ngModel)]="exactName" (ngModelChange)="onExactDuplicateFilterChange()"
+                placeholder="Exact Name (case-sensitive)..."
+                title="Exact stored Name match"
+                class="h-8 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-medium text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-[#8c7ae6] focus:ring-1 focus:ring-[#8c7ae6]/20" />
+            </div>
+
+            <div class="relative min-w-[160px] max-w-[190px]">
+              <input type="text" [(ngModel)]="exactPhone" (ngModelChange)="onExactDuplicateFilterChange()"
+                placeholder="Exact Phone (e.g. 9876543210)..."
+                title="Exact stored Phone match"
+                class="h-8 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-medium text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-[#8c7ae6] focus:ring-1 focus:ring-[#8c7ae6]/20" />
+            </div>
+
+            <span class="text-[11px] text-slate-400 italic">Returns newest row with duplicate count badge</span>
+
+            @if (activeAdvancedFilterCount > 0) {
+            <div class="ml-auto">
+              <button type="button" (click)="resetAdvancedFilters(); onBackendFilterChange()"
+                class="text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 hover:underline">
+                Clear advanced filters
+              </button>
+            </div>
+            }
+          </div>
+
         </div>
         }
 
@@ -453,10 +496,15 @@
                 </td>
               </tr>
               } @else {
-              @for (lead of displayedLeads; track lead.id) {
+              @for (lead of displayedLeads; track lead.id; let rowIndex = $index) {
               <tr (click)="openLeadDetail(lead)" class="group transition-colors duration-150 hover:bg-indigo-50/40 cursor-pointer">
                 @for (col of visibleColumns; track col.key) {
                 @switch (col.key) {
+                @case ('sno') {
+                <td class="whitespace-nowrap px-2.5 py-1.5 text-center text-xs font-semibold text-slate-400">
+                  {{ getSerialNumber(rowIndex) }}
+                </td>
+                }
                 @case ('id') {
                 <td class="px-2.5 py-1.5">
                   <span class="inline-block px-1.5 py-0.5 rounded bg-slate-100 text-[11px] font-bold text-slate-700 group-hover:bg-indigo-100 group-hover:text-indigo-800 transition">
@@ -471,7 +519,19 @@
                 }
                 @case ('name') {
                 <td class="whitespace-nowrap px-2.5 py-1.5 text-[13px] font-semibold text-slate-800">
-                  <span>{{ lead.name || '—' }}</span>
+                  <div class="flex items-center gap-1.5">
+                    <span>{{ lead.name || '—' }}</span>
+                    @if (lead.duplicate_count && lead.duplicate_count > 1) {
+                      <span class="inline-flex items-center gap-1 rounded-full bg-amber-50 border border-amber-200 px-1.5 py-0.5 text-[10px] font-bold text-amber-700"
+                        [title]="lead.duplicate_count + ' duplicate records found for this exact match'">
+                        <svg class="h-2.5 w-2.5 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M7 9a2 2 0 012-2h6a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2V9z"/>
+                          <path d="M5 3a2 2 0 00-2 2v6a2 2 0 002 2V5h8a2 2 0 00-2-2H5z"/>
+                        </svg>
+                        {{ lead.duplicate_count }} dups
+                      </span>
+                    }
+                  </div>
                 </td>
                 }
                 @case ('phone') {
@@ -621,6 +681,21 @@
               <span class="text-xs font-semibold text-slate-700 mt-1 block">{{ selectedLeadForDetail.entrydate || '—' }}</span>
             </div>
           </div>
+
+          <!-- DUPLICATE BANNER (IF EXACT DUPLICATES PRESENT) -->
+          @if (selectedLeadForDetail.duplicate_count && selectedLeadForDetail.duplicate_count > 1) {
+          <div class="rounded-xl border border-amber-200 bg-amber-50/70 p-3.5 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <div class="h-8 w-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-xs shrink-0">
+                {{ selectedLeadForDetail.duplicate_count }}x
+              </div>
+              <div>
+                <span class="text-xs font-bold text-amber-900 block">Exact Duplicate Records Found</span>
+                <span class="text-[11px] text-amber-700">This record represents {{ selectedLeadForDetail.duplicate_count }} duplicate submissions matching exact name/phone.</span>
+              </div>
+            </div>
+          </div>
+          }
 
           <!-- Personal & Contact Information -->
           <div>
