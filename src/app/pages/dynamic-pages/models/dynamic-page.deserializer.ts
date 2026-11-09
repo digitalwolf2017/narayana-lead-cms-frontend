@@ -321,8 +321,20 @@ export function populateSectionsFromBackend(
           const programs = c['programs'];
           if (Array.isArray(programs) && programs.length > 0) {
             state.course.courses = programs.map((p: Record<string, unknown>, idx: number) => {
-              const fg = (p['feature_groups'] as Array<Record<string, unknown>>)?.[0];
-              const points = (fg?.['points'] as Array<Record<string, unknown>>) || [];
+              const fgs = (p['feature_groups'] as Array<Record<string, unknown>>) || [];
+              const fg1 = fgs[0];
+              const fg2 = fgs[1];
+              const fg3 = fgs[2];
+              const fg4 = fgs[3];
+
+              const mapPoints = (fg: Record<string, unknown> | undefined) => {
+                const pts = (fg?.['points'] as Array<Record<string, unknown>>) || [];
+                return pts.map((pt, ptIdx) => ({
+                  id: ptIdx + 1,
+                  text: String(pt['text'] || ''),
+                }));
+              };
+
               const courseMediaId1 = p['desktop_primary_media_id'] ?? p['media_id'] ?? p['image_media_id'];
               const courseMediaId2 = p['desktop_secondary_media_id'];
               const existingCourse = state.course.courses?.[idx];
@@ -331,22 +343,19 @@ export function populateSectionsFromBackend(
               return {
                 id: idx + 1,
                 heading: String(p['name'] || ''),
-                subHeading1: String(fg?.['title'] || ''),
-                subHeading2: '',
-                subHeading3: '',
-                subHeading4: '',
+                subHeading1: String(fg1?.['title'] || ''),
+                subHeading2: String(fg2?.['title'] || ''),
+                subHeading3: String(fg3?.['title'] || ''),
+                subHeading4: String(fg4?.['title'] || ''),
                 image1: courseImg,
                 image2: courseImg2,
                 mediaId: courseMediaId1 ? Number(courseMediaId1) : 1,
                 mediaId1: courseMediaId1 ? Number(courseMediaId1) : 1,
                 mediaId2: courseMediaId2 ? Number(courseMediaId2) : undefined,
-                listItems1: points.map((pt, ptIdx) => ({
-                  id: ptIdx + 1,
-                  text: String(pt['text'] || ''),
-                })),
-                listItems2: [],
-                listItems3: [],
-                listItems4: [],
+                listItems1: mapPoints(fg1),
+                listItems2: mapPoints(fg2),
+                listItems3: mapPoints(fg3),
+                listItems4: mapPoints(fg4),
                 buttonText1: '',
                 buttonUrl1: '',
                 buttonText2: '',

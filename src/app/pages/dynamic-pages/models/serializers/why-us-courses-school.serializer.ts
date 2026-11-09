@@ -52,15 +52,35 @@ export function buildCoursesSection(
       const secondaryId = Number(rawMedia2);
       const desktopSecondaryMediaId = Number.isInteger(secondaryId) && secondaryId > 0 ? secondaryId : null;
 
-      const points = (Array.isArray(c.listItems1) && c.listItems1.length > 0
-        ? c.listItems1
-        : []
-      )
-        .filter((p: { text?: string }) => (p.text || '').trim().length > 0)
-        .map((p: { text?: string }, pIdx: number) => ({
-          text: p.text!.trim(),
-          sort_order: pIdx + 1,
-        }));
+      const subHeadingGroups = [
+        { title: c.subHeading1, items: c.listItems1 },
+        { title: c.subHeading2, items: c.listItems2 },
+        { title: c.subHeading3, items: c.listItems3 },
+        { title: c.subHeading4, items: c.listItems4 },
+      ];
+
+      const feature_groups = subHeadingGroups
+        .map((grp, gIdx) => {
+          const grpPoints = (Array.isArray(grp.items) ? grp.items : [])
+            .filter((p: { text?: string }) => (p.text || '').trim().length > 0)
+            .map((p: { text?: string }, pIdx: number) => ({
+              text: p.text!.trim(),
+              sort_order: pIdx + 1,
+            }));
+
+          const title = (grp.title || '').trim();
+          if (!title && grpPoints.length === 0) return null;
+
+          return {
+            icon_key: 'STAR',
+            title: title || `Feature Group ${gIdx + 1}`,
+            points: grpPoints,
+            sort_order: gIdx + 1,
+          };
+        })
+        .filter((g): g is NonNullable<typeof g> => g !== null);
+
+      const allPoints = feature_groups.flatMap((g) => g.points);
 
       return {
         code: `COURSE_${idx + 1}`,
@@ -72,13 +92,8 @@ export function buildCoursesSection(
         image_alt: c.heading || 'Course Image',
         badge_icon_media_id: null,
         badge_icon_alt: 'Course Badge',
-        feature_groups: points.length > 0 ? [{
-          icon_key: 'STAR',
-          title: (c.subHeading1 || 'Key Features').trim(),
-          points,
-          sort_order: 1,
-        }] : [],
-        mobile_highlights: points.slice(0, 2),
+        feature_groups,
+        mobile_highlights: allPoints.slice(0, 2),
         fees_cta: { label: c.buttonText1 || 'Check Fees', action: 'FEES_STRUCTURE', url: c.buttonUrl1 || null },
         brochure_cta: { label: c.buttonText2 || 'Download Brochure', action: 'DOWNLOAD_BROCHURE', url: c.buttonUrl2 || null },
         callback_cta: { label: 'Request Callback', action: 'CALLBACK', url: null },

@@ -264,15 +264,15 @@ export class CourseComponent {
     courseId: number,
     listNumber: 1 | 2 | 3 | 4
   ): void {
-
-    const courseItem =
-      this.course.courses.find(
-        (item) => item.id === courseId
-      );
-
+    const courseItem = this.course.courses.find((item) => item.id === courseId);
     if (!courseItem) {
       return;
     }
+
+    if (!Array.isArray(courseItem.listItems1)) courseItem.listItems1 = [];
+    if (!Array.isArray(courseItem.listItems2)) courseItem.listItems2 = [];
+    if (!Array.isArray(courseItem.listItems3)) courseItem.listItems3 = [];
+    if (!Array.isArray(courseItem.listItems4)) courseItem.listItems4 = [];
 
     const newItem: CourseListItem = {
       id: this.nextListItemId++,
@@ -281,17 +281,11 @@ export class CourseComponent {
 
     if (listNumber === 1) {
       courseItem.listItems1.push(newItem);
-    }
-
-    if (listNumber === 2) {
+    } else if (listNumber === 2) {
       courseItem.listItems2.push(newItem);
-    }
-
-    if (listNumber === 3) {
+    } else if (listNumber === 3) {
       courseItem.listItems3.push(newItem);
-    }
-
-    if (listNumber === 4) {
+    } else if (listNumber === 4) {
       courseItem.listItems4.push(newItem);
     }
 
@@ -303,42 +297,19 @@ export class CourseComponent {
     listNumber: 1 | 2 | 3 | 4,
     itemId: number
   ): void {
-
-    const courseItem =
-      this.course.courses.find(
-        (item) => item.id === courseId
-      );
-
+    const courseItem = this.course.courses.find((item) => item.id === courseId);
     if (!courseItem) {
       return;
     }
 
-    if (listNumber === 1) {
-      courseItem.listItems1 =
-        courseItem.listItems1.filter(
-          (item) => item.id !== itemId
-        );
-    }
-
-    if (listNumber === 2) {
-      courseItem.listItems2 =
-        courseItem.listItems2.filter(
-          (item) => item.id !== itemId
-        );
-    }
-
-    if (listNumber === 3) {
-      courseItem.listItems3 =
-        courseItem.listItems3.filter(
-          (item) => item.id !== itemId
-        );
-    }
-
-    if (listNumber === 4) {
-      courseItem.listItems4 =
-        courseItem.listItems4.filter(
-          (item) => item.id !== itemId
-        );
+    if (listNumber === 1 && Array.isArray(courseItem.listItems1)) {
+      courseItem.listItems1 = courseItem.listItems1.filter((item) => item.id !== itemId);
+    } else if (listNumber === 2 && Array.isArray(courseItem.listItems2)) {
+      courseItem.listItems2 = courseItem.listItems2.filter((item) => item.id !== itemId);
+    } else if (listNumber === 3 && Array.isArray(courseItem.listItems3)) {
+      courseItem.listItems3 = courseItem.listItems3.filter((item) => item.id !== itemId);
+    } else if (listNumber === 4 && Array.isArray(courseItem.listItems4)) {
+      courseItem.listItems4 = courseItem.listItems4.filter((item) => item.id !== itemId);
     }
 
     this.emitChange();
@@ -361,43 +332,18 @@ export class CourseComponent {
 
   emitChange(): void {
     this.courseChange.emit({
-      sectionHeading:
-        this.course.sectionHeading,
-
-      sectionSubHeading:
-        this.course.sectionSubHeading,
-
-      courses:
-        this.course.courses.map(
-          (courseItem) => ({
-            ...courseItem,
-
-            listItems1: [
-              ...courseItem.listItems1,
-            ],
-
-            listItems2: [
-              ...courseItem.listItems2,
-            ],
-
-            listItems3: [
-              ...courseItem.listItems3,
-            ],
-
-            listItems4: [
-              ...courseItem.listItems4,
-            ],
-          })
-        ),
-
-      isActive:
-        this.course.isActive,
-
-      desktopActive:
-        this.course.desktopActive,
-
-      mobileActive:
-        this.course.mobileActive,
+      sectionHeading: this.course.sectionHeading,
+      sectionSubHeading: this.course.sectionSubHeading,
+      courses: this.course.courses.map((courseItem) => ({
+        ...courseItem,
+        listItems1: Array.isArray(courseItem.listItems1) ? [...courseItem.listItems1] : [],
+        listItems2: Array.isArray(courseItem.listItems2) ? [...courseItem.listItems2] : [],
+        listItems3: Array.isArray(courseItem.listItems3) ? [...courseItem.listItems3] : [],
+        listItems4: Array.isArray(courseItem.listItems4) ? [...courseItem.listItems4] : [],
+      })),
+      isActive: this.course.isActive,
+      desktopActive: this.course.desktopActive,
+      mobileActive: this.course.mobileActive,
     });
   }
 }
