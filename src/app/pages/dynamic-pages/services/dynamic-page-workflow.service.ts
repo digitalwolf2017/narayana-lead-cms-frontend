@@ -177,7 +177,7 @@ export class DynamicPageWorkflowService {
           title: ctx.pageTitle,
           seoTitle: ctx.seoTitle,
           seoDescription: ctx.seoDescription,
-          isIndexed: ctx.isIndexed ?? true,
+          isIndexed: ctx.isIndexed ?? false,
           sections: all12Sections,
         },
         (current, total, sectionType) => {
@@ -283,7 +283,7 @@ export class DynamicPageWorkflowService {
             title: ctx.pageTitle,
             seoTitle: ctx.seoTitle,
             seoDescription: ctx.seoDescription,
-            isIndexed: ctx.isIndexed ?? true,
+            isIndexed: ctx.isIndexed ?? false,
             sections: all12Sections,
           })
           .subscribe({

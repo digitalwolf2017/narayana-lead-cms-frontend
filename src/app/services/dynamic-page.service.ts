@@ -94,6 +94,8 @@ export interface ClonePageRequest {
   title: string;
   seo_title?: string;
   seo_description?: string;
+  is_indexed?: boolean;
+  robots?: string;
 }
 
 export type ClonePageResponse = ApiResponse<CreatePageData | Record<string, unknown>>;

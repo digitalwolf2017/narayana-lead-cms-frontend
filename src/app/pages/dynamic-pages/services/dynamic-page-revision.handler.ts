@@ -107,8 +107,8 @@ export class DynamicPageRevisionHandler {
         title: payload.title,
         seo_title: payload.seoTitle,
         seo_description: payload.seoDescription,
-        is_indexed: payload.isIndexed ?? true,
-        robots: (payload.isIndexed ?? true) ? 'index, follow' : 'noindex, nofollow',
+        is_indexed: payload.isIndexed ?? false,
+        robots: (payload.isIndexed ?? false) ? 'index, follow' : 'noindex, nofollow',
       })
       .pipe(
         catchError(() => of({ success: true })),
@@ -236,7 +236,7 @@ export class DynamicPageRevisionHandler {
     title: string,
     seoTitle: string,
     seoDescription: string,
-    isIndexed: boolean = true
+    isIndexed: boolean = false
   ): Observable<HandlerResult> {
     return this.dynamicPageService
       .updateDraftMetadata(pageId, revisionId, {

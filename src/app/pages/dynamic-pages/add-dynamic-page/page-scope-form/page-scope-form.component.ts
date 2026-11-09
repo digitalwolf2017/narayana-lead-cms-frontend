@@ -39,7 +39,7 @@ export class PageScopeFormComponent {
   @Input() seoDescription = '';
   @Output() seoDescriptionChange = new EventEmitter<string>();
 
-  @Input() isIndexed = true;
+  @Input() isIndexed = false;
   @Output() isIndexedChange = new EventEmitter<boolean>();
 
   @Input() domainName = '';

@@ -414,6 +414,8 @@ export class ClonePageModalComponent implements OnChanges {
       title: this.title.trim(),
       seo_title: (this.seoTitle || this.title).trim(),
       seo_description: (this.seoDescription || this.title).trim(),
+      is_indexed: false,
+      robots: 'noindex, nofollow',
     };
 
     this.dynamicPageService.clonePage(this.sourcePage.id, payload).subscribe({
@@ -447,8 +449,26 @@ export class ClonePageModalComponent implements OnChanges {
         }
 
         if (newPageId) {
-          this.cloned.emit({ pageId: newPageId, revisionId: newRevisionId });
-          this.closeModal();
+          if (newRevisionId) {
+            this.dynamicPageService
+              .updateDraftMetadata(newPageId, newRevisionId, {
+                is_indexed: false,
+                robots: 'noindex, nofollow',
+              })
+              .subscribe({
+                next: () => {
+                  this.cloned.emit({ pageId: newPageId!, revisionId: newRevisionId });
+                  this.closeModal();
+                },
+                error: () => {
+                  this.cloned.emit({ pageId: newPageId!, revisionId: newRevisionId });
+                  this.closeModal();
+                },
+              });
+          } else {
+            this.cloned.emit({ pageId: newPageId, revisionId: newRevisionId });
+            this.closeModal();
+          }
         } else {
           this.errorMessage = 'Page cloned, but no new page ID was returned.';
           this.cdr.detectChanges();

@@ -103,7 +103,7 @@ export class DynamicPageCreationService {
     generatedSlug: string,
     seoTitle?: string,
     seoDescription?: string,
-    isIndexed: boolean = true
+    isIndexed: boolean = false
   ): CreateDynamicPageRequest {
     const cleanSlug = generatedSlug.startsWith('/') ? generatedSlug.substring(1) : generatedSlug;
     return {

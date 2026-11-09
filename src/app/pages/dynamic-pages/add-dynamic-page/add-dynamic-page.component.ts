@@ -127,7 +127,7 @@ export class AddDynamicPageComponent implements OnInit {
   pageTitle = '';
   seoTitle = '';
   seoDescription = '';
-  isIndexed = true;
+  isIndexed = false;
   pageType = '';
   editingPageId: number | null = null;
   pageStatus: 'ACTIVE' | 'INACTIVE' = 'ACTIVE';
@@ -460,6 +460,8 @@ export class AddDynamicPageComponent implements OnInit {
       this.isIndexed = Boolean(revUnknown['is_indexed']);
     } else if (revUnknown['robots']) {
       this.isIndexed = !String(revUnknown['robots']).toLowerCase().includes('noindex');
+    } else {
+      this.isIndexed = false;
     }
     const sections = fallbackSections ?? (revUnknown?.['sections'] as PageBuilderSection[] | undefined);
     if (Array.isArray(sections) && sections.length > 0) {
