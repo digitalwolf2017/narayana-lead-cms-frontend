@@ -22,13 +22,15 @@ export function buildWhyUsSection(
     content: {
       heading: fullHeading || (whyUs.sectionHeading ?? '').trim(),
       subheading: (whyUs.sectionSubHeading ?? '').trim(),
-      items: whyUsBoxes.map((b, idx) => ({
-        title: (b.heading ?? '').trim(),
-        description: (b.paragraph ?? '').trim(),
-        icon_media_id: b.mediaId !== undefined && b.mediaId !== null ? Number(b.mediaId) : null,
-        icon_alt: (b.heading ?? '').trim(),
-        sort_order: idx + 1,
-      })),
+      items: whyUsBoxes
+        .filter((b) => (b.heading || b.paragraph || '').trim().length > 0)
+        .map((b, idx) => ({
+          title: (b.heading ?? '').trim(),
+          description: (b.paragraph ?? '').trim(),
+          icon_media_id: b.mediaId !== undefined && b.mediaId !== null ? Number(b.mediaId) : null,
+          icon_alt: (b.heading ?? '').trim(),
+          sort_order: idx + 1,
+        })),
     },
   };
 }
@@ -40,64 +42,57 @@ export function buildCoursesSection(
   const isEnabled = Boolean(sections.find((s) => s.key === 'course')?.active ?? true);
   const courseList = Array.isArray(course.courses) && course.courses.length > 0 ? course.courses : [];
 
+  const programs = courseList
+    .filter((c) => (c.heading || '').trim().length > 0)
+    .map((c, idx: number) => {
+      const rawMedia1 = (c as unknown as Record<string, unknown>)['mediaId1'] ?? (c as unknown as Record<string, unknown>)['mediaId'];
+      const primaryId = Number(rawMedia1);
+      const desktopPrimaryMediaId = Number.isInteger(primaryId) && primaryId > 0 ? primaryId : null;
+      const rawMedia2 = (c as unknown as Record<string, unknown>)['mediaId2'];
+      const secondaryId = Number(rawMedia2);
+      const desktopSecondaryMediaId = Number.isInteger(secondaryId) && secondaryId > 0 ? secondaryId : null;
+
+      const points = (Array.isArray(c.listItems1) && c.listItems1.length > 0
+        ? c.listItems1
+        : []
+      )
+        .filter((p: { text?: string }) => (p.text || '').trim().length > 0)
+        .map((p: { text?: string }, pIdx: number) => ({
+          text: p.text!.trim(),
+          sort_order: pIdx + 1,
+        }));
+
+      return {
+        code: `COURSE_${idx + 1}`,
+        name: (c.heading || `Course Program ${idx + 1}`).trim(),
+        class_range: (c.subHeading1 || '').trim(),
+        desktop_primary_media_id: desktopPrimaryMediaId,
+        desktop_secondary_media_id: desktopSecondaryMediaId,
+        mobile_media_id: null,
+        image_alt: c.heading || 'Course Image',
+        badge_icon_media_id: null,
+        badge_icon_alt: 'Course Badge',
+        feature_groups: points.length > 0 ? [{
+          icon_key: 'STAR',
+          title: (c.subHeading1 || 'Key Features').trim(),
+          points,
+          sort_order: 1,
+        }] : [],
+        mobile_highlights: points.slice(0, 2),
+        fees_cta: { label: c.buttonText1 || 'Check Fees', action: 'FEES_STRUCTURE', url: c.buttonUrl1 || null },
+        brochure_cta: { label: c.buttonText2 || 'Download Brochure', action: 'DOWNLOAD_BROCHURE', url: c.buttonUrl2 || null },
+        callback_cta: { label: 'Request Callback', action: 'CALLBACK', url: null },
+        sort_order: idx + 1,
+      };
+    });
+
   return {
     section_type: 'COURSES',
     is_enabled: isEnabled,
     sort_order: 4,
     content: {
-      heading: course.sectionHeading || 'Courses & Programs',
-      programs: courseList.length > 0
-        ? courseList.map((c, idx: number) => {
-            const rawMedia1 = (c as unknown as Record<string, unknown>)['mediaId1'] ?? (c as unknown as Record<string, unknown>)['mediaId'];
-            const primaryId = Number(rawMedia1);
-            const desktopPrimaryMediaId = Number.isInteger(primaryId) && primaryId > 0 ? primaryId : 1;
-            const rawMedia2 = (c as unknown as Record<string, unknown>)['mediaId2'];
-            const secondaryId = Number(rawMedia2);
-            const desktopSecondaryMediaId = Number.isInteger(secondaryId) && secondaryId > 0 ? secondaryId : null;
-
-            return {
-              code: `COURSE_${idx + 1}`,
-              name: c.heading || `Course Program ${idx + 1}`,
-              class_range: 'Grade 6 - 12',
-              desktop_primary_media_id: desktopPrimaryMediaId,
-              desktop_secondary_media_id: desktopSecondaryMediaId,
-              mobile_media_id: null,
-              image_alt: c.heading || 'Course Image',
-              badge_icon_media_id: null,
-              badge_icon_alt: 'Course Badge',
-              feature_groups: [{
-                icon_key: 'STAR',
-                title: c.subHeading1 || 'Key Features',
-                points: (Array.isArray(c.listItems1) && c.listItems1.length > 0
-                  ? c.listItems1
-                  : [{ id: 1, text: 'Specialized coaching' }]
-                ).map((p: { text?: string }, pIdx: number) => ({
-                  text: p.text || 'Comprehensive syllabus coverage',
-                  sort_order: pIdx + 1,
-                })),
-                sort_order: 1,
-              }],
-              mobile_highlights: [
-                { text: 'Comprehensive syllabus coverage', sort_order: 1 },
-                { text: 'Mock test series and micro-analysis', sort_order: 2 },
-              ],
-              fees_cta: { label: 'Check Fees', action: 'FEES_STRUCTURE', url: null },
-              brochure_cta: { label: 'Download Brochure', action: 'DOWNLOAD_BROCHURE', url: null },
-              callback_cta: { label: 'Request Callback', action: 'CALLBACK', url: null },
-              sort_order: idx + 1,
-            };
-          })
-        : [{
-            code: 'COURSE_1', name: 'Integrated Competitive Curriculum', class_range: 'Grade 6 - 12',
-            desktop_primary_media_id: 1, desktop_secondary_media_id: null, mobile_media_id: null,
-            image_alt: 'Integrated Curriculum', badge_icon_media_id: null, badge_icon_alt: 'Course Badge',
-            feature_groups: [{ icon_key: 'STAR', title: 'Key Features', points: [{ text: 'Comprehensive syllabus coverage', sort_order: 1 }], sort_order: 1 }],
-            mobile_highlights: [{ text: 'Comprehensive syllabus coverage', sort_order: 1 }],
-            fees_cta: { label: 'Check Fees', action: 'FEES_STRUCTURE', url: null },
-            brochure_cta: { label: 'Download Brochure', action: 'DOWNLOAD_BROCHURE', url: null },
-            callback_cta: { label: 'Request Callback', action: 'CALLBACK', url: null },
-            sort_order: 1,
-          }],
+      heading: course.sectionHeading || '',
+      programs,
     },
   };
 }
@@ -109,23 +104,20 @@ export function buildRightSchoolSection(
   const isEnabled = Boolean(sections.find((s) => s.key === 'right-school')?.active ?? true);
   const rightSchoolCards =
     Array.isArray(rightSchool.cards) && rightSchool.cards.length > 0
-      ? rightSchool.cards
-      : [
-          { id: 1, image: '', heading: 'Holistic Education', paragraph: 'Academic rigor balanced with sports, arts, and character building.' },
-          { id: 2, image: '', heading: 'Proven Track Record', paragraph: 'Decades of consistent top ranks in competitive examinations nationwide.' },
-        ];
+      ? rightSchool.cards.filter((c) => (c.heading || c.paragraph || '').trim().length > 0)
+      : [];
 
   return {
     section_type: 'RIGHT_SCHOOL',
     is_enabled: isEnabled,
     sort_order: 6,
     content: {
-      heading: rightSchool.sectionHeading || 'Choose The Right School',
-      subheading: rightSchool.sectionSubHeading || 'Empowering every student with confidence, curiosity and knowledge',
+      heading: rightSchool.sectionHeading || '',
+      subheading: rightSchool.sectionSubHeading || '',
       items: rightSchoolCards.map((p, idx: number) => ({
         icon_key: `ITEM_${idx + 1}`,
-        title: p.heading || `Advantage ${idx + 1}`,
-        description: p.paragraph || 'State of the art learning environment.',
+        title: (p.heading || '').trim(),
+        description: (p.paragraph || '').trim(),
         sort_order: idx + 1,
       })),
     },

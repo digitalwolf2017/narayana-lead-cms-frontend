@@ -1,6 +1,5 @@
 import { LogoConfig, SectionConfig } from '../dynamic-page.model';
 import { PageBuilderSection } from '../../../../services/dynamic-page.service';
-import { getDefaultLogos } from '../dynamic-page.defaults';
 import { ClassesConfig } from '../../sections/classes/classes.component';
 
 export function getMediaId(item: Record<string, unknown>, ...keys: string[]): number | null {
@@ -19,22 +18,23 @@ export function buildHeaderSection(
   sections: SectionConfig[],
 ): PageBuilderSection {
   const isEnabled = Boolean(sections.find((s) => s.key === 'header')?.active ?? false);
-  const headerLogos = (Array.isArray(logos) && logos.length > 0 ? logos : getDefaultLogos()).map(
-    (logo: LogoConfig, idx: number) => {
+  const headerLogos = (Array.isArray(logos) ? logos : [])
+    .filter((logo) => (logo.name || '').trim().length > 0)
+    .map((logo: LogoConfig, idx: number) => {
       const parsedMediaId = getMediaId(
         logo as unknown as Record<string, unknown>,
         'mediaId', 'media_id',
       );
       return {
-        media_id: parsedMediaId && parsedMediaId > 0 ? parsedMediaId : 1,
+        media_id: parsedMediaId && parsedMediaId > 0 ? parsedMediaId : null,
         name: (logo.name || `Logo ${idx + 1}`).trim(),
         alt: (logo.name || `Logo ${idx + 1}`).trim(),
         show_desktop: logo.desktopActive ?? true,
         show_mobile: logo.mobileActive ?? true,
         sort_order: idx + 1,
       };
-    },
-  );
+    });
+
   return {
     section_type: 'HEADER',
     is_enabled: isEnabled,
@@ -71,13 +71,14 @@ export function buildBannerSection(
   const buttonText = String(banner['buttonText'] || '').trim();
   const buttonUrl = banner['buttonUrl'] ? String(banner['buttonUrl']).trim() : null;
   const formTitle = String(banner['form_title'] || banner['formTitle'] || '').trim();
+  const desktopMediaId = getMediaId(banner, 'desktop_background_media_id', 'mediaId');
 
   return {
     section_type: 'BANNER',
     is_enabled: isEnabled,
     sort_order: 1,
     content: {
-      desktop_background_media_id: Number(banner['desktop_background_media_id'] || banner['mediaId'] || 1),
+      desktop_background_media_id: desktopMediaId,
       mobile_background_media_id:
         banner['mobile_background_media_id'] !== undefined && banner['mobile_background_media_id'] !== null
           ? Number(banner['mobile_background_media_id'])
@@ -88,11 +89,11 @@ export function buildBannerSection(
       highlighted_text: String(banner['highlighted_text'] || banner['highlightText'] || '').trim(),
       bullets: bannerBullets,
       primary_cta: {
-        label: buttonText || 'Admissions Open',
+        label: buttonText || 'Get Admission Fees Details',
         action: 'OPEN_ADMISSION_MODAL',
         url: buttonUrl,
       },
-      form_title: formTitle || 'Admission Enquiry',
+      form_title: formTitle || 'Admission Open for AY 2027-28',
       form_enabled: true,
       default_form_intent: 'ENQUIRY',
     },
@@ -107,99 +108,54 @@ export function buildClassesSection(
   const cards = classesConfig?.cards;
   const programs =
     Array.isArray(cards) && cards.length > 0
-      ? cards.map((card, idx) => {
-          const rawMediaId = (card as unknown as Record<string, unknown>)['mediaId'] ?? (card as unknown as Record<string, unknown>)['media_id'];
-          const parsedMediaId = Number(rawMediaId);
-          const desktopMediaId = Number.isInteger(parsedMediaId) && parsedMediaId > 0 ? parsedMediaId : 1;
-          const code = `PROGRAM_${idx + 1}`;
-          const features = (Array.isArray(card.listItems) && card.listItems.length > 0
-            ? card.listItems
-            : [{ id: 1, text: 'Interactive learning' }]
-          ).map((item, itemIdx) => ({
-            text: item.text || 'Comprehensive instruction',
-            sort_order: itemIdx + 1,
-          }));
+      ? cards
+          .filter((card) => (card.heading || card.subHeading || '').trim().length > 0)
+          .map((card, idx) => {
+            const rawMediaId = (card as unknown as Record<string, unknown>)['mediaId'] ?? (card as unknown as Record<string, unknown>)['media_id'];
+            const parsedMediaId = Number(rawMediaId);
+            const desktopMediaId = Number.isInteger(parsedMediaId) && parsedMediaId > 0 ? parsedMediaId : null;
+            const code = `PROGRAM_${idx + 1}`;
+            const features = (Array.isArray(card.listItems) && card.listItems.length > 0
+              ? card.listItems
+              : []
+            )
+              .filter((item) => (item.text || '').trim().length > 0)
+              .map((item, itemIdx) => ({
+                text: item.text.trim(),
+                sort_order: itemIdx + 1,
+              }));
 
-          return {
-            code,
-            name: card.heading || `Program ${idx + 1}`,
-            class_range: card.subHeading || 'Grade Level',
-            summary: card.h3Heading || 'Foundational curriculum and interactive learning.',
-            desktop_media_id: desktopMediaId,
-            mobile_media_id: null,
-            image_alt: card.heading || 'Class Program Image',
-            features,
-            fees_cta: {
-              label: card.button1Text || 'Fee Structure',
-              action: 'FEES_STRUCTURE',
-              url: card.button1Url ? card.button1Url : null,
-            },
-            brochure_cta: {
-              label: card.button2Text || 'Download Brochure',
-              action: 'DOWNLOAD_BROCHURE',
-              url: card.button2Url ? card.button2Url : null,
-            },
-            sort_order: idx + 1,
-          };
-        })
-      : [
-          {
-            code: 'PRE_PRIMARY',
-            name: 'Pre-Primary',
-            class_range: 'Nursery to UKG',
-            summary: 'Foundational learning with interactive pedagogical methods.',
-            desktop_media_id: 1,
-            mobile_media_id: null,
-            image_alt: 'Pre-Primary Classes',
-            features: [
-              { text: 'Activity-based learning', sort_order: 1 },
-              { text: 'Personalized attention', sort_order: 2 },
-            ],
-            fees_cta: { label: 'Fee Structure', action: 'FEES_STRUCTURE', url: null },
-            brochure_cta: { label: 'Download Brochure', action: 'DOWNLOAD_BROCHURE', url: null },
-            sort_order: 1,
-          },
-          {
-            code: 'PRIMARY',
-            name: 'Primary School',
-            class_range: 'Grade 1 to 5',
-            summary: 'Concept-oriented foundation with joyful learning atmosphere.',
-            desktop_media_id: 1,
-            mobile_media_id: null,
-            image_alt: 'Primary School Classes',
-            features: [
-              { text: 'Interactive digital classrooms', sort_order: 1 },
-              { text: 'Science and math foundation', sort_order: 2 },
-            ],
-            fees_cta: { label: 'Fee Structure', action: 'FEES_STRUCTURE', url: null },
-            brochure_cta: { label: 'Download Brochure', action: 'DOWNLOAD_BROCHURE', url: null },
-            sort_order: 2,
-          },
-          {
-            code: 'HIGH_SCHOOL',
-            name: 'High School',
-            class_range: 'Grade 6 to 10',
-            summary: 'Competitive exam orientation alongside board exam excellence.',
-            desktop_media_id: 1,
-            mobile_media_id: null,
-            image_alt: 'High School Classes',
-            features: [
-              { text: 'Olympiad & competitive preparation', sort_order: 1 },
-              { text: 'Rigorous assessment modules', sort_order: 2 },
-            ],
-            fees_cta: { label: 'Fee Structure', action: 'FEES_STRUCTURE', url: null },
-            brochure_cta: { label: 'Download Brochure', action: 'DOWNLOAD_BROCHURE', url: null },
-            sort_order: 3,
-          },
-        ];
+            return {
+              code,
+              name: (card.heading || `Program ${idx + 1}`).trim(),
+              class_range: (card.subHeading || '').trim(),
+              summary: (card.h3Heading || '').trim(),
+              desktop_media_id: desktopMediaId,
+              mobile_media_id: null,
+              image_alt: card.heading || 'Class Program Image',
+              features,
+              fees_cta: {
+                label: card.button1Text || 'Fee Structure',
+                action: 'FEES_STRUCTURE',
+                url: card.button1Url ? card.button1Url : null,
+              },
+              brochure_cta: {
+                label: card.button2Text || 'Download Brochure',
+                action: 'DOWNLOAD_BROCHURE',
+                url: card.button2Url ? card.button2Url : null,
+              },
+              sort_order: idx + 1,
+            };
+          })
+      : [];
 
   return {
     section_type: 'CLASSES',
     is_enabled: isEnabled,
     sort_order: 2,
     content: {
-      heading: classesConfig?.sectionHeading || 'Our Classes & Programs',
-      subheading: classesConfig?.sectionSubHeading || 'Comprehensive Curriculum from Pre-Primary to Higher Secondary',
+      heading: classesConfig?.sectionHeading || '',
+      subheading: classesConfig?.sectionSubHeading || '',
       programs,
     },
   };

@@ -10,21 +10,18 @@ export function buildFaqSection(
   const isEnabled = Boolean(sections.find((s) => s.key === 'faq')?.active ?? true);
   const faqItems =
     Array.isArray(faq.faqs) && faq.faqs.length > 0
-      ? faq.faqs
-      : [
-          { id: 1, question: 'What is the admission procedure?', answer: 'Admissions can be initiated online by submitting the enquiry form or visiting the campus directly.' },
-          { id: 2, question: 'What curriculum is followed?', answer: 'We follow recognized standard curriculum boards integrated with competitive exam foundation training.' },
-        ];
+      ? faq.faqs.filter((f) => (f.question || f.answer || '').trim().length > 0)
+      : [];
 
   return {
     section_type: 'FAQ',
     is_enabled: isEnabled,
     sort_order: 9,
     content: {
-      heading: faq.sectionHeading || 'Frequently Asked Questions',
+      heading: faq.sectionHeading || '',
       items: faqItems.map((f, idx) => ({
-        question: f.question || 'How do I apply?',
-        answer: f.answer || 'Submit an enquiry or contact school admissions.',
+        question: (f.question || '').trim(),
+        answer: (f.answer || '').trim(),
         sort_order: idx + 1,
       })),
     },
@@ -38,50 +35,35 @@ export function buildLimitedSeatsSection(
   const isEnabled = Boolean(sections.find((s) => s.key === 'limited-seats')?.active ?? true);
   const u = limitedSeats as unknown as Record<string, unknown>;
 
-  const bgMediaId =
+  const rawBg =
     limitedSeats.backgroundMediaId ??
     limitedSeats.background_media_id ??
-    (u['background_media_id'] ? Number(u['background_media_id']) : null) ??
-    (u['mediaId'] ? Number(u['mediaId']) : 1);
+    u['background_media_id'] ??
+    u['mediaId'];
+  const bgMediaId = Number.isInteger(Number(rawBg)) && Number(rawBg) > 0 ? Number(rawBg) : null;
 
-  const featMediaId =
+  const rawFeat =
     limitedSeats.mediaId ??
     limitedSeats.feature_media_id ??
-    (u['feature_media_id'] ? Number(u['feature_media_id']) : null) ??
-    (u['mediaId'] ? Number(u['mediaId']) : 1);
+    u['feature_media_id'] ??
+    u['mediaId'];
+  const featMediaId = Number.isInteger(Number(rawFeat)) && Number(rawFeat) > 0 ? Number(rawFeat) : null;
 
   const cards = Array.isArray(limitedSeats.cards) && limitedSeats.cards.length > 0
-    ? limitedSeats.cards
-    : [
-        {
-          id: 1,
-          title: limitedSeats.schoolName || 'Narayana Schools',
-          label: 'Pan India Campuses',
-          value: limitedSeats.numberOfSchools || '300+',
-          image: '',
-          mediaId: 1,
-        },
-        {
-          id: 2,
-          title: 'Student Body',
-          label: 'Enrolled Students',
-          value: '100,000+',
-          image: '',
-          mediaId: 1,
-        },
-      ];
+    ? limitedSeats.cards.filter((c) => (c.title || c.label || c.value || '').trim().length > 0)
+    : [];
 
   return {
     section_type: 'LIMITED_SEATS',
     is_enabled: isEnabled,
     sort_order: 10,
     content: {
-      background_media_id: Number(bgMediaId || 1),
+      background_media_id: bgMediaId,
       background_alt: 'Limited Seats Background',
-      feature_media_id: Number(featMediaId || 1),
+      feature_media_id: featMediaId,
       feature_image_alt: 'Admissions Open Banner',
-      availability_text: limitedSeats.subHeading || 'Secure your spot today!',
-      urgency_text: limitedSeats.heading || 'Limited seats available for 2027-28 academic year.',
+      availability_text: (limitedSeats.subHeading || '').trim(),
+      urgency_text: (limitedSeats.heading || '').trim(),
       brochure_cta: {
         label: limitedSeats.buttonText || 'Download Brochure',
         action: 'DOWNLOAD_BROCHURE',
@@ -90,14 +72,18 @@ export function buildLimitedSeatsSection(
       form_title: 'Apply for Admission',
       form_enabled: true,
       default_form_intent: 'ENQUIRY',
-      statistics: cards.map((card, idx) => ({
-        logo_media_id: card.mediaId ? Number(card.mediaId) : 1,
-        logo_alt: card.title || 'School Logo',
-        title: card.title || (idx === 0 ? 'Narayana Schools' : 'Student Body'),
-        label: card.label || (idx === 0 ? 'Pan India Campuses' : 'Enrolled Students'),
-        value: card.value || (idx === 0 ? '300+' : '100,000+'),
-        sort_order: idx + 1,
-      })),
+      statistics: cards.map((card, idx) => {
+        const rawCardMedia = card.mediaId;
+        const cardMediaId = Number.isInteger(Number(rawCardMedia)) && Number(rawCardMedia) > 0 ? Number(rawCardMedia) : null;
+        return {
+          logo_media_id: cardMediaId,
+          logo_alt: card.title || 'School Logo',
+          title: (card.title || '').trim(),
+          label: (card.label || '').trim(),
+          value: (card.value || '').trim(),
+          sort_order: idx + 1,
+        };
+      }),
     },
   };
 }

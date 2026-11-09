@@ -12,28 +12,31 @@ export function buildAcademicResultsSection(
   const isEnabled = Boolean(sections.find((s) => s.key === 'academic-results')?.active ?? true);
   const resultCards =
     Array.isArray(academicResults.results) && academicResults.results.length > 0
-      ? academicResults.results
-      : [
-          { id: 1, image: '', studentName: 'JEE Advanced Rankers', marks: '100+', boardName: 'CBSE', buttonText: '', buttonUrl: '' },
-          { id: 2, image: '', studentName: 'NEET Top Scores', marks: '500+', boardName: 'CBSE', buttonText: '', buttonUrl: '' },
-        ];
+      ? academicResults.results.filter((c) => (c.studentName || c.marks || '').trim().length > 0)
+      : [];
 
   return {
     section_type: 'ACADEMIC_RESULTS',
     is_enabled: isEnabled,
     sort_order: 7,
     content: {
-      heading: academicResults.sectionHeading || 'Outstanding Academic Results',
-      subheading: academicResults.sectionSubHeading || 'Our students consistently excel at state and national levels',
-      results: resultCards.map((card, idx: number) => ({
-        student_name: card.studentName || `Topper ${idx + 1}`,
-        score: card.marks || 'Top Rank',
-        exam: card.boardName || 'National Board / Competitive Exam',
-        year: 2024,
-        media_id: Number((card as unknown as Record<string, unknown>)['mediaId'] || 1),
-        image_alt: card.studentName || 'Result Image',
-        sort_order: idx + 1,
-      })),
+      heading: academicResults.sectionHeading || '',
+      subheading: academicResults.sectionSubHeading || '',
+      results: resultCards.map((card, idx: number) => {
+        const rawMedia = (card as unknown as Record<string, unknown>)['mediaId'] ?? (card as unknown as Record<string, unknown>)['media_id'];
+        const parsedMediaId = Number(rawMedia);
+        const mediaId = Number.isInteger(parsedMediaId) && parsedMediaId > 0 ? parsedMediaId : null;
+
+        return {
+          student_name: (card.studentName || '').trim(),
+          score: (card.marks || '').trim(),
+          exam: (card.boardName || '').trim(),
+          year: new Date().getFullYear(),
+          media_id: mediaId,
+          image_alt: card.studentName || 'Result Image',
+          sort_order: idx + 1,
+        };
+      }),
       cta: { label: 'View All Results', action: 'OPEN_ADMISSION_MODAL', url: null },
     },
   };
@@ -45,18 +48,23 @@ export function buildImageSection(
 ): PageBuilderSection {
   const isEnabled = Boolean(sections.find((s) => s.key === 'image-section')?.active ?? false);
   const u = imageSec as unknown as Record<string, unknown>;
+  const rawDesktop = u['desktop_media_id'] ?? u['mediaId'];
+  const desktopMediaId = Number.isInteger(Number(rawDesktop)) && Number(rawDesktop) > 0 ? Number(rawDesktop) : null;
+  const rawMobile = u['mobile_media_id'] ?? u['mediaId'];
+  const mobileMediaId = Number.isInteger(Number(rawMobile)) && Number(rawMobile) > 0 ? Number(rawMobile) : null;
+
   return {
     section_type: 'IMAGE_SECTION',
     is_enabled: isEnabled,
     sort_order: 12,
     content: {
-      desktop_media_id: Number(u['desktop_media_id'] || u['mediaId'] || 1),
+      desktop_media_id: desktopMediaId,
       desktop_alt: String(u['title'] || 'Campus Gallery Showcase'),
-      mobile_images: [{
-        media_id: Number(u['mobile_media_id'] || u['mediaId'] || 1),
+      mobile_images: mobileMediaId ? [{
+        media_id: mobileMediaId,
         alt: String(u['title'] || 'Campus Mobile View'),
         sort_order: 1,
-      }],
+      }] : [],
       link_url: null,
     },
   };
@@ -69,27 +77,39 @@ export function buildParentsSaySection(
   const isEnabled = Boolean(sections.find((s) => s.key === 'parents-say')?.active ?? true);
   const reviewsList =
     Array.isArray(parentsSay.reviews) && parentsSay.reviews.length > 0
-      ? parentsSay.reviews
-      : [{ id: 1, name: 'Priya Sharma', location: 'Verified Parent', review: 'The personalized guidance and modern teaching methods have significantly boosted my child confidence and academic results.', rating: 5, image: '' }];
+      ? parentsSay.reviews.filter((r) => (r.name || r.review || '').trim().length > 0)
+      : [];
+
+  const rawParentsSay = parentsSay as unknown as Record<string, unknown>;
+  const heading = typeof rawParentsSay['sectionHeading'] === 'string' && rawParentsSay['sectionHeading'].trim()
+    ? rawParentsSay['sectionHeading'].trim()
+    : '';
+  const subheading = typeof rawParentsSay['sectionSubHeading'] === 'string' && rawParentsSay['sectionSubHeading'].trim()
+    ? rawParentsSay['sectionSubHeading'].trim()
+    : '';
 
   return {
     section_type: 'PARENTS_SAY',
     is_enabled: isEnabled,
     sort_order: 8,
     content: {
-      heading: 'What Parents Say About Us',
-      subheading: 'Real experiences and heartfelt stories from our parent community',
-      testimonials: reviewsList.map((t, idx) => ({
-        name: t.name || `Parent ${idx + 1}`,
-        location: t.location || 'Verified Parent',
-        quote: t.review || 'Outstanding academic environment and nurturing faculty.',
-        rating: Number(t.rating || 5),
-        avatar_media_id: (t as unknown as Record<string, unknown>)['mediaId']
-          ? Number((t as unknown as Record<string, unknown>)['mediaId'])
-          : null,
-        avatar_alt: t.name || 'Parent Avatar',
-        sort_order: idx + 1,
-      })),
+      heading,
+      subheading,
+      testimonials: reviewsList.map((t, idx) => {
+        const rawMedia = (t as unknown as Record<string, unknown>)['mediaId'] ?? (t as unknown as Record<string, unknown>)['media_id'];
+        const parsedMediaId = Number(rawMedia);
+        const avatarMediaId = Number.isInteger(parsedMediaId) && parsedMediaId > 0 ? parsedMediaId : null;
+
+        return {
+          name: (t.name || '').trim(),
+          location: (t.location || '').trim(),
+          quote: (t.review || '').trim(),
+          rating: Number(t.rating || 5),
+          avatar_media_id: avatarMediaId,
+          avatar_alt: t.name || 'Parent Avatar',
+          sort_order: idx + 1,
+        };
+      }),
     },
   };
 }
@@ -101,26 +121,29 @@ export function buildFacilitiesSection(
   const isEnabled = Boolean(sections.find((s) => s.key === 'facilities')?.active ?? true);
   const facilityItems =
     Array.isArray(facilities.facilities) && facilities.facilities.length > 0
-      ? facilities.facilities
-      : [
-          { id: 1, heading: 'Modern Science Labs', paragraph: 'State-of-the-art physics, chemistry, and biology laboratories.' },
-          { id: 2, heading: 'Digital Smart Classrooms', paragraph: 'Equipped with interactive smart boards and high-speed digital connectivity.' },
-        ];
+      ? facilities.facilities.filter((f) => (f.heading || f.paragraph || '').trim().length > 0)
+      : [];
 
   return {
     section_type: 'FACILITIES',
     is_enabled: isEnabled,
     sort_order: 5,
     content: {
-      heading: facilities.sectionHeading || 'World-Class Campus Facilities',
-      subheading: facilities.sectionSubHeading || 'Equipped with contemporary infrastructure to support comprehensive education',
-      items: facilityItems.map((f, idx) => ({
-        title: f.heading || `Facility ${idx + 1}`,
-        description: f.paragraph || 'State of the art learning facility.',
-        media_id: Number((f as unknown as Record<string, unknown>)['mediaId'] || 1),
-        image_alt: f.heading || 'Facility Image',
-        sort_order: idx + 1,
-      })),
+      heading: facilities.sectionHeading || '',
+      subheading: facilities.sectionSubHeading || '',
+      items: facilityItems.map((f, idx) => {
+        const rawMedia = (f as unknown as Record<string, unknown>)['mediaId'] ?? (f as unknown as Record<string, unknown>)['media_id'];
+        const parsedMediaId = Number(rawMedia);
+        const mediaId = Number.isInteger(parsedMediaId) && parsedMediaId > 0 ? parsedMediaId : null;
+
+        return {
+          title: (f.heading || '').trim(),
+          description: (f.paragraph || '').trim(),
+          media_id: mediaId,
+          image_alt: f.heading || 'Facility Image',
+          sort_order: idx + 1,
+        };
+      }),
     },
   };
 }
