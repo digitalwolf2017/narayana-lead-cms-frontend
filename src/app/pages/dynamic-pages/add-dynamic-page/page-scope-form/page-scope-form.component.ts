@@ -59,6 +59,7 @@ export class PageScopeFormComponent {
   @Output() discardDraft = new EventEmitter<void>();
   @Output() copyUrl = new EventEmitter<void>();
   @Output() openUrl = new EventEmitter<void>();
+  @Output() previewDraft = new EventEmitter<void>();
 
   onCitySelect(val: number | null): void {
     this.selectedCityId = val;

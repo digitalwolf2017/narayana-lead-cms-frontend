@@ -8,6 +8,7 @@ import { CourseConfig } from '../sections/course/course.component';
 import { ClassesConfig } from '../sections/classes/classes.component';
 import { FaqConfig } from '../sections/faq/faq-section.component';
 import { LimitedSeatsConfig } from '../sections/limited-seats/limited-seats.component';
+import { environment } from '../../../../environments/environment';
 
 export interface DynamicPage {
   id: number;
@@ -116,5 +117,6 @@ export function normalizeImageUrl(url: string | null | undefined): string {
     return trimmed;
   }
   const cleanPath = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
-  return `https://apiframework.wbnarayanaschools.in${cleanPath}`;
+  const cdnBase = environment.mediaCdnBaseUrl.replace(/\/+$/, '');
+  return `${cdnBase}${cleanPath}`;
 }

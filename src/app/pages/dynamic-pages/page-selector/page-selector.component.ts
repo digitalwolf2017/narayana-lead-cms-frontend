@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { environment } from '../../../../environments/environment';
 
 export interface CityOption {
   name: string;
@@ -95,8 +96,7 @@ export class PageSelectorComponent {
   copied = false;
   pageCreated = false;
 
-  private readonly domainName =
-    'https://www.narayanaschools.in/';
+  private readonly domainName = environment.publicWebBaseUrl.replace(/\/?$/, '/');
 
   onCityChange(): void {
     const city = this.cities.find(

@@ -27,6 +27,7 @@ export class PageRevisionPanelComponent {
 
   @Output() revisionChanged = new EventEmitter<number | string | null>();
   @Output() publish = new EventEmitter<void>();
+  @Output() previewDraft = new EventEmitter<void>();
   @Output() createDraft = new EventEmitter<void>();
   @Output() clonePage = new EventEmitter<void>();
   @Output() unpublishPage = new EventEmitter<void>();

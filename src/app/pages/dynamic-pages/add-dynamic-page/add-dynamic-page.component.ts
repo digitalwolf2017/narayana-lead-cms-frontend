@@ -33,6 +33,7 @@ import {
   PageBuilderSection,
   DynamicPageStatus,
 } from '../../../services/dynamic-page.service';
+import { environment } from '../../../../environments/environment';
 import { MediaService } from '../../../services/media.service';
 import { BranchService } from '../../../services/branch.service';
 import { populateSectionsFromBackend } from '../models/dynamic-page.deserializer';
@@ -108,7 +109,7 @@ export class AddDynamicPageComponent implements OnInit {
   private readonly toastService = inject(ToastService);
   private readonly cdr = inject(ChangeDetectorRef);
 
-  readonly domainName = 'https://wbnarayanaschools.in';
+  readonly domainName = environment.publicWebBaseUrl;
 
   selectedCityId: number | null = null;
   selectedBranchId: number | null = null;
@@ -669,6 +670,40 @@ export class AddDynamicPageComponent implements OnInit {
   openPageUrl(): void {
     const fullUrl = `${this.domainName}${this.generatedSlug}`;
     window.open(fullUrl, '_blank', 'noopener,noreferrer');
+  }
+
+  previewDraft(): void {
+    const pageId = this.editingPageId ?? this.createdPageId;
+    const revisionId = this.selectedRevisionId;
+
+    if (!pageId || !revisionId) {
+      this.showToast(
+        'Preview Unavailable',
+        'Please save the page and select a draft revision first.',
+        pageId ?? undefined,
+        'warning'
+      );
+      return;
+    }
+
+    const token =
+      localStorage.getItem(environment.tokenStorageKey) ??
+      sessionStorage.getItem(environment.tokenStorageKey) ??
+      '';
+
+    const isLocalhost =
+      window.location.hostname === 'localhost' ||
+      window.location.hostname === '127.0.0.1';
+
+    const previewOrigin =
+      environment.previewBaseUrl ||
+      (isLocalhost ? 'http://localhost:3000' : environment.publicWebBaseUrl);
+
+    const previewUrl = `${previewOrigin}/preview/${pageId}/${revisionId}${
+      token ? `?token=${encodeURIComponent(token)}` : ''
+    }`;
+
+    window.open(previewUrl, '_blank', 'noopener,noreferrer');
   }
 
   resetAddPage(): void {
