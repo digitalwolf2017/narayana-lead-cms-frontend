@@ -348,7 +348,8 @@ export class DocumentsComponent implements OnInit {
           this.loadDocuments();
         },
         error: (err) => {
-          alert(err.error?.message || 'Failed to retire document.');
+          this.showToast(err.error?.message || 'Failed to retire document.');
+          this.cdr.markForCheck();
         },
       });
   }
