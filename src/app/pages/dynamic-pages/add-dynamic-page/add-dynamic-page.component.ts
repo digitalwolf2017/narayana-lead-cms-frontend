@@ -34,6 +34,7 @@ import {
   DynamicPageStatus,
 } from '../../../services/dynamic-page.service';
 import { MediaService } from '../../../services/media.service';
+import { BranchService } from '../../../services/branch.service';
 import { populateSectionsFromBackend } from '../models/dynamic-page.deserializer';
 import { resetSectionsToDefaults } from '../models/dynamic-page-snapshot.util';
 import {
@@ -103,6 +104,7 @@ export class AddDynamicPageComponent implements OnInit {
   private readonly mediaHandler = inject(DynamicPageMediaHandler);
   private readonly revisionHandler = inject(DynamicPageRevisionHandler);
   private readonly mediaService = inject(MediaService);
+  private readonly branchService = inject(BranchService);
   private readonly toastService = inject(ToastService);
   private readonly cdr = inject(ChangeDetectorRef);
 
@@ -275,6 +277,29 @@ export class AddDynamicPageComponent implements OnInit {
   onCityChange(): void {
     this.selectedBranchId = null;
     this.selectedClassId = null;
+
+    if (this.selectedCityId !== null) {
+      this.branchService.getBranches({ city_id: this.selectedCityId, limit: 500 }).subscribe({
+        next: (res) => {
+          if (res.success && res.data) {
+            const fetched: BranchOption[] = res.data.map((b) => ({
+              id: Number(b.id),
+              city_id: Number(b.city_id),
+              name: b.name,
+              slug: b.slug,
+            }));
+            const existingIds = new Set(this.branches.map((b) => Number(b.id)));
+            const newBranches = fetched.filter((b) => !existingIds.has(Number(b.id)));
+            if (newBranches.length > 0) {
+              this.branches = [...this.branches, ...newBranches];
+              this.cdr.detectChanges();
+            }
+          }
+        },
+        error: () => {},
+      });
+    }
+
     this.generateSlug();
   }
 

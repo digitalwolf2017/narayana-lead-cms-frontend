@@ -12,7 +12,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DynamicPage } from '../../models/dynamic-page.model';
 import { City } from '../../../../services/city.service';
-import { Branch } from '../../../../services/branch.service';
+import { Branch, BranchService } from '../../../../services/branch.service';
 import { ClassMaster } from '../../../../services/class.service';
 import {
   ClonePageRequest,
@@ -54,6 +54,9 @@ export interface SourcePageSummary {
   cityName?: string;
   branchName?: string | null;
   className?: string | null;
+  cityId?: number | string | null;
+  branchId?: number | string | null;
+  classId?: number | string | null;
   scopeKey?: string;
   canonicalPath?: string;
 }
@@ -66,6 +69,7 @@ export interface SourcePageSummary {
 })
 export class ClonePageModalComponent implements OnChanges {
   private readonly dynamicPageService = inject(DynamicPageService);
+  private readonly branchService = inject(BranchService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   @Input() isOpen = false;
@@ -90,6 +94,10 @@ export class ClonePageModalComponent implements OnChanges {
   targetBranchId: number | null = null;
   targetClassId: number | null = null;
 
+  // Dynamically loaded branches for the selected city
+  cityBranches: ScopeBranchItem[] = [];
+  isLoadingBranches = false;
+
   // Page Details
   title = '';
   seoTitle = '';
@@ -100,6 +108,7 @@ export class ClonePageModalComponent implements OnChanges {
   errorMessage = '';
   private userEditedTitle = false;
   private userEditedSeoTitle = false;
+  private userEditedSeoDescription = false;
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['isOpen'] && this.isOpen) {
@@ -112,6 +121,9 @@ export class ClonePageModalComponent implements OnChanges {
     this.isCloning = false;
     this.userEditedTitle = false;
     this.userEditedSeoTitle = false;
+    this.userEditedSeoDescription = false;
+    this.isLoadingBranches = false;
+    this.cityBranches = [];
 
     this.targetCityId = null;
     this.targetBranchId = null;
@@ -127,6 +139,18 @@ export class ClonePageModalComponent implements OnChanges {
     } else {
       this.fetchSourceRevisions(this.sourcePage.id);
     }
+  }
+
+  get sourceClassId(): number | null {
+    if (!this.sourcePage) return null;
+    const raw =
+      (this.sourcePage as DynamicPage).classId ??
+      (this.sourcePage as SourcePageSummary).classId;
+    if (raw !== undefined && raw !== null && raw !== '') {
+      const num = Number(raw);
+      return Number.isNaN(num) ? null : num;
+    }
+    return null;
   }
 
   private fetchSourceRevisions(pageId: number): void {
@@ -171,31 +195,82 @@ export class ClonePageModalComponent implements OnChanges {
     }
 
     const activeRev = revs.find((r) => Number(r.id) === this.selectedSourceRevisionId);
-    if (activeRev) {
+    if (activeRev && !this.userEditedSeoDescription && !this.targetCityId) {
       this.seoDescription = activeRev.seo_description || '';
     }
   }
 
   onRevisionSelectChange(): void {
     const rev = this.availableRevisions.find((r) => Number(r.id) === Number(this.selectedSourceRevisionId));
-    if (rev && !this.seoDescription) {
+    if (rev && !this.userEditedSeoDescription && !this.targetCityId) {
       this.seoDescription = rev.seo_description || '';
     }
   }
 
   get availableBranches(): ScopeBranchItem[] {
     if (!this.targetCityId) return [];
+    if (this.cityBranches.length > 0) {
+      return this.cityBranches;
+    }
     return this.branches.filter((b) => Number(b.city_id) === Number(this.targetCityId));
   }
 
   onCityChange(): void {
     this.targetBranchId = null;
     this.targetClassId = null;
+    this.cityBranches = [];
+
+    if (this.targetCityId !== null) {
+      // Seed immediately with any cached branches matching this city
+      const cached = this.branches.filter((b) => Number(b.city_id) === Number(this.targetCityId));
+      if (cached.length > 0) {
+        this.cityBranches = cached;
+      }
+
+      this.isLoadingBranches = true;
+      this.branchService.getBranches({ city_id: this.targetCityId, limit: 500 }).subscribe({
+        next: (res) => {
+          this.isLoadingBranches = false;
+          if (res.success && res.data) {
+            const fetched: ScopeBranchItem[] = res.data.map((b) => ({
+              id: b.id,
+              city_id: b.city_id,
+              name: b.name,
+              slug: b.slug,
+            }));
+            this.cityBranches = fetched;
+
+            // Merge into this.branches cache so other lookups have them
+            const existingIds = new Set(this.branches.map((b) => Number(b.id)));
+            const newBranches = fetched.filter((b) => !existingIds.has(Number(b.id)));
+            if (newBranches.length > 0) {
+              this.branches = [...this.branches, ...newBranches];
+            }
+          }
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.isLoadingBranches = false;
+          this.cdr.detectChanges();
+        },
+      });
+    }
+
     this.updateAutoTitles();
   }
 
   onBranchChange(): void {
     this.targetClassId = null;
+
+    // If source page had a class, auto-sync target class if it exists in class master
+    const srcClassId = this.sourceClassId;
+    if (this.targetBranchId !== null && srcClassId !== null) {
+      const classExists = this.classes.some((cl) => Number(cl.id) === Number(srcClassId));
+      if (classExists) {
+        this.targetClassId = Number(srcClassId);
+      }
+    }
+
     this.updateAutoTitles();
   }
 
@@ -211,18 +286,31 @@ export class ClonePageModalComponent implements OnChanges {
     this.userEditedSeoTitle = true;
   }
 
+  onSeoDescriptionInput(): void {
+    this.userEditedSeoDescription = true;
+  }
+
   private updateAutoTitles(): void {
     const city = this.cities.find((c) => Number(c.id) === Number(this.targetCityId));
-    const branch = this.branches.find((b) => Number(b.id) === Number(this.targetBranchId));
+    const branch = this.availableBranches.find((b) => Number(b.id) === Number(this.targetBranchId));
     const cls = this.classes.find((cl) => Number(cl.id) === Number(this.targetClassId));
 
     let autoTitle = '';
+    let autoSeoTitle = '';
+    let autoSeoDesc = '';
+
     if (city && branch && cls) {
       autoTitle = `${city.name} - ${branch.name} - ${cls.name}`;
+      autoSeoTitle = `Narayana School ${branch.name} - ${cls.name}`;
+      autoSeoDesc = `Admission information for ${cls.name} at Narayana School ${branch.name}, ${city.name}.`;
     } else if (city && branch) {
       autoTitle = `${city.name} - ${branch.name}`;
+      autoSeoTitle = `Narayana School ${branch.name}`;
+      autoSeoDesc = `Admission information for Narayana School at ${branch.name}, ${city.name}.`;
     } else if (city) {
       autoTitle = city.name;
+      autoSeoTitle = `Narayana School ${city.name}`;
+      autoSeoDesc = `Admission information for Narayana Schools in ${city.name}.`;
     }
 
     if (!this.userEditedTitle || !this.title) {
@@ -230,13 +318,26 @@ export class ClonePageModalComponent implements OnChanges {
     }
 
     if (!this.userEditedSeoTitle || !this.seoTitle) {
-      this.seoTitle = autoTitle;
+      this.seoTitle = autoSeoTitle;
+    }
+
+    // Replace SEO description if user hasn't typed custom text,
+    // or if the current description contains stale source text (like "kolkata" when target is "Bardhaman")
+    const currentDescLower = (this.seoDescription || '').toLowerCase();
+    const isSourceCityStale =
+      city && currentDescLower.includes('kolkata') && city.name.toLowerCase() !== 'kolkata';
+
+    if (!this.userEditedSeoDescription || !this.seoDescription || isSourceCityStale) {
+      this.seoDescription = autoSeoDesc;
+      if (isSourceCityStale) {
+        this.userEditedSeoDescription = false;
+      }
     }
   }
 
   get targetScopePath(): string {
     const city = this.cities.find((c) => Number(c.id) === Number(this.targetCityId));
-    const branch = this.branches.find((b) => Number(b.id) === Number(this.targetBranchId));
+    const branch = this.availableBranches.find((b) => Number(b.id) === Number(this.targetBranchId));
     const cls = this.classes.find((cl) => Number(cl.id) === Number(this.targetClassId));
 
     if (!city) return '';
@@ -251,14 +352,22 @@ export class ClonePageModalComponent implements OnChanges {
 
     // Same as source page
     if (this.sourcePage) {
-      const srcCity = Number(this.sourcePage.cityName ? this.cities.find(c => c.name === this.sourcePage?.cityName)?.id : (this.sourcePage as DynamicPage).cityId);
-      const srcBranch = (this.sourcePage as DynamicPage).branchId ?? null;
-      const srcClass = (this.sourcePage as DynamicPage).classId ?? null;
+      const srcCity = Number(
+        this.sourcePage.cityName
+          ? this.cities.find((c) => c.name === this.sourcePage?.cityName)?.id
+          : (this.sourcePage as DynamicPage).cityId ?? (this.sourcePage as SourcePageSummary).cityId
+      );
+      const srcBranch =
+        (this.sourcePage as DynamicPage).branchId ?? (this.sourcePage as SourcePageSummary).branchId ?? null;
+      const srcClass =
+        (this.sourcePage as DynamicPage).classId ?? (this.sourcePage as SourcePageSummary).classId ?? null;
 
       if (
         srcCity === Number(this.targetCityId) &&
-        (srcBranch === null ? null : Number(srcBranch)) === (this.targetBranchId === null ? null : Number(this.targetBranchId)) &&
-        (srcClass === null ? null : Number(srcClass)) === (this.targetClassId === null ? null : Number(this.targetClassId))
+        (srcBranch === null ? null : Number(srcBranch)) ===
+          (this.targetBranchId === null ? null : Number(this.targetBranchId)) &&
+        (srcClass === null ? null : Number(srcClass)) ===
+          (this.targetClassId === null ? null : Number(this.targetClassId))
       ) {
         return true;
       }
@@ -271,7 +380,11 @@ export class ClonePageModalComponent implements OnChanges {
       const tBranch = this.targetBranchId === null ? null : Number(this.targetBranchId);
       const tClass = this.targetClassId === null ? null : Number(this.targetClassId);
 
-      return Number(p.cityId) === Number(this.targetCityId) && pBranch === tBranch && pClass === tClass;
+      return (
+        Number(p.cityId) === Number(this.targetCityId) &&
+        pBranch === tBranch &&
+        pClass === tClass
+      );
     });
 
     return !!match;
@@ -324,10 +437,10 @@ export class ClonePageModalComponent implements OnChanges {
           newRevisionId =
             Number(
               revisionsArr[0]?.['id'] ??
-              d['revision_id'] ??
-              d['draft_revision_id'] ??
-              (d['revision'] as Record<string, unknown>)?.['id'] ??
-              0
+                d['revision_id'] ??
+                d['draft_revision_id'] ??
+                (d['revision'] as Record<string, unknown>)?.['id'] ??
+                0
             ) || null;
         } else if (res.data !== undefined && res.data !== null) {
           newPageId = Number(res.data) || null;

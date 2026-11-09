@@ -487,7 +487,7 @@
       <!-- CLONE PAGE MODAL -->
       <app-clone-page-modal
         [isOpen]="isCloneModalOpen"
-        [sourcePage]="editingPageId !== null ? { id: editingPageId, title: pageTitle } : null"
+        [sourcePage]="editingPageId !== null ? { id: editingPageId, title: pageTitle, cityId: selectedCityId, branchId: selectedBranchId, classId: selectedClassId } : null"
         [sourceRevisionId]="selectedRevisionId"
         [revisions]="revisions"
         [cities]="cities"
