@@ -56,6 +56,10 @@ export function buildCoursesSection(
       const badgeIconId = Number(rawBadgeMedia);
       const desktopBadgeIconMediaId = Number.isInteger(badgeIconId) && badgeIconId > 0 ? badgeIconId : null;
 
+      const rawMobileMedia = (c as unknown as Record<string, unknown>)['mobileMediaId'] ?? (c as unknown as Record<string, unknown>)['mobile_media_id'];
+      const mobileId = Number(rawMobileMedia);
+      const mobileMediaId = Number.isInteger(mobileId) && mobileId > 0 ? mobileId : null;
+
       const subHeadingGroups = [
         { title: c.subHeading1, icon: c.icon1 || 'TRENDING_UP', items: c.listItems1 },
         { title: c.subHeading2, icon: c.icon2 || 'PUZZLE', items: c.listItems2 },
@@ -86,18 +90,31 @@ export function buildCoursesSection(
 
       const allPoints = feature_groups.flatMap((g) => g.points);
 
+      const rawMobileHighlights = (c as unknown as Record<string, unknown>)['mobileHighlights'] as Array<{ text?: string }> | undefined;
+      const customMobilePoints = (Array.isArray(rawMobileHighlights) ? rawMobileHighlights : [])
+        .filter((p) => (p?.text || '').trim().length > 0)
+        .map((p, pIdx) => ({
+          text: p.text!.trim(),
+          sort_order: pIdx + 1,
+        }));
+
+      const mobile_highlights =
+        customMobilePoints.length > 0
+          ? customMobilePoints
+          : allPoints.slice(0, 8);
+
       return {
         code: `COURSE_${idx + 1}`,
         name: (c.heading || `Course Program ${idx + 1}`).trim(),
         class_range: (c.classRange || '').trim(),
         desktop_primary_media_id: desktopPrimaryMediaId,
         desktop_secondary_media_id: desktopSecondaryMediaId,
-        mobile_media_id: null,
+        mobile_media_id: mobileMediaId,
         image_alt: c.heading || 'Course Image',
         badge_icon_media_id: desktopBadgeIconMediaId,
         badge_icon_alt: c.heading || 'Course Badge',
         feature_groups,
-        mobile_highlights: allPoints.slice(0, 2),
+        mobile_highlights,
         fees_cta: {
           label: (c.buttonText1 || 'Get Fee Structure').trim(),
           action: 'FEES_STRUCTURE',

@@ -21,6 +21,10 @@ export interface CourseItem {
   mediaId1?: number | null;
   mediaId2?: number | null;
 
+  mobileImage?: string;
+  mobileMediaId?: number | null;
+  mobileHighlights?: CourseListItem[];
+
   badgeIconImage?: string;
   badgeIconMediaId?: number | null;
 
@@ -195,6 +199,9 @@ export class CourseComponent {
 
       image1: '',
       image2: '',
+      mobileImage: '',
+      mobileMediaId: null,
+      mobileHighlights: [],
       badgeIconImage: '',
       badgeIconMediaId: null,
 
@@ -359,12 +366,45 @@ export class CourseComponent {
     this.emitChange();
   }
 
+  onCourseMobileImageChange(courseId: number, image: string): void {
+    const course = this.course.courses.find((item) => item.id === courseId);
+    if (!course) return;
+    course.mobileImage = image;
+    this.emitChange();
+  }
+
+  onCourseMobileMediaIdChange(courseId: number, mediaId: number | null): void {
+    const course = this.course.courses.find((item) => item.id === courseId);
+    if (!course) return;
+    course.mobileMediaId = mediaId;
+    this.emitChange();
+  }
+
+  addMobileHighlight(courseId: number): void {
+    const course = this.course.courses.find((item) => item.id === courseId);
+    if (!course) return;
+    if (!Array.isArray(course.mobileHighlights)) course.mobileHighlights = [];
+    course.mobileHighlights.push({
+      id: this.nextListItemId++,
+      text: '',
+    });
+    this.emitChange();
+  }
+
+  removeMobileHighlight(courseId: number, itemId: number): void {
+    const course = this.course.courses.find((item) => item.id === courseId);
+    if (!course || !Array.isArray(course.mobileHighlights)) return;
+    course.mobileHighlights = course.mobileHighlights.filter((item) => item.id !== itemId);
+    this.emitChange();
+  }
+
   emitChange(): void {
     this.courseChange.emit({
       sectionHeading: this.course.sectionHeading,
       sectionSubHeading: this.course.sectionSubHeading,
       courses: this.course.courses.map((courseItem) => ({
         ...courseItem,
+        mobileHighlights: Array.isArray(courseItem.mobileHighlights) ? [...courseItem.mobileHighlights] : [],
         listItems1: Array.isArray(courseItem.listItems1) ? [...courseItem.listItems1] : [],
         listItems2: Array.isArray(courseItem.listItems2) ? [...courseItem.listItems2] : [],
         listItems3: Array.isArray(courseItem.listItems3) ? [...courseItem.listItems3] : [],

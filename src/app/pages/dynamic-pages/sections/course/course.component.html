@@ -157,24 +157,33 @@
           <div class="space-y-5">
 
             <!-- Images -->
-            <div class="grid gap-5 md:grid-cols-2">
+            <div class="grid gap-5 md:grid-cols-3">
 
-              <!-- Image 1 -->
+              <!-- Image 1 (Desktop Primary) -->
               <div>
-                <app-image-upload label="Course Image 1" description="Drag & drop course image here or click to browse"
+                <app-image-upload label="Course Image 1 (Desktop)" description="Primary desktop image (e.g. 560x560)"
                   [imagePreview]="courseItem.image1"
                   [mediaId]="courseItem.mediaId1 || courseItem.mediaId"
                   (imageChange)="onCourseImageChange(courseItem.id, 1, $event)"
                   (mediaIdChange)="onCourseMediaId1Change(courseItem.id, $event)" />
               </div>
 
-              <!-- Image 2 -->
+              <!-- Image 2 (Desktop Secondary) -->
               <div>
-                <app-image-upload label="Course Image 2" description="Drag & drop course image here or click to browse"
+                <app-image-upload label="Course Image 2 (Desktop)" description="Secondary desktop image (e.g. 560x560)"
                   [imagePreview]="courseItem.image2"
                   [mediaId]="courseItem.mediaId2"
                   (imageChange)="onCourseImageChange(courseItem.id, 2, $event)"
                   (mediaIdChange)="onCourseMediaId2Change(courseItem.id, $event)" />
+              </div>
+
+              <!-- Image 3 (Mobile Card Image) -->
+              <div>
+                <app-image-upload label="Course Mobile Image" description="Banner image for mobile card (e.g. 400x280)"
+                  [imagePreview]="courseItem.mobileImage || ''"
+                  [mediaId]="courseItem.mobileMediaId"
+                  (imageChange)="onCourseMobileImageChange(courseItem.id, $event)"
+                  (mediaIdChange)="onCourseMobileMediaIdChange(courseItem.id, $event)" />
               </div>
 
             </div>
@@ -526,6 +535,88 @@
 
               </div>
 
+            </div>
+
+            <!-- Mobile Version Configuration -->
+            <div class="rounded-2xl border-2 border-blue-200 bg-gradient-to-br from-blue-50/70 via-indigo-50/40 to-slate-50 p-5 space-y-5">
+              <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-blue-200/80 pb-4">
+                <div class="flex items-center gap-3">
+                  <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#034DA2] text-white shadow-md">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 class="text-base font-bold text-slate-900">
+                      Mobile Version Configuration
+                    </h4>
+                    <p class="text-xs text-slate-500">
+                      Configure bullet points displayed specifically on mobile cards.
+                    </p>
+                  </div>
+                </div>
+
+                <button type="button" (click)="addMobileHighlight(courseItem.id)"
+                  class="inline-flex items-center gap-1.5 rounded-xl bg-[#034DA2] px-3.5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-800 transition">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                  </svg>
+                  + Add Mobile Point
+                </button>
+              </div>
+
+              <!-- Mobile Highlights Points List -->
+              <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                  <label class="text-xs font-bold uppercase tracking-wider text-slate-700">
+                    Mobile Highlights / Points
+                  </label>
+                  <span class="text-xs font-medium text-slate-500">
+                    {{ (courseItem.mobileHighlights || []).length }} custom points
+                  </span>
+                </div>
+
+                <p class="text-xs text-slate-500">
+                  These points appear inside the dark-blue card on phones. If left empty, highlights will be automatically generated from the sub-headings.
+                </p>
+
+                <div class="space-y-2.5">
+                  @for (mPoint of courseItem.mobileHighlights; track mPoint.id; let pIdx = $index) {
+                    <div class="flex items-center gap-2">
+                      <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-xs font-bold text-blue-900">
+                        {{ pIdx + 1 }}
+                      </span>
+                      <input type="text" [(ngModel)]="mPoint.text" (ngModelChange)="emitChange()"
+                        placeholder="e.g. Focus on overall development of the child"
+                        class="flex-1 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+                      <button type="button" (click)="removeMobileHighlight(courseItem.id, mPoint.id)"
+                        class="rounded-lg p-2 text-red-500 hover:bg-red-50 transition" title="Remove point">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  }
+
+                  @if (!courseItem.mobileHighlights || courseItem.mobileHighlights.length === 0) {
+                    <div class="rounded-xl border border-dashed border-blue-200 bg-white/70 p-5 text-center">
+                      <svg class="mx-auto h-8 w-8 text-blue-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <p class="text-xs font-medium text-slate-600">
+                        No specific mobile points added yet.
+                      </p>
+                      <p class="text-[11px] text-slate-400 mt-0.5">
+                        The mobile card will automatically display points from your desktop sub-headings.
+                      </p>
+                      <button type="button" (click)="addMobileHighlight(courseItem.id)"
+                        class="mt-3 inline-flex items-center gap-1 rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700 hover:bg-blue-100 transition">
+                        + Add Specific Mobile Point
+                      </button>
+                    </div>
+                  }
+                </div>
+              </div>
             </div>
 
             <!-- Course Buttons -->

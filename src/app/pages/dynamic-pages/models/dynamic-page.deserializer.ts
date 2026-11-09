@@ -337,11 +337,21 @@ export function populateSectionsFromBackend(
 
               const courseMediaId1 = p['desktop_primary_media_id'] ?? p['media_id'] ?? p['image_media_id'];
               const courseMediaId2 = p['desktop_secondary_media_id'];
+              const courseMobileMediaId = p['mobile_media_id'];
               const courseBadgeMediaId = p['badge_icon_media_id'];
               const existingCourse = state.course.courses?.[idx];
               const courseImg = resolveMediaUrl(courseMediaId1, mediaMap, existingCourse?.image1 || '');
               const courseImg2 = resolveMediaUrl(courseMediaId2, mediaMap, existingCourse?.image2 || '');
+              const courseMobileImg = resolveMediaUrl(courseMobileMediaId, mediaMap, existingCourse?.mobileImage || '');
               const badgeImg = resolveMediaUrl(courseBadgeMediaId, mediaMap, existingCourse?.badgeIconImage || '');
+
+              const rawMobileHighlights = Array.isArray(p['mobile_highlights']) ? p['mobile_highlights'] : [];
+              const mobileHighlights = rawMobileHighlights
+                .filter((item) => typeof item === 'object' && item !== null && 'text' in item)
+                .map((item, mIdx) => ({
+                  id: mIdx + 1,
+                  text: String((item as { text: string }).text || ''),
+                }));
 
               const feesCta = p['fees_cta'] as Record<string, unknown> | undefined;
               const brochureCta = p['brochure_cta'] as Record<string, unknown> | undefined;
@@ -361,9 +371,12 @@ export function populateSectionsFromBackend(
                 icon4: String(fg4?.['icon_key'] || 'ID_BADGE'),
                 image1: courseImg,
                 image2: courseImg2,
+                mobileImage: courseMobileImg,
                 mediaId: courseMediaId1 ? Number(courseMediaId1) : 1,
                 mediaId1: courseMediaId1 ? Number(courseMediaId1) : 1,
                 mediaId2: courseMediaId2 ? Number(courseMediaId2) : undefined,
+                mobileMediaId: courseMobileMediaId ? Number(courseMobileMediaId) : null,
+                mobileHighlights,
                 badgeIconImage: badgeImg,
                 badgeIconMediaId: courseBadgeMediaId ? Number(courseBadgeMediaId) : null,
                 listItems1: mapPoints(fg1),
