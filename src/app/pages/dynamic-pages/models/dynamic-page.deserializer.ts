@@ -293,6 +293,12 @@ export function populateSectionsFromBackend(
             state.whyUs.headingSuffix = String(c['heading_suffix'] || c['headingSuffix']);
           }
           if (c['subheading']) state.whyUs.sectionSubHeading = String(c['subheading']);
+          if (c['desktop_active'] !== undefined || c['desktopActive'] !== undefined) {
+            state.whyUs.desktopActive = Boolean(c['desktop_active'] ?? c['desktopActive']);
+          }
+          if (c['mobile_active'] !== undefined || c['mobileActive'] !== undefined) {
+            state.whyUs.mobileActive = Boolean(c['mobile_active'] ?? c['mobileActive']);
+          }
           const items = c['items'];
           if (Array.isArray(items) && items.length > 0) {
             state.whyUs.boxes = items.map((item: Record<string, unknown>, idx: number) => {

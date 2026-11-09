@@ -22,6 +22,10 @@ export function buildWhyUsSection(
     content: {
       heading: fullHeading || (whyUs.sectionHeading ?? '').trim() || 'Why Choose Narayana',
       subheading: (whyUs.sectionSubHeading ?? '').trim() || 'A system built for consistency, discipline, and results.',
+      highlight_word: (whyUs.highlightWord ?? '').trim(),
+      heading_suffix: (whyUs.headingSuffix ?? '').trim(),
+      desktop_active: whyUs.desktopActive ?? true,
+      mobile_active: whyUs.mobileActive ?? true,
       items: whyUsBoxes
         .filter((b) => (b.heading || b.paragraph || '').trim().length > 0)
         .map((b, idx) => ({
