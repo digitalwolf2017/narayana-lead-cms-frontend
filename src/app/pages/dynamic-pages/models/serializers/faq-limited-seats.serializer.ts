@@ -18,7 +18,7 @@ export function buildFaqSection(
     is_enabled: isEnabled,
     sort_order: 9,
     content: {
-      heading: faq.sectionHeading || '',
+      heading: (faq.sectionHeading || '').trim() || 'Frequently Asked Questions',
       items: faqItems.map((f, idx) => ({
         question: (f.question || '').trim(),
         answer: (f.answer || '').trim(),

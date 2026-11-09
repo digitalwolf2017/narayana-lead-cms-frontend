@@ -20,8 +20,8 @@ export function buildWhyUsSection(
     is_enabled: isEnabled,
     sort_order: 3,
     content: {
-      heading: fullHeading || (whyUs.sectionHeading ?? '').trim(),
-      subheading: (whyUs.sectionSubHeading ?? '').trim(),
+      heading: fullHeading || (whyUs.sectionHeading ?? '').trim() || 'Why Choose Narayana',
+      subheading: (whyUs.sectionSubHeading ?? '').trim() || 'A system built for consistency, discipline, and results.',
       items: whyUsBoxes
         .filter((b) => (b.heading || b.paragraph || '').trim().length > 0)
         .map((b, idx) => ({
@@ -91,7 +91,7 @@ export function buildCoursesSection(
     is_enabled: isEnabled,
     sort_order: 4,
     content: {
-      heading: course.sectionHeading || '',
+      heading: (course.sectionHeading || '').trim() || 'Courses & Programs',
       programs,
     },
   };
@@ -112,8 +112,8 @@ export function buildRightSchoolSection(
     is_enabled: isEnabled,
     sort_order: 6,
     content: {
-      heading: rightSchool.sectionHeading || '',
-      subheading: rightSchool.sectionSubHeading || '',
+      heading: (rightSchool.sectionHeading || '').trim() || 'Choose The Right School',
+      subheading: (rightSchool.sectionSubHeading || '').trim() || 'Empowering every student with confidence, curiosity and knowledge',
       items: rightSchoolCards.map((p, idx: number) => ({
         icon_key: `ITEM_${idx + 1}`,
         title: (p.heading || '').trim(),

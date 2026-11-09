@@ -84,8 +84,8 @@ export function buildBannerSection(
           ? Number(banner['mobile_background_media_id'])
           : null,
       background_alt: String(banner['heading'] || 'Banner Background'),
-      eyebrow: combinedEyebrow,
-      heading: String(banner['heading'] || banner['h1'] || '').trim(),
+      eyebrow: combinedEyebrow || 'Admission Open For Narayana School',
+      heading: String(banner['heading'] || banner['h1'] || '').trim() || 'Welcome to Narayana Schools',
       highlighted_text: String(banner['highlighted_text'] || banner['highlightText'] || '').trim(),
       bullets: bannerBullets,
       primary_cta: {
@@ -154,8 +154,8 @@ export function buildClassesSection(
     is_enabled: isEnabled,
     sort_order: 2,
     content: {
-      heading: classesConfig?.sectionHeading || '',
-      subheading: classesConfig?.sectionSubHeading || '',
+      heading: (classesConfig?.sectionHeading || '').trim() || 'Our Classes & Programs',
+      subheading: (classesConfig?.sectionSubHeading || '').trim() || 'Comprehensive Curriculum from Pre-Primary to Higher Secondary',
       programs,
     },
   };

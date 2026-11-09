@@ -20,8 +20,8 @@ export function buildAcademicResultsSection(
     is_enabled: isEnabled,
     sort_order: 7,
     content: {
-      heading: academicResults.sectionHeading || '',
-      subheading: academicResults.sectionSubHeading || '',
+      heading: (academicResults.sectionHeading || '').trim() || 'Academic Results',
+      subheading: (academicResults.sectionSubHeading || '').trim() || 'Excellence in Board & Competitive Examinations',
       results: resultCards.map((card, idx: number) => {
         const rawMedia = (card as unknown as Record<string, unknown>)['mediaId'] ?? (card as unknown as Record<string, unknown>)['media_id'];
         const parsedMediaId = Number(rawMedia);
@@ -83,10 +83,10 @@ export function buildParentsSaySection(
   const rawParentsSay = parentsSay as unknown as Record<string, unknown>;
   const heading = typeof rawParentsSay['sectionHeading'] === 'string' && rawParentsSay['sectionHeading'].trim()
     ? rawParentsSay['sectionHeading'].trim()
-    : '';
+    : 'What Parents Say About Us';
   const subheading = typeof rawParentsSay['sectionSubHeading'] === 'string' && rawParentsSay['sectionSubHeading'].trim()
     ? rawParentsSay['sectionSubHeading'].trim()
-    : '';
+    : 'Hear from parents who trusted Narayana for their child’s future';
 
   return {
     section_type: 'PARENTS_SAY',
@@ -129,8 +129,8 @@ export function buildFacilitiesSection(
     is_enabled: isEnabled,
     sort_order: 5,
     content: {
-      heading: facilities.sectionHeading || '',
-      subheading: facilities.sectionSubHeading || '',
+      heading: (facilities.sectionHeading || '').trim() || 'Campus & Facilities',
+      subheading: (facilities.sectionSubHeading || '').trim() || 'World-class infrastructure designed for all-round development',
       items: facilityItems.map((f, idx) => {
         const rawMedia = (f as unknown as Record<string, unknown>)['mediaId'] ?? (f as unknown as Record<string, unknown>)['media_id'];
         const parsedMediaId = Number(rawMedia);
