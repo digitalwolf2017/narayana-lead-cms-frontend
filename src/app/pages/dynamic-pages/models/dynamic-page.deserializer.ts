@@ -337,31 +337,45 @@ export function populateSectionsFromBackend(
 
               const courseMediaId1 = p['desktop_primary_media_id'] ?? p['media_id'] ?? p['image_media_id'];
               const courseMediaId2 = p['desktop_secondary_media_id'];
+              const courseBadgeMediaId = p['badge_icon_media_id'];
               const existingCourse = state.course.courses?.[idx];
               const courseImg = resolveMediaUrl(courseMediaId1, mediaMap, existingCourse?.image1 || '');
               const courseImg2 = resolveMediaUrl(courseMediaId2, mediaMap, existingCourse?.image2 || '');
+              const badgeImg = resolveMediaUrl(courseBadgeMediaId, mediaMap, existingCourse?.badgeIconImage || '');
+
+              const feesCta = p['fees_cta'] as Record<string, unknown> | undefined;
+              const brochureCta = p['brochure_cta'] as Record<string, unknown> | undefined;
+              const callbackCta = p['callback_cta'] as Record<string, unknown> | undefined;
+
               return {
                 id: idx + 1,
                 heading: String(p['name'] || ''),
+                classRange: String(p['class_range'] || ''),
                 subHeading1: String(fg1?.['title'] || ''),
+                icon1: String(fg1?.['icon_key'] || 'TRENDING_UP'),
                 subHeading2: String(fg2?.['title'] || ''),
+                icon2: String(fg2?.['icon_key'] || 'PUZZLE'),
                 subHeading3: String(fg3?.['title'] || ''),
+                icon3: String(fg3?.['icon_key'] || 'FLASK'),
                 subHeading4: String(fg4?.['title'] || ''),
+                icon4: String(fg4?.['icon_key'] || 'ID_BADGE'),
                 image1: courseImg,
                 image2: courseImg2,
                 mediaId: courseMediaId1 ? Number(courseMediaId1) : 1,
                 mediaId1: courseMediaId1 ? Number(courseMediaId1) : 1,
                 mediaId2: courseMediaId2 ? Number(courseMediaId2) : undefined,
+                badgeIconImage: badgeImg,
+                badgeIconMediaId: courseBadgeMediaId ? Number(courseBadgeMediaId) : null,
                 listItems1: mapPoints(fg1),
                 listItems2: mapPoints(fg2),
                 listItems3: mapPoints(fg3),
                 listItems4: mapPoints(fg4),
-                buttonText1: '',
-                buttonUrl1: '',
-                buttonText2: '',
-                buttonUrl2: '',
-                buttonText3: '',
-                buttonUrl3: '',
+                buttonText1: String(feesCta?.['label'] || ''),
+                buttonUrl1: String(feesCta?.['url'] || ''),
+                buttonText2: String(brochureCta?.['label'] || ''),
+                buttonUrl2: String(brochureCta?.['url'] || ''),
+                buttonText3: String(callbackCta?.['label'] || ''),
+                buttonUrl3: String(callbackCta?.['url'] || ''),
               };
             });
           }

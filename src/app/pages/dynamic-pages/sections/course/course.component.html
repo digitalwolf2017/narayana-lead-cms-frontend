@@ -190,6 +190,16 @@
                 class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100" />
             </div>
 
+            <!-- Course Heading Badge Icon / Image -->
+            <div>
+              <app-image-upload label="Course Heading Badge Icon / Image"
+                description="Upload circular badge icon for course heading (e.g. 64x64 or 80x80 SVG or PNG)"
+                [imagePreview]="courseItem.badgeIconImage || ''"
+                [mediaId]="courseItem.badgeIconMediaId"
+                (imageChange)="onCourseBadgeIconChange(courseItem.id, $event)"
+                (mediaIdChange)="onCourseBadgeIconMediaIdChange(courseItem.id, $event)" />
+            </div>
+
             <!-- Sub Heading 1 -->
             <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
 
@@ -200,7 +210,7 @@
                   </h4>
 
                   <p class="mt-1 text-xs text-slate-500">
-                    Add heading and list points.
+                    Add heading, icon and list points.
                   </p>
                 </div>
 
@@ -217,9 +227,26 @@
 
               <div class="mt-4">
 
-                <input type="text" [(ngModel)]="courseItem.subHeading1" (ngModelChange)="emitChange()"
-                  placeholder="Enter sub heading 1"
-                  class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100" />
+                <div class="grid gap-3 sm:grid-cols-4">
+                  <div class="sm:col-span-3">
+                    <input type="text" [(ngModel)]="courseItem.subHeading1" (ngModelChange)="emitChange()"
+                      placeholder="Enter sub heading 1 (e.g. Holistic Development:)"
+                      class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100" />
+                  </div>
+                  <div>
+                    <select [(ngModel)]="courseItem.icon1" (ngModelChange)="emitChange()"
+                      class="w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 outline-none transition focus:border-slate-400">
+                      <option value="TRENDING_UP">📈 Trending Chart</option>
+                      <option value="PUZZLE">🧩 Puzzle</option>
+                      <option value="FLASK">🧪 Science Flask</option>
+                      <option value="ID_BADGE">🪪 ID / Teacher</option>
+                      <option value="STAR">⭐ Star</option>
+                      <option value="BOOK">📖 Book</option>
+                      <option value="BRAIN">🧠 Brain / Concept</option>
+                      <option value="SHIELD">🛡️ Shield</option>
+                    </select>
+                  </div>
+                </div>
 
                 <div class="mt-3 space-y-2">
 
@@ -282,9 +309,26 @@
 
               <div class="mt-4">
 
-                <input type="text" [(ngModel)]="courseItem.subHeading2" (ngModelChange)="emitChange()"
-                  placeholder="Enter sub heading 2"
-                  class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100" />
+                <div class="grid gap-3 sm:grid-cols-4">
+                  <div class="sm:col-span-3">
+                    <input type="text" [(ngModel)]="courseItem.subHeading2" (ngModelChange)="emitChange()"
+                      placeholder="Enter sub heading 2 (e.g. Concept-Based Learning:)"
+                      class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100" />
+                  </div>
+                  <div>
+                    <select [(ngModel)]="courseItem.icon2" (ngModelChange)="emitChange()"
+                      class="w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 outline-none transition focus:border-slate-400">
+                      <option value="PUZZLE">🧩 Puzzle</option>
+                      <option value="TRENDING_UP">📈 Trending Chart</option>
+                      <option value="FLASK">🧪 Science Flask</option>
+                      <option value="ID_BADGE">🪪 ID / Teacher</option>
+                      <option value="STAR">⭐ Star</option>
+                      <option value="BOOK">📖 Book</option>
+                      <option value="BRAIN">🧠 Brain / Concept</option>
+                      <option value="SHIELD">🛡️ Shield</option>
+                    </select>
+                  </div>
+                </div>
 
                 <div class="mt-3 space-y-2">
 
@@ -347,9 +391,26 @@
 
               <div class="mt-4">
 
-                <input type="text" [(ngModel)]="courseItem.subHeading3" (ngModelChange)="emitChange()"
-                  placeholder="Enter sub heading 3"
-                  class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100" />
+                <div class="grid gap-3 sm:grid-cols-4">
+                  <div class="sm:col-span-3">
+                    <input type="text" [(ngModel)]="courseItem.subHeading3" (ngModelChange)="emitChange()"
+                      placeholder="Enter sub heading 3 (e.g. Logical & Scientific Thinking:)"
+                      class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100" />
+                  </div>
+                  <div>
+                    <select [(ngModel)]="courseItem.icon3" (ngModelChange)="emitChange()"
+                      class="w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 outline-none transition focus:border-slate-400">
+                      <option value="FLASK">🧪 Science Flask</option>
+                      <option value="TRENDING_UP">📈 Trending Chart</option>
+                      <option value="PUZZLE">🧩 Puzzle</option>
+                      <option value="ID_BADGE">🪪 ID / Teacher</option>
+                      <option value="STAR">⭐ Star</option>
+                      <option value="BOOK">📖 Book</option>
+                      <option value="BRAIN">🧠 Brain / Concept</option>
+                      <option value="SHIELD">🛡️ Shield</option>
+                    </select>
+                  </div>
+                </div>
 
                 <div class="mt-3 space-y-2">
 
@@ -412,9 +473,26 @@
 
               <div class="mt-4">
 
-                <input type="text" [(ngModel)]="courseItem.subHeading4" (ngModelChange)="emitChange()"
-                  placeholder="Enter sub heading 4"
-                  class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100" />
+                <div class="grid gap-3 sm:grid-cols-4">
+                  <div class="sm:col-span-3">
+                    <input type="text" [(ngModel)]="courseItem.subHeading4" (ngModelChange)="emitChange()"
+                      placeholder="Enter sub heading 4 (e.g. Structured & Supportive Learning:)"
+                      class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100" />
+                  </div>
+                  <div>
+                    <select [(ngModel)]="courseItem.icon4" (ngModelChange)="emitChange()"
+                      class="w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 outline-none transition focus:border-slate-400">
+                      <option value="ID_BADGE">🪪 ID / Teacher</option>
+                      <option value="TRENDING_UP">📈 Trending Chart</option>
+                      <option value="PUZZLE">🧩 Puzzle</option>
+                      <option value="FLASK">🧪 Science Flask</option>
+                      <option value="STAR">⭐ Star</option>
+                      <option value="BOOK">📖 Book</option>
+                      <option value="BRAIN">🧠 Brain / Concept</option>
+                      <option value="SHIELD">🛡️ Shield</option>
+                    </select>
+                  </div>
+                </div>
 
                 <div class="mt-3 space-y-2">
 

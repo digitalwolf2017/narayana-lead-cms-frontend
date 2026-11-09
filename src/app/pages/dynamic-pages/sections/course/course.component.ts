@@ -21,18 +21,26 @@ export interface CourseItem {
   mediaId1?: number | null;
   mediaId2?: number | null;
 
+  badgeIconImage?: string;
+  badgeIconMediaId?: number | null;
+
   heading: string;
+  classRange?: string;
 
   subHeading1: string;
+  icon1?: string;
   listItems1: CourseListItem[];
 
   subHeading2: string;
+  icon2?: string;
   listItems2: CourseListItem[];
 
   subHeading3: string;
+  icon3?: string;
   listItems3: CourseListItem[];
 
   subHeading4: string;
+  icon4?: string;
   listItems4: CourseListItem[];
 
   buttonText1: string;
@@ -187,19 +195,26 @@ export class CourseComponent {
 
       image1: '',
       image2: '',
+      badgeIconImage: '',
+      badgeIconMediaId: null,
 
       heading: '',
+      classRange: '',
 
       subHeading1: '',
+      icon1: 'TRENDING_UP',
       listItems1: [],
 
       subHeading2: '',
+      icon2: 'PUZZLE',
       listItems2: [],
 
       subHeading3: '',
+      icon3: 'FLASK',
       listItems3: [],
 
       subHeading4: '',
+      icon4: 'ID_BADGE',
       listItems4: [],
 
       buttonText1: '',
@@ -327,6 +342,20 @@ export class CourseComponent {
     const course = this.course.courses.find((item) => item.id === courseId);
     if (!course) return;
     course.mediaId2 = mediaId;
+    this.emitChange();
+  }
+
+  onCourseBadgeIconChange(courseId: number, image: string): void {
+    const course = this.course.courses.find((item) => item.id === courseId);
+    if (!course) return;
+    course.badgeIconImage = image;
+    this.emitChange();
+  }
+
+  onCourseBadgeIconMediaIdChange(courseId: number, mediaId: number | null): void {
+    const course = this.course.courses.find((item) => item.id === courseId);
+    if (!course) return;
+    course.badgeIconMediaId = mediaId;
     this.emitChange();
   }
 

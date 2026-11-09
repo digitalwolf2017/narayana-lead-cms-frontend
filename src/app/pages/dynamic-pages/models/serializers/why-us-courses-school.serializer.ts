@@ -52,11 +52,15 @@ export function buildCoursesSection(
       const secondaryId = Number(rawMedia2);
       const desktopSecondaryMediaId = Number.isInteger(secondaryId) && secondaryId > 0 ? secondaryId : null;
 
+      const rawBadgeMedia = (c as unknown as Record<string, unknown>)['badgeIconMediaId'] ?? (c as unknown as Record<string, unknown>)['badge_icon_media_id'];
+      const badgeIconId = Number(rawBadgeMedia);
+      const desktopBadgeIconMediaId = Number.isInteger(badgeIconId) && badgeIconId > 0 ? badgeIconId : null;
+
       const subHeadingGroups = [
-        { title: c.subHeading1, items: c.listItems1 },
-        { title: c.subHeading2, items: c.listItems2 },
-        { title: c.subHeading3, items: c.listItems3 },
-        { title: c.subHeading4, items: c.listItems4 },
+        { title: c.subHeading1, icon: c.icon1 || 'TRENDING_UP', items: c.listItems1 },
+        { title: c.subHeading2, icon: c.icon2 || 'PUZZLE', items: c.listItems2 },
+        { title: c.subHeading3, icon: c.icon3 || 'FLASK', items: c.listItems3 },
+        { title: c.subHeading4, icon: c.icon4 || 'ID_BADGE', items: c.listItems4 },
       ];
 
       const feature_groups = subHeadingGroups
@@ -72,7 +76,7 @@ export function buildCoursesSection(
           if (!title && grpPoints.length === 0) return null;
 
           return {
-            icon_key: 'STAR',
+            icon_key: grp.icon || 'STAR',
             title: title || `Feature Group ${gIdx + 1}`,
             points: grpPoints,
             sort_order: gIdx + 1,
@@ -85,18 +89,30 @@ export function buildCoursesSection(
       return {
         code: `COURSE_${idx + 1}`,
         name: (c.heading || `Course Program ${idx + 1}`).trim(),
-        class_range: (c.subHeading1 || '').trim(),
+        class_range: (c.classRange || '').trim(),
         desktop_primary_media_id: desktopPrimaryMediaId,
         desktop_secondary_media_id: desktopSecondaryMediaId,
         mobile_media_id: null,
         image_alt: c.heading || 'Course Image',
-        badge_icon_media_id: null,
-        badge_icon_alt: 'Course Badge',
+        badge_icon_media_id: desktopBadgeIconMediaId,
+        badge_icon_alt: c.heading || 'Course Badge',
         feature_groups,
         mobile_highlights: allPoints.slice(0, 2),
-        fees_cta: { label: c.buttonText1 || 'Check Fees', action: 'FEES_STRUCTURE', url: c.buttonUrl1 || null },
-        brochure_cta: { label: c.buttonText2 || 'Download Brochure', action: 'DOWNLOAD_BROCHURE', url: c.buttonUrl2 || null },
-        callback_cta: { label: 'Request Callback', action: 'CALLBACK', url: null },
+        fees_cta: {
+          label: (c.buttonText1 || 'Get Fee Structure').trim(),
+          action: 'FEES_STRUCTURE',
+          url: c.buttonUrl1 ? c.buttonUrl1.trim() : null,
+        },
+        brochure_cta: {
+          label: (c.buttonText2 || 'Download Brochure').trim(),
+          action: 'DOWNLOAD_BROCHURE',
+          url: c.buttonUrl2 ? c.buttonUrl2.trim() : null,
+        },
+        callback_cta: {
+          label: (c.buttonText3 || 'Get Call Back for Your Query').trim(),
+          action: 'CALLBACK',
+          url: c.buttonUrl3 ? c.buttonUrl3.trim() : null,
+        },
         sort_order: idx + 1,
       };
     });
