@@ -63,17 +63,45 @@
 
     </div>
 
-    <!-- Section Heading -->
-    <div class="grid gap-5 md:grid-cols-2">
+    <!-- Section Heading Configuration -->
+    <div class="space-y-4">
 
-      <!-- Section Heading -->
-      <div>
-        <label class="mb-2 block text-sm font-semibold text-slate-700">
-          Section Heading
-        </label>
+      <div class="grid gap-4 md:grid-cols-3">
 
-        <input type="text" [(ngModel)]="whyUs.sectionHeading" (ngModelChange)="emitChange()" placeholder="Why Choose Us"
-          class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100" />
+        <!-- Prefix / Heading -->
+        <div>
+          <label class="mb-2 block text-sm font-semibold text-slate-700">
+            Heading Prefix
+          </label>
+
+          <input type="text" [(ngModel)]="whyUs.sectionHeading" (ngModelChange)="emitChange()"
+            placeholder="e.g. Why Parents Choose"
+            class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100" />
+        </div>
+
+        <!-- Highlight Word -->
+        <div>
+          <label class="mb-2 flex items-center justify-between text-sm font-semibold text-slate-700">
+            <span>Highlighted Word</span>
+            <span class="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-800 uppercase">Yellow Marker</span>
+          </label>
+
+          <input type="text" [(ngModel)]="whyUs.highlightWord" (ngModelChange)="emitChange()"
+            placeholder="e.g. Narayana"
+            class="w-full rounded-xl border border-amber-300 bg-amber-50/40 px-4 py-3 text-sm font-medium text-slate-800 outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-100" />
+        </div>
+
+        <!-- Suffix -->
+        <div>
+          <label class="mb-2 block text-sm font-semibold text-slate-700">
+            Heading Suffix
+          </label>
+
+          <input type="text" [(ngModel)]="whyUs.headingSuffix" (ngModelChange)="emitChange()"
+            placeholder="e.g. Over Other Schools"
+            class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100" />
+        </div>
+
       </div>
 
       <!-- Section Sub Heading -->
@@ -83,8 +111,40 @@
         </label>
 
         <input type="text" [(ngModel)]="whyUs.sectionSubHeading" (ngModelChange)="emitChange()"
-          placeholder="Discover what makes us different"
+          placeholder="e.g. A system built for consistency, discipline, and results."
           class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100" />
+      </div>
+
+      <!-- Live Heading Preview -->
+      <div class="rounded-xl border border-amber-200 bg-linear-to-r from-amber-50/70 to-orange-50/50 p-4 shadow-2xs">
+        <div class="mb-1.5 flex items-center gap-2">
+          <span class="h-2 w-2 rounded-full bg-amber-500"></span>
+          <span class="text-[11px] font-bold uppercase tracking-wider text-amber-800">Live Heading Preview</span>
+        </div>
+
+        @if (whyUs.sectionHeading || whyUs.highlightWord || whyUs.headingSuffix) {
+          <h3 class="text-lg md:text-xl font-bold text-gray-800 leading-snug">
+            @if (whyUs.sectionHeading) {
+              <span>{{ whyUs.sectionHeading }} </span>
+            }
+            @if (whyUs.highlightWord) {
+              <span class="bg-[linear-gradient(transparent_55%,#fde047_55%)] px-1 text-gray-900">
+                {{ whyUs.highlightWord }}
+              </span>
+            }
+            @if (whyUs.headingSuffix) {
+              <span> {{ whyUs.headingSuffix }}</span>
+            }
+          </h3>
+        } @else {
+          <p class="text-sm italic text-slate-400">Heading preview will display here as you enter the fields above.</p>
+        }
+
+        @if (whyUs.sectionSubHeading) {
+          <p class="mt-1 text-xs md:text-sm text-gray-500">
+            {{ whyUs.sectionSubHeading }}
+          </p>
+        }
       </div>
 
     </div>
@@ -125,10 +185,14 @@
 
           <div class="flex min-w-0 items-center gap-3">
 
-            <!-- Number -->
+            <!-- Icon Thumbnail / Number -->
             <div
-              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-sm font-bold text-slate-600">
-              {{ $index + 1 }}
+              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white border border-slate-200 overflow-hidden text-sm font-bold text-slate-600">
+              @if (box.image) {
+                <img [src]="box.image" [alt]="box.heading || 'Icon'" class="h-6 w-6 object-contain" />
+              } @else {
+                {{ $index + 1 }}
+              }
             </div>
 
             <!-- Box Info -->
@@ -137,12 +201,12 @@
               <h4 class="truncate text-sm font-semibold text-slate-900">
                 {{
                 box.heading ||
-                'Untitled Why Choose Box'
+                'Untitled Card'
                 }}
               </h4>
 
               <p class="mt-0.5 text-xs text-slate-500">
-                Why Choose Box #{{ $index + 1 }}
+                Reason Card #{{ $index + 1 }}
               </p>
 
             </div>
@@ -175,34 +239,34 @@
 
           <div class="space-y-5">
 
-            <!-- Image -->
-            <app-image-upload label="Why Choose Image" description="Drag & drop image here or click to browse"
+            <!-- Image / Icon -->
+            <app-image-upload label="Card Icon / Image" description="Upload card icon (recommended 80x80 SVG or PNG)"
               [imagePreview]="box.image" [mediaId]="box.mediaId"
               (imageChange)="onBoxImageChange(box.id, $event)"
               (mediaIdChange)="onBoxMediaIdChange(box.id, $event)" />
 
-            <!-- Heading -->
+            <!-- Title / Heading -->
             <div>
 
               <label class="mb-2 block text-sm font-semibold text-slate-700">
-                Heading
+                Card Title
               </label>
 
               <input type="text" [(ngModel)]="box.heading" (ngModelChange)="emitChange()"
-                placeholder="Experienced Faculty"
+                placeholder="Integrated Curriculum"
                 class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100" />
 
             </div>
 
-            <!-- Paragraph -->
+            <!-- Description / Paragraph -->
             <div>
 
               <label class="mb-2 block text-sm font-semibold text-slate-700">
-                Paragraph
+                Card Description
               </label>
 
-              <textarea rows="5" [(ngModel)]="box.paragraph" (ngModelChange)="emitChange()"
-                placeholder="Write a short description about why students should choose this feature."
+              <textarea rows="4" [(ngModel)]="box.paragraph" (ngModelChange)="emitChange()"
+                placeholder="Write a clear description of this key benefit."
                 class="w-full resize-y rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100"></textarea>
 
             </div>

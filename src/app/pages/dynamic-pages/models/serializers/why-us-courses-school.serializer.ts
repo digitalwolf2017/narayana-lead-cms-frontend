@@ -9,23 +9,22 @@ export function buildWhyUsSection(
   sections: SectionConfig[],
 ): PageBuilderSection {
   const isEnabled = Boolean(sections.find((s) => s.key === 'why-us')?.active ?? true);
-  const whyUsBoxes =
-    Array.isArray(whyUs.boxes) && whyUs.boxes.length > 0
-      ? whyUs.boxes
-      : [{ id: 1, heading: 'Experienced Faculty', paragraph: 'Learn from experienced and dedicated educators who focus on every student.' }];
+  const whyUsBoxes = Array.isArray(whyUs.boxes) ? whyUs.boxes : [];
 
   return {
     section_type: 'WHY_US',
     is_enabled: isEnabled,
     sort_order: 3,
     content: {
-      heading: whyUs.sectionHeading || 'Why Choose Us',
-      subheading: whyUs.sectionSubHeading || 'Discover what makes our educational institution unique',
+      heading: (whyUs.sectionHeading ?? '').trim(),
+      highlight_word: (whyUs.highlightWord ?? '').trim(),
+      heading_suffix: (whyUs.headingSuffix ?? '').trim(),
+      subheading: (whyUs.sectionSubHeading ?? '').trim(),
       items: whyUsBoxes.map((b, idx) => ({
-        title: b.heading || `Reason ${idx + 1}`,
-        description: b.paragraph || 'Excellence in student mentoring and pedagogical quality.',
-        icon_media_id: Number((b as unknown as Record<string, unknown>)['mediaId'] || 1),
-        icon_alt: b.heading || 'Why Us Icon',
+        title: (b.heading ?? '').trim(),
+        description: (b.paragraph ?? '').trim(),
+        icon_media_id: b.mediaId !== undefined && b.mediaId !== null ? Number(b.mediaId) : null,
+        icon_alt: (b.heading ?? '').trim(),
         sort_order: idx + 1,
       })),
     },

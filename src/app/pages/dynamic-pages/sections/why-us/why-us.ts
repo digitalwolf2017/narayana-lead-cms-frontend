@@ -17,6 +17,8 @@ interface WhyChooseBox {
 
 export interface WhyUsConfig {
   sectionHeading: string;
+  highlightWord?: string;
+  headingSuffix?: string;
   sectionSubHeading: string;
   boxes: WhyChooseBox[];
   isActive: boolean;
@@ -40,18 +42,11 @@ export interface WhyUsConfig {
 })
 export class WhyUs {
   @Input() whyUs: WhyUsConfig = {
-    sectionHeading: 'Why Choose Us',
-    sectionSubHeading:
-      'Discover what makes us different',
-    boxes: [
-      {
-        id: 1,
-        image: '',
-        heading: 'Experienced Faculty',
-        paragraph:
-          'Learn from experienced and dedicated educators who focus on every student.',
-      },
-    ],
+    sectionHeading: '',
+    highlightWord: '',
+    headingSuffix: '',
+    sectionSubHeading: '',
+    boxes: [],
     isActive: true,
     desktopActive: true,
     mobileActive: true,
@@ -161,6 +156,12 @@ export class WhyUs {
     this.whyUsChange.emit({
       sectionHeading:
         this.whyUs.sectionHeading,
+
+      highlightWord:
+        this.whyUs.highlightWord,
+
+      headingSuffix:
+        this.whyUs.headingSuffix,
 
       sectionSubHeading:
         this.whyUs.sectionSubHeading,

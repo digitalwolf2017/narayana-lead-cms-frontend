@@ -136,17 +136,11 @@ export function getDefaultSections(): SectionConfig[] {
 
 export function getDefaultWhyUs(): WhyUsConfig {
   return {
-    sectionHeading: 'Why Choose Us',
-    sectionSubHeading: 'Discover what makes us different',
-    boxes: [
-      {
-        id: 1,
-        image: '',
-        heading: 'Experienced Faculty',
-        paragraph:
-          'Learn from experienced and dedicated educators who focus on every student.',
-      },
-    ],
+    sectionHeading: '',
+    highlightWord: '',
+    headingSuffix: '',
+    sectionSubHeading: '',
+    boxes: [],
     isActive: true,
     desktopActive: true,
     mobileActive: true,

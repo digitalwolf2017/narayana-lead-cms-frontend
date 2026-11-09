@@ -242,6 +242,12 @@ export function populateSectionsFromBackend(
         const c = s.content as Record<string, unknown>;
         if (c) {
           if (c['heading']) state.whyUs.sectionHeading = String(c['heading']);
+          if (c['highlight_word'] || c['highlightWord']) {
+            state.whyUs.highlightWord = String(c['highlight_word'] || c['highlightWord']);
+          }
+          if (c['heading_suffix'] || c['headingSuffix']) {
+            state.whyUs.headingSuffix = String(c['heading_suffix'] || c['headingSuffix']);
+          }
           if (c['subheading']) state.whyUs.sectionSubHeading = String(c['subheading']);
           const items = c['items'];
           if (Array.isArray(items) && items.length > 0) {
@@ -251,8 +257,8 @@ export function populateSectionsFromBackend(
               const iconUrl = resolveMediaUrl(iconMediaId, mediaMap, existingBox?.image || '');
               return {
                 id: idx + 1,
-                heading: String(item['title'] || ''),
-                paragraph: String(item['description'] || ''),
+                heading: String(item['title'] || item['heading'] || ''),
+                paragraph: String(item['description'] || item['paragraph'] || ''),
                 image: iconUrl,
                 mediaId: Number(iconMediaId || 1),
               };
