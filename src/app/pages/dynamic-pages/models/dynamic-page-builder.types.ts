@@ -24,6 +24,8 @@ export interface PageRevision {
   title: string;
   seo_title: string;
   seo_description: string;
+  is_indexed?: boolean;
+  robots?: string;
   status?: string;
   created_at?: string;
   updated_at?: string;

@@ -39,6 +39,9 @@ export class PageScopeFormComponent {
   @Input() seoDescription = '';
   @Output() seoDescriptionChange = new EventEmitter<string>();
 
+  @Input() isIndexed = true;
+  @Output() isIndexedChange = new EventEmitter<boolean>();
+
   @Input() domainName = '';
   @Input() generatedSlug = '';
   @Input() pageCreated = false;
@@ -88,5 +91,10 @@ export class PageScopeFormComponent {
   onSeoDescriptionInput(val: string): void {
     this.seoDescription = val;
     this.seoDescriptionChange.emit(val);
+  }
+
+  onIndexToggle(val: boolean): void {
+    this.isIndexed = val;
+    this.isIndexedChange.emit(val);
   }
 }

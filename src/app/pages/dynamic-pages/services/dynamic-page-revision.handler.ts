@@ -13,6 +13,7 @@ export interface SaveRevisionPayload {
   title: string;
   seoTitle: string;
   seoDescription: string;
+  isIndexed?: boolean;
   sections: PageBuilderSection[];
 }
 
@@ -106,6 +107,8 @@ export class DynamicPageRevisionHandler {
         title: payload.title,
         seo_title: payload.seoTitle,
         seo_description: payload.seoDescription,
+        is_indexed: payload.isIndexed ?? true,
+        robots: (payload.isIndexed ?? true) ? 'index, follow' : 'noindex, nofollow',
       })
       .pipe(
         catchError(() => of({ success: true })),
@@ -232,7 +235,8 @@ export class DynamicPageRevisionHandler {
     revisionId: number,
     title: string,
     seoTitle: string,
-    seoDescription: string
+    seoDescription: string,
+    isIndexed: boolean = true
   ): Observable<HandlerResult> {
     return this.dynamicPageService
       .updateDraftMetadata(pageId, revisionId, {
@@ -240,6 +244,8 @@ export class DynamicPageRevisionHandler {
         title,
         seo_title: seoTitle,
         seo_description: seoDescription,
+        is_indexed: isIndexed,
+        robots: isIndexed ? 'index, follow' : 'noindex, nofollow',
       })
       .pipe(
         map((res) => ({

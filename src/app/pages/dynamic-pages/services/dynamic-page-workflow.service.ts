@@ -35,6 +35,7 @@ export interface WorkflowTarget {
   pageTitle: string;
   seoTitle: string;
   seoDescription: string;
+  isIndexed?: boolean;
   isSavingConfiguration: boolean;
   saveProgressText: string;
   isPublishing: boolean;
@@ -176,6 +177,7 @@ export class DynamicPageWorkflowService {
           title: ctx.pageTitle,
           seoTitle: ctx.seoTitle,
           seoDescription: ctx.seoDescription,
+          isIndexed: ctx.isIndexed ?? true,
           sections: all12Sections,
         },
         (current, total, sectionType) => {
@@ -281,6 +283,7 @@ export class DynamicPageWorkflowService {
             title: ctx.pageTitle,
             seoTitle: ctx.seoTitle,
             seoDescription: ctx.seoDescription,
+            isIndexed: ctx.isIndexed ?? true,
             sections: all12Sections,
           })
           .subscribe({

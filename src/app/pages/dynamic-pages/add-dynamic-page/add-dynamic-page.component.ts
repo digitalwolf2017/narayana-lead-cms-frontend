@@ -127,6 +127,7 @@ export class AddDynamicPageComponent implements OnInit {
   pageTitle = '';
   seoTitle = '';
   seoDescription = '';
+  isIndexed = true;
   pageType = '';
   editingPageId: number | null = null;
   pageStatus: 'ACTIVE' | 'INACTIVE' = 'ACTIVE';
@@ -359,7 +360,8 @@ export class AddDynamicPageComponent implements OnInit {
       this.pageTitle,
       this.generatedSlug,
       this.seoTitle,
-      this.seoDescription
+      this.seoDescription,
+      this.isIndexed
     );
 
     this.creationService.createPage(payload).subscribe((res) => {
@@ -454,6 +456,11 @@ export class AddDynamicPageComponent implements OnInit {
     this.seoDescription = rev.seo_description ?? this.seoDescription;
 
     const revUnknown = rev as unknown as Record<string, unknown>;
+    if (revUnknown['is_indexed'] !== undefined && revUnknown['is_indexed'] !== null) {
+      this.isIndexed = Boolean(revUnknown['is_indexed']);
+    } else if (revUnknown['robots']) {
+      this.isIndexed = !String(revUnknown['robots']).toLowerCase().includes('noindex');
+    }
     const sections = fallbackSections ?? (revUnknown?.['sections'] as PageBuilderSection[] | undefined);
     if (Array.isArray(sections) && sections.length > 0) {
       const mergedMedia = {
@@ -626,7 +633,7 @@ export class AddDynamicPageComponent implements OnInit {
     this.cdr.detectChanges();
 
     this.revisionHandler
-      .updateMetadata(this.editingPageId, this.selectedRevisionId, this.pageTitle, this.seoTitle, this.seoDescription)
+      .updateMetadata(this.editingPageId, this.selectedRevisionId, this.pageTitle, this.seoTitle, this.seoDescription, this.isIndexed)
       .subscribe((res) => {
         this.isSavingMetadata = false;
         if (!res.success) {

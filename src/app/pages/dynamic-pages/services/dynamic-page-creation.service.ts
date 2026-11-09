@@ -102,7 +102,8 @@ export class DynamicPageCreationService {
     pageTitle: string,
     generatedSlug: string,
     seoTitle?: string,
-    seoDescription?: string
+    seoDescription?: string,
+    isIndexed: boolean = true
   ): CreateDynamicPageRequest {
     const cleanSlug = generatedSlug.startsWith('/') ? generatedSlug.substring(1) : generatedSlug;
     return {
@@ -115,6 +116,8 @@ export class DynamicPageCreationService {
       status: 'ACTIVE',
       seo_title: seoTitle || pageTitle,
       seo_description: seoDescription || pageTitle,
+      is_indexed: isIndexed,
+      robots: isIndexed ? 'index, follow' : 'noindex, nofollow',
     };
   }
 
