@@ -29,9 +29,11 @@ export function getDefaultLogos(): LogoConfig[] {
 
 export function getDefaultBanner(): BannerConfig {
   return {
-    heading: 'Welcome to Narayana Schools',
-    h1: 'Welcome to Narayana Schools',
-    subHeading: 'Empowering Education Since 1977',
+    subHeading: 'Admission Open For',
+    eyebrow_highlight: 'Narayana School',
+    heading: 'CBSE School for',
+    h1: 'CBSE School for',
+    highlighted_text: 'Class- I',
     backgroundImage: '',
     bullets: [
       {

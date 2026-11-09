@@ -10,15 +10,17 @@ export function buildWhyUsSection(
 ): PageBuilderSection {
   const isEnabled = Boolean(sections.find((s) => s.key === 'why-us')?.active ?? true);
   const whyUsBoxes = Array.isArray(whyUs.boxes) ? whyUs.boxes : [];
+  const fullHeading = [whyUs.sectionHeading, whyUs.highlightWord, whyUs.headingSuffix]
+    .filter((part): part is string => Boolean(part && String(part).trim().length > 0))
+    .join(' ')
+    .trim();
 
   return {
     section_type: 'WHY_US',
     is_enabled: isEnabled,
     sort_order: 3,
     content: {
-      heading: (whyUs.sectionHeading ?? '').trim(),
-      highlight_word: (whyUs.highlightWord ?? '').trim(),
-      heading_suffix: (whyUs.headingSuffix ?? '').trim(),
+      heading: fullHeading || (whyUs.sectionHeading ?? '').trim(),
       subheading: (whyUs.sectionSubHeading ?? '').trim(),
       items: whyUsBoxes.map((b, idx) => ({
         title: (b.heading ?? '').trim(),

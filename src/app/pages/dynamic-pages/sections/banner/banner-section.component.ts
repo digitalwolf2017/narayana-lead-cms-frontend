@@ -23,8 +23,11 @@ interface BannerStat {
 
 export interface BannerConfig {
   subHeading: string;
+  eyebrow_highlight?: string;
   heading: string;
   h1?: string;
+  highlighted_text?: string;
+  form_title?: string;
   bullets?: BannerBullet[];
   stats: BannerStat[];
   buttonText?: string;
@@ -54,8 +57,10 @@ export interface BannerConfig {
 export class BannerSectionComponent {
 
   @Input() banner: BannerConfig = {
-    subHeading: 'Empowering Education Since 1977',
-    heading: 'Welcome to Narayana Schools',
+    subHeading: 'Admission Open For',
+    eyebrow_highlight: 'Narayana School',
+    heading: 'CBSE School for',
+    highlighted_text: 'Class- I',
     bullets: [
       {
         id: 1,
@@ -265,8 +270,14 @@ export class BannerSectionComponent {
       subHeading:
         this.banner.subHeading,
 
+      eyebrow_highlight:
+        this.banner.eyebrow_highlight,
+
       heading:
         this.banner.heading,
+
+      highlighted_text:
+        this.banner.highlighted_text,
 
       bullets:
         (this.banner.bullets || []).map(

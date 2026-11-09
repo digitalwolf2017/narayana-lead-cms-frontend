@@ -95,15 +95,28 @@
 
         <div class="grid gap-5 md:grid-cols-2">
 
-          <!-- Sub Heading -->
+          <!-- Sub Heading (Eyebrow) -->
           <div>
 
             <label class="mb-2 block text-sm font-semibold text-slate-700">
-              Sub Heading
+              Sub Heading (Eyebrow)
             </label>
 
             <input type="text" [(ngModel)]="banner.subHeading" (ngModelChange)="emitChange()"
-              placeholder="Empowering Education Since 1977"
+              placeholder="e.g. Admission Open For"
+              class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100" />
+
+          </div>
+
+          <!-- Eyebrow Highlight Word (Yellow) -->
+          <div>
+
+            <label class="mb-2 block text-sm font-semibold text-slate-700">
+              Eyebrow Highlight Word (Yellow)
+            </label>
+
+            <input type="text" [(ngModel)]="banner.eyebrow_highlight" (ngModelChange)="emitChange()"
+              placeholder="e.g. Narayana School"
               class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100" />
 
           </div>
@@ -116,7 +129,20 @@
             </label>
 
             <input type="text" [(ngModel)]="banner.heading" (ngModelChange)="emitChange()"
-              placeholder="Shape Your Future With Us"
+              placeholder="e.g. CBSE School for"
+              class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100" />
+
+          </div>
+
+          <!-- Highlighted Text -->
+          <div>
+
+            <label class="mb-2 block text-sm font-semibold text-slate-700">
+              Heading Highlight Word (Yellow Curved Underline)
+            </label>
+
+            <input type="text" [(ngModel)]="banner.highlighted_text" (ngModelChange)="emitChange()"
+              placeholder="e.g. Class- I"
               class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100" />
 
           </div>

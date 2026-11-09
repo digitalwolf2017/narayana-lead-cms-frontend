@@ -81,6 +81,9 @@ export interface BannerConfig {
   heading: string;
   h1?: string;
   subHeading: string;
+  eyebrow_highlight?: string;
+  highlighted_text?: string;
+  form_title?: string;
   backgroundImage: string;
   mediaId?: number | null;
   desktop_background_media_id?: number | null;

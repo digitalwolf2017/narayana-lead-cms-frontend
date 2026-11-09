@@ -157,7 +157,23 @@ export function populateSectionsFromBackend(
         const c = s.content as Record<string, unknown>;
         if (c) {
           if (c['heading']) state.banner.heading = String(c['heading']);
-          if (c['heading']) state.banner.h1 = String(c['heading']);
+          if (c['h1']) state.banner.h1 = String(c['h1']);
+          if (c['eyebrow']) {
+            const rawEyebrow = String(c['eyebrow']).trim();
+            if (rawEyebrow.includes('Narayana School')) {
+              state.banner.subHeading = rawEyebrow.replace('Narayana School', '').trim();
+              state.banner.eyebrow_highlight = 'Narayana School';
+            } else {
+              state.banner.subHeading = rawEyebrow;
+              state.banner.eyebrow_highlight = String(c['eyebrow_highlight'] || c['eyebrowHighlight'] || '');
+            }
+          } else if (c['subHeading']) {
+            state.banner.subHeading = String(c['subHeading']);
+          }
+          if (c['highlighted_text']) state.banner.highlighted_text = String(c['highlighted_text']);
+          else if (c['highlightText']) state.banner.highlighted_text = String(c['highlightText']);
+          if (c['form_title']) state.banner.form_title = String(c['form_title']);
+          else if (c['formTitle']) state.banner.form_title = String(c['formTitle']);
           const rawBullets = c['bullets'];
           if (Array.isArray(rawBullets) && rawBullets.length > 0) {
             state.banner.bullets = rawBullets.map((b: Record<string, unknown>, idx: number) => ({
@@ -167,9 +183,27 @@ export function populateSectionsFromBackend(
               show_mobile: Boolean(b['show_mobile'] ?? true),
               sort_order: idx + 1,
             }));
-            if (rawBullets[0]?.text) {
-              state.banner.subHeading = String(rawBullets[0].text);
-            }
+          }
+          const rawStats = c['stats'] || c['counters'];
+          if (Array.isArray(rawStats) && rawStats.length > 0) {
+            state.banner.stats = rawStats.map((st: Record<string, unknown>, idx: number) => ({
+              id: idx + 1,
+              value: String(st['value'] ?? (st['target'] !== undefined && st['target'] !== null ? `${st['target']}+` : '')),
+              label: String(st['label'] ?? ''),
+            }));
+          }
+          const primaryCta = c['primary_cta'] as Record<string, unknown> | undefined;
+          if (primaryCta?.['label']) {
+            state.banner.buttonText = String(primaryCta['label']);
+          } else if (c['buttonText']) {
+            state.banner.buttonText = String(c['buttonText']);
+          } else if (c['button_text']) {
+            state.banner.buttonText = String(c['button_text']);
+          }
+          if (primaryCta?.['url']) {
+            state.banner.buttonUrl = String(primaryCta['url']);
+          } else if (c['buttonUrl']) {
+            state.banner.buttonUrl = String(c['buttonUrl']);
           }
           const desktopMediaId =
             c['desktop_background_media_id'] ??
@@ -241,7 +275,17 @@ export function populateSectionsFromBackend(
         if (sec) sec.active = isEnabled;
         const c = s.content as Record<string, unknown>;
         if (c) {
-          if (c['heading']) state.whyUs.sectionHeading = String(c['heading']);
+          if (c['heading']) {
+            const rawHeading = String(c['heading']).trim();
+            if (rawHeading.includes('Narayana')) {
+              const parts = rawHeading.split('Narayana');
+              state.whyUs.sectionHeading = parts[0]?.trim() || 'Why Choose';
+              state.whyUs.highlightWord = 'Narayana';
+              state.whyUs.headingSuffix = parts[1]?.trim() || 'Schools';
+            } else {
+              state.whyUs.sectionHeading = rawHeading;
+            }
+          }
           if (c['highlight_word'] || c['highlightWord']) {
             state.whyUs.highlightWord = String(c['highlight_word'] || c['highlightWord']);
           }

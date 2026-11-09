@@ -51,19 +51,26 @@ export function buildBannerSection(
   const rawBullets = banner['bullets'];
   const bannerBullets =
     Array.isArray(rawBullets) && rawBullets.length > 0
-      ? (rawBullets as Array<{ text: string; show_desktop?: boolean; show_mobile?: boolean; sort_order?: number }>).map(
-          (b, idx) => ({
-            text: b.text || 'Excellence in Education',
+      ? (rawBullets as Array<{ text: string; show_desktop?: boolean; show_mobile?: boolean; sort_order?: number }>)
+          .map((b, idx) => ({
+            text: (b.text || '').trim(),
             show_desktop: b.show_desktop ?? true,
             show_mobile: b.show_mobile ?? true,
             sort_order: idx + 1,
-          }),
-        )
-      : [
-          { text: 'Technologically driven stress-free curriculum', show_desktop: true, show_mobile: true, sort_order: 1 },
-          { text: "Asia's one of the largest educational conglomerates", show_desktop: true, show_mobile: true, sort_order: 2 },
-          { text: 'Learning that leads to careers, not just certificates', show_desktop: true, show_mobile: true, sort_order: 3 },
-        ];
+          }))
+          .filter((b) => b.text.length > 0)
+      : [];
+
+  const rawEyebrow = String(banner['eyebrow'] || banner['subHeading'] || '').trim();
+  const rawEyebrowHighlight = String(banner['eyebrow_highlight'] || banner['eyebrowHighlight'] || '').trim();
+  const combinedEyebrow =
+    rawEyebrow && rawEyebrowHighlight && !rawEyebrow.toLowerCase().includes(rawEyebrowHighlight.toLowerCase())
+      ? `${rawEyebrow} ${rawEyebrowHighlight}`.trim()
+      : rawEyebrow || rawEyebrowHighlight;
+
+  const buttonText = String(banner['buttonText'] || '').trim();
+  const buttonUrl = banner['buttonUrl'] ? String(banner['buttonUrl']).trim() : null;
+  const formTitle = String(banner['form_title'] || banner['formTitle'] || '').trim();
 
   return {
     section_type: 'BANNER',
@@ -76,12 +83,16 @@ export function buildBannerSection(
           ? Number(banner['mobile_background_media_id'])
           : null,
       background_alt: String(banner['heading'] || 'Banner Background'),
-      eyebrow: banner['eyebrow'] ? String(banner['eyebrow']) : '',
-      heading: String(banner['heading'] || banner['h1'] || 'Welcome to Narayana Schools'),
-      highlighted_text: banner['highlighted_text'] ? String(banner['highlighted_text']) : '',
+      eyebrow: combinedEyebrow,
+      heading: String(banner['heading'] || banner['h1'] || '').trim(),
+      highlighted_text: String(banner['highlighted_text'] || banner['highlightText'] || '').trim(),
       bullets: bannerBullets,
-      primary_cta: { label: 'Admissions Open', action: 'OPEN_ADMISSION_MODAL', url: null },
-      form_title: 'Admission Enquiry',
+      primary_cta: {
+        label: buttonText || 'Admissions Open',
+        action: 'OPEN_ADMISSION_MODAL',
+        url: buttonUrl,
+      },
+      form_title: formTitle || 'Admission Enquiry',
       form_enabled: true,
       default_form_intent: 'ENQUIRY',
     },
